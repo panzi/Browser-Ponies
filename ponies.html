@@ -1,0 +1,50 @@
+<html>
+<head>
+<title>OMG Pwnies!</title>
+<script type="text/javascript" src="ponycfg.js"></script>
+<script type="text/javascript" src="browserponies.js"></script>
+
+<script type="text/javascript">
+function convert () {
+	try {
+		var what = document.getElementById('what').value;
+		var src = document.getElementById('ini').value;
+		var converted = what === 'Pony' ?
+			BrowserPonies.convertPony(src, document.getElementById('baseurl').value) :
+			BrowserPonies.convertInteractions(src);
+		document.getElementById('json').value = JSON.stringify(converted);
+	}
+	catch (e) {
+		console.error(e);
+		alert("Error during Conversion:\n"+e.name+": "+e.message);
+	}
+}
+</script>
+</head>
+<body>
+<h1>OMG Pwnies!</h1>
+<p>
+<button onclick="BrowserPonies.start();">Start</button>
+<button onclick="BrowserPonies.stop();">Stop</button>
+<button onclick="BrowserPonies.pause();">Pause</button>
+<button onclick="BrowserPonies.resume();">Resume</button>
+</p>
+<p>
+<label for="ini">Pony.ini / Interactions.ini:</label>
+<select id="what" onchange="document.getElementById('baseurlcont').style.display = this.value === 'Pony' ? '' : 'none';">
+<option selected="selected">Pony</option>
+<option>Interactions</option>
+</select>
+<span id="baseurlcont"><label for="baseurl">Base URL:</label><input type="text" id="baseurl"/></span>
+<br/>
+<textarea id="ini" cols="100" rows="15"></textarea>
+</p>
+<p>
+<button onclick="convert();">Convert</button>
+</p>
+<p>
+<label for="json">BrowserPonies JSON:</label><br/>
+<textarea id="json" cols="100" rows="15"></textarea>
+</p>
+</body>
+</html>
