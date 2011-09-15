@@ -541,7 +541,7 @@ var BrowserPonies = (function () {
 	var allloaded = false;
 	var checkAllLoaded = function () {
 		for (var url in resources) {
-			if (!resources[url]) {
+			if (!resources[url].loaded) {
 				return;
 			}
 		}
@@ -554,29 +554,44 @@ var BrowserPonies = (function () {
 	var preload = function (imgurl,callback) {
 		if (has(resources,imgurl)) {
 			if (callback) {
-				callback(resources[imgurl]);
+				var loader = resources[imgurl];
+				if (loader.loaded) {
+					callback(loader.object);
+				}
+				else {
+					loader.callbacks.push(callback);
+				}
 			}
 		}
 		else {
 			var image = new Image();
-			image.src = imgurl;
+			var loader = {
+				object: image,
+				loaded: false,
+				callbacks: []
+			};
+			if (callback) {
+				loader.callbacks.push(callback);
+			}
+			allloaded = false;
+			resources[imgurl] = loader;
 			observe(image, 'load', function () {
 //				console.log('loaded',imgurl,image.width,'x',image.height);
-				resources[imgurl] = image;
-				if (callback) {
-					callback(image);
+				loader.loaded = true
+				for (var i = 0, n = loader.callbacks.length; i < n; ++ i) {
+					loader.callbacks[i](image);
 				}
+				delete loader.callbacks;
 				checkAllLoaded();
 			});
-			allloaded = false;
-			resources[imgurl] = false;
+			image.src = imgurl;
 		}
 	};
 	var docurl = document.location.href;
-	resources[docurl] = false;
+	resources[docurl] = {loaded: false};
 	observe(window,'load',function () {
 //		console.log('loaded',docurl);
-		resources[docurl] = true;
+		resources[docurl].loaded = true;
 		checkAllLoaded();
 	});
 	var onload = function (callback) {
@@ -952,6 +967,7 @@ var BrowserPonies = (function () {
 //					console.log("repeating",what.effect.name);
 					var inst = new EffectInstance(this, currentTime, what.effect);
 					overlay.appendChild(inst.img);
+					inst.replay();
 					inst.updatePosition(currentTime, 0);
 					this.effects.push(inst);
 					what.at += what.effect.delay * 1000;
@@ -1227,6 +1243,7 @@ var BrowserPonies = (function () {
 				var effect = behavior.effects[i];
 				var inst = new EffectInstance(this, this.start_time, effect);
 				overlay.appendChild(inst.img);
+				inst.replay();
 				inst.updatePosition(this.start_time, 0);
 				neweffects.push(inst);
 
@@ -1296,9 +1313,10 @@ var BrowserPonies = (function () {
 		if (Gecko) duration *= 0.6;
 		this.end_time   = start_time + duration;
 		this.effect     = effect;
+		var imgurl      = pony.facing_right ? this.effect.rightimage : this.effect.leftimage;
 		this.img        = tag('img', {
 			draggable: 'false',
-			src: pony.facing_right ? this.effect.rightimage : this.effect.leftimage,
+			src: imgurl,
 			style: {
 				position:        "fixed",
 				userSelect:      "none",
@@ -1309,6 +1327,7 @@ var BrowserPonies = (function () {
 				backgroundColor: "transparent",
 				zIndex:          String(BaseZIndex + 1000)
 			}});
+
 		this.current_size = pony.facing_right ? this.effect.rightsize : this.effect.leftsize;
 
 		var locs = ['rightloc','rightcenter','leftloc','leftcenter'];
@@ -1339,6 +1358,12 @@ var BrowserPonies = (function () {
 			if (this.img.parentNode) {
 				this.img.parentNode.removeChild(this.img);
 			}
+		},
+		replay: function () {
+			// XXX HACK for Chrome
+			setTimeout(function() {
+				this.img.src = this.img.src;
+			}.bind(this), 0);
 		},
 		updatePosition: function (currentTime, passedTime) {
 			var loc, center;
