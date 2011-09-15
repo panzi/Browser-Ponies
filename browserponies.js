@@ -142,6 +142,8 @@ var BrowserPonies = (function () {
 
 	var Opera = Object.prototype.toString.call(window.opera) === '[object Opera]';
 	var IE = !!window.attachEvent && !Opera;
+	var Gecko = navigator.userAgent.indexOf('Gecko') > -1 && navigator.userAgent.indexOf('KHTML') === -1;
+	var HasAudio = typeof(Audio) !== "undefined";
 	var add = function (element, arg) {
 		if (!arg) return;
 		if (typeof(arg) === "string") {
@@ -448,12 +450,22 @@ var BrowserPonies = (function () {
 		// Image preloading:
 		if (behavior.rightimage) {
 			this.rightimage = baseurl + behavior.rightimage;
-			preload(this.rightimage);
+			preload(this.rightimage, function (image) {
+				this.rightsize = {
+					width:  image.width,
+					height: image.height
+				};
+			}.bind(this));
 		}
 		
 		if (behavior.leftimage) {
 			this.leftimage = baseurl + behavior.leftimage;
-			preload(this.leftimage);
+			preload(this.leftimage, function (image) {
+				this.leftsize = {
+					width:  image.width,
+					height: image.height
+				};
+			}.bind(this));
 		}
 
 		this.effects         = [];
@@ -504,12 +516,22 @@ var BrowserPonies = (function () {
 		// Image preloading:
 		if (effect.rightimage) {
 			this.rightimage = baseurl + effect.rightimage;
-			preload(this.rightimage);
+			preload(this.rightimage, function (image) {
+				this.rightsize = {
+					width:  image.width,
+					height: image.height
+				};
+			}.bind(this));
 		}
 		
 		if (effect.leftimage) {
 			this.leftimage = baseurl + effect.leftimage;
-			preload(this.leftimage);
+			preload(this.leftimage, function (image) {
+				this.leftsize = {
+					width:  image.width,
+					height: image.height
+				};
+			}.bind(this));
 		}
 	};
 
@@ -529,21 +551,32 @@ var BrowserPonies = (function () {
 		}
 		onload_callbacks = [];
 	};
-	var preload = function (imgurl) {
-		if (!has(resources,imgurl)) {
+	var preload = function (imgurl,callback) {
+		if (has(resources,imgurl)) {
+			if (callback) {
+				callback(resources[imgurl]);
+			}
+		}
+		else {
 			var image = new Image();
 			image.src = imgurl;
 			observe(image, 'load', function () {
-				resources[imgurl] = true;
+//				console.log('loaded',imgurl,image.width,'x',image.height);
+				resources[imgurl] = image;
+				if (callback) {
+					callback(image);
+				}
 				checkAllLoaded();
 			});
 			allloaded = false;
 			resources[imgurl] = false;
 		}
 	};
-	resources[document.location.href] = false;
+	var docurl = document.location.href;
+	resources[docurl] = false;
 	observe(window,'load',function () {
-		resources[document.location.href] = true;
+//		console.log('loaded',docurl);
+		resources[docurl] = true;
 		checkAllLoaded();
 	});
 	var onload = function (callback) {
@@ -689,10 +722,16 @@ var BrowserPonies = (function () {
 			};
 		},
 		size: function () {
+			return this.current_size;
+			/*
 			return {
-				width:  this.img.offsetWidth,
-				height: this.img.offsetHeight
+				// What the Bug?
+				width:  this.img.width,
+				height: this.img.height
+//				width:  this.img.offsetWidth,
+//				height: this.img.offsetHeight
 			};
+			*/
 		},
 		rect: function () {
 			return extend(this.position(), this.size());
@@ -788,6 +827,7 @@ var BrowserPonies = (function () {
 			}
 			this.start_time       = null;
 			this.end_time         = null;
+			this.current_size     = {width: 0, height: 0};
 			this.current_behavior = null;
 			this.facing_right     = true;
 			this.end_at_dest      = false;
@@ -821,7 +861,7 @@ var BrowserPonies = (function () {
 					at: currentTime + duration
 				});
 			}
-			if (speech.file) {
+			if (HasAudio && speech.file) {
 				// TODO: preload
 				var audio = new Audio();
 				audio.src = speech.file;
@@ -840,24 +880,28 @@ var BrowserPonies = (function () {
 			}
 
 			var dest = null;
+			var dist;
 			if (this.following) {
 				if (this.following.img.parentNode) {
 					dest = this.following.position();
+					dist = distance(curr, dest);
+					if (dist < 60) {
+						dest = null;
+					}
 				}
 				else {
 					this.following = null;
 				}
 			}
-
-			if (!dest) {
+			else {
 				dest = this.dest_position;
+				if (dest) dist = distance(curr, dest);
 			}
 
 			var pos;
 			if (dest) {
 				var dx = dest.x - curr.x;
 				var dy = dest.y - curr.y;
-				var dist  = distance(curr, dest);
 				var tdist = this.current_behavior.speed * passedTime * 0.01 * 3;
 
 				if (tdist >= dist) {
@@ -905,6 +949,7 @@ var BrowserPonies = (function () {
 			for (var i = 0, n = this.repeating.length; i < n; ++ i) {
 				var what = this.repeating[i];
 				if (what.at <= currentTime) {
+//					console.log("repeating",what.effect.name);
 					var inst = new EffectInstance(this, currentTime, what.effect);
 					overlay.appendChild(inst.img);
 					inst.updatePosition(currentTime, 0);
@@ -962,9 +1007,11 @@ var BrowserPonies = (function () {
 			var newimg;
 			if (value) {
 				newimg = this.current_behavior.rightimage;
+				this.current_size = this.current_behavior.rightsize;
 			}
 			else {
 				newimg = this.current_behavior.leftimage;
+				this.current_size = this.current_behavior.leftsize;
 			}
 			if (newimg !== this.img.getAttribute("src")) {
 				this.img.src = newimg;
@@ -1005,7 +1052,7 @@ var BrowserPonies = (function () {
 			}
 			else if (!behavior.speakend && !this.following &&
 				this.pony.random_speeches.length > 0 &&
-				Math.random() <= speakChance) {
+				Math.random() < speakChance) {
 				this.speak(this.start_time, randomSelect(this.pony.random_speeches));
 			}
 			
@@ -1070,7 +1117,7 @@ var BrowserPonies = (function () {
 				}
 				else {
 					var nearTop    = pos.y < 200;
-					var nearBottom = pos.y + size.heigth + 200 > winsize.height;
+					var nearBottom = pos.y + size.height + 200 > winsize.height;
 					var nearLeft   = pos.x < 200;
 					var nearRight  = pos.x + size.width + 200 > winsize.width;
 					var reducedMovements = movements.slice();
@@ -1244,8 +1291,10 @@ var BrowserPonies = (function () {
 	var EffectInstance = function EffectInstance (pony, start_time, effect) {
 		this.pony       = pony;
 		this.start_time = start_time;
-		// XXX: browser gif animations speed is buggy!
-		this.end_time   = start_time + effect.duration * 1000 * 0.5;
+		var duration = effect.duration * 1000;
+		// XXX: Gecko gif animations speed is buggy!
+		if (Gecko) duration *= 0.6;
+		this.end_time   = start_time + duration;
 		this.effect     = effect;
 		this.img        = tag('img', {
 			draggable: 'false',
@@ -1260,6 +1309,7 @@ var BrowserPonies = (function () {
 				backgroundColor: "transparent",
 				zIndex:          String(BaseZIndex + 1000)
 			}});
+		this.current_size = pony.facing_right ? this.effect.rightsize : this.effect.leftsize;
 
 		var locs = ['rightloc','rightcenter','leftloc','leftcenter'];
 		for (var i = 0, n = locs.length; i < n; ++ i) {
@@ -1383,9 +1433,11 @@ var BrowserPonies = (function () {
 				var imgurl;
 				if (this.pony.facing_right) {
 					imgurl = this.effect.rightimage;
+					this.current_size = this.effect.rightsize;
 				}
 				else {
 					imgurl = this.effect.leftimage;
+					this.current_size = this.effect.leftsize;
 				}
 				if (this.img.getAttribute("src") !== imgurl) {
 					this.img.src = imgurl;
