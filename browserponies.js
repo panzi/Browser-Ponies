@@ -265,6 +265,7 @@ var BrowserPonies = (function () {
 						break;
 
 					case ',':
+						line = line.slice(1);
 						row.push("");
 						break;
 
@@ -380,6 +381,15 @@ var BrowserPonies = (function () {
 		Center:        8,
 		Any:           9,
 		AnyNotCenter: 10
+	};
+
+	var locationName = function (loc) {
+		for (var name in Locations) {
+			if (Locations[name] === loc) {
+				return name;
+			}
+		}
+		return "Not a Location";
 	};
 
 	var camelize = function (s) {
@@ -523,7 +533,7 @@ var BrowserPonies = (function () {
 
 	var Pony = function Pony (pony) {
 		if (!pony.name) {
-			throw new Error('illegal pony name: '+pony.name);
+			throw new Error('pony with following base URL has no name: '+pony.baseurl);
 		}
 		this.name      = pony.name;
 		this.baseurl   = pony.baseurl;
@@ -551,8 +561,9 @@ var BrowserPonies = (function () {
 						behavior.linked = this.behaviors_by_name[behavior.linked];
 					}
 					else {
-						throw new Error('behavior '+behavior.name+' of pony '+this.name+
+						console.error(pony.baseurl+': Behavior '+behavior.name+' of pony '+this.name+
 							' references non-existing behavior '+behavior.linked);
+						delete behavior.linked;
 					}
 				}
 			}
@@ -569,6 +580,35 @@ var BrowserPonies = (function () {
 		return false;
 	};
 	
+	var isOffscreen = function (rect) {
+		var winsize = windowSize();
+		return rect.x < 0 || rect.y < 0 ||
+			rect.x + rect.width  > winsize.width || 
+			rect.y + rect.height > winsize.height;
+	};
+
+	var clipToScreen = function (rect) {
+		var winsize = windowSize();
+		var x = rect.x;
+		var y = rect.y;
+
+		if (x < 0) {
+			x = 0;
+		}
+		else if (x + rect.width > winsize.width) {
+			x = winsize.width - rect.width;
+		}
+
+		if (y < 0) {
+			y = 0;
+		}
+		else if (y + rect.height > winsize.height) {
+			y = winsize.height - rect.height;
+		}
+
+		return {x: x, y: y};
+	};
+
 	var Instance = function Instance () {};
 	Instance.prototype = {
 		setPosition: function (pos) {
@@ -618,7 +658,9 @@ var BrowserPonies = (function () {
 			},
 			onmousedown: function (event) {
 				// TODO: drag pony
-				this.behave(this.randomBehavior(true));
+				if (this.pony.mouseover_behaviors.length > 0) {
+					this.behave(this.randomBehavior(true));
+				}
 				dragged = this;
 			}.bind(this),
 			onmousemove: function () {
@@ -645,44 +687,28 @@ var BrowserPonies = (function () {
 			}.bind(this)
 		});
 
-		this.start_time       = null;
-		this.end_time         = null;
-		this.current_behavior = null;
-		this.facing_right     = true;
-		this.effects          = [];
-	};
-
-	var isOffscreen = function (rect) {
-		var winsize = windowSize();
-		return rect.x < 0 || rect.y < 0 ||
-			rect.x + rect.width  > winsize.width || 
-			rect.y + rect.height > winsize.height;
-	};
-
-	var clipToScreen = function (rect) {
-		var winsize = windowSize();
-		var x = rect.x;
-		var y = rect.y;
-
-		if (x < 0) {
-			x = 0;
-		}
-		else if (x + rect.width > winsize.width) {
-			x = winsize.width - rect.width;
-		}
-
-		if (y < 0) {
-			y = 0;
-		}
-		else if (y + rect.height > winsize.height) {
-			y = winsize.height - rect.height;
-		}
-
-		return {x: x, y: y};
+		this.clear();
 	};
 
 	PonyInstance.prototype = extend(new Instance(), {
 		// TODO
+		clear: function () {
+			if (this.effects) {
+				for (var i = 0, n = this.effects.length; i < n; ++ i) {
+					this.effects[i].clear();
+				}
+			}
+			if (this.img.parentNode) {
+				this.img.parentNode.removeChild(this.img);
+			}
+			this.start_time       = null;
+			this.end_time         = null;
+			this.current_behavior = null;
+			this.facing_right     = true;
+			this.end_at_dest      = false;
+			this.effects          = [];
+			this.repeating        = [];
+		},
 		update: function (currentTime, passedTime, winsize) {
 			var curr = this.rect();
 
@@ -708,8 +734,8 @@ var BrowserPonies = (function () {
 				dest = this.dest_position;
 			}
 
+			var pos;
 			if (dest) {
-				var pos;
 				var dx = dest.x - curr.x;
 				var dy = dest.y - curr.y;
 				var dist  = distance(curr, dest);
@@ -740,7 +766,8 @@ var BrowserPonies = (function () {
 */
 			}
 			else {
-				this.clipToScreen();
+//				this.clipToScreen();
+				pos = curr;
 			}
 
 			var neweffects = [];
@@ -753,9 +780,22 @@ var BrowserPonies = (function () {
 					effect.img.parentNode.removeChild(effect.img);
 				}
 			}
+			
+			for (var i = 0, n = this.repeating.length; i < n; ++ i) {
+				var what = this.repeating[i];
+				if (what.at <= currentTime) {
+					var inst = new EffectInstance(this, currentTime, what.effect);
+					overlay.appendChild(inst.img);
+					inst.updatePosition(currentTime, 0);
+					neweffects.push(inst);
+					what.at += what.effect.delay * 1000;
+				}
+			}
 			this.effects = neweffects;
 
-			if (currentTime >= this.end_time) {
+			if (currentTime >= this.end_time || (!this.following && // this.end_at_dest &&
+					this.dest_position.x === pos.x &&
+					this.dest_position.y === pos.y)) {
 				this.nextBehavior();
 			}
 		},
@@ -777,10 +817,11 @@ var BrowserPonies = (function () {
 		},
 		nextBehavior: function () {
 			if (this.current_behavior && this.current_behavior.linked) {
-				this.behave(this.current_behavior.linked);
+				this.behave(this.current_behavior.linked, this.isOffscreen());
 			}
 			else {
-				this.behave(this.randomBehavior(this.pony.mouseover_behaviors.length > 0 && this.mouseover));
+				this.behave(this.randomBehavior(this.pony.mouseover_behaviors.length > 0 && this.mouseover),
+					this.isOffscreen());
 			}
 		},
 		setFacingRight: function (value) {
@@ -806,8 +847,11 @@ var BrowserPonies = (function () {
 			var neweffects = [];
 			for (var i = 0, n = this.effects.length; i < n; ++ i) {
 				var inst = this.effects[i];
-				if (inst.effect.duration !== 0) {
+				if (inst.effect.duration) {
 					neweffects.push(inst);
+				}
+				else if (inst.img.parentNode) {
+					inst.img.parentNode.removeChild(inst.img);
 				}
 			}
 			
@@ -821,13 +865,15 @@ var BrowserPonies = (function () {
 			var pos = this.position();
 			var size = this.size();
 			var winsize = windowSize();
+			this.end_at_dest = false;
 			if (this.following) {
 				this.dest_position = this.following.position();
 			}
 			else if (behavior.x && behavior.y) {
+				this.end_at_dest = true;
 				this.dest_position = {
-					x: (winsize.width  - size.width)  * behavior.x / 100,
-					y: (winsize.height - size.height) * behavior.y / 100
+					x: Math.round((winsize.width  - size.width)  * behavior.x / 100),
+					y: Math.round((winsize.height - size.height) * behavior.y / 100)
 				};
 			}
 			else {
@@ -906,28 +952,28 @@ var BrowserPonies = (function () {
 							};
 							break;
 						case Movements.UpLeft:
-							a = Math.round(Math.sqrt(dist*dist*0.5));
+							a = Math.sqrt(dist*dist*0.5);
 							this.dest_position = {
 								x: pos.x - a,
 								y: pos.y - a
 							};
 							break;
 						case Movements.UpRight:
-							a = Math.round(Math.sqrt(dist*dist*0.5));
+							a = Math.sqrt(dist*dist*0.5);
 							this.dest_position = {
 								x: pos.x + a,
 								y: pos.y - a
 							};
 							break;
 						case Movements.DownLeft:
-							a = Math.round(Math.sqrt(dist*dist*0.5));
+							a = Math.sqrt(dist*dist*0.5);
 							this.dest_position = {
 								x: pos.x - a,
 								y: pos.y + a
 							};
 							break;
 						case Movements.DownRight:
-							a = Math.round(Math.sqrt(dist*dist*0.5));
+							a = Math.sqrt(dist*dist*0.5);
 							this.dest_position = {
 								x: pos.x + a,
 								y: pos.y + a
@@ -938,6 +984,9 @@ var BrowserPonies = (function () {
 					if (moveIntoScreen) {
 						this.dest_position = clipToScreen(extend(this.dest_position, size));
 					}
+
+					this.dest_position.x = Math.round(this.dest_position.x);
+					this.dest_position.y = Math.round(this.dest_position.y);
 				}
 
 				this.setFacingRight(
@@ -947,10 +996,20 @@ var BrowserPonies = (function () {
 			}
 
 			var overlay = getOverlay();
+			this.repeating = [];
 			for (var i = 0, n = behavior.effects.length; i < n; ++ i) {
-				var inst = new EffectInstance(this, this.start_time, behavior.effects[i]);
+				var effect = behavior.effects[i];
+				var inst = new EffectInstance(this, this.start_time, effect);
 				overlay.appendChild(inst.img);
+				inst.updatePosition(this.start_time, 0);
 				neweffects.push(inst);
+
+				if (effect.delay) {
+					this.repeating.push({
+						effect: effect,
+						at: this.start_time + effect.delay * 1000
+					});
+				}
 			}
 			this.effects = neweffects;
 
@@ -967,7 +1026,7 @@ var BrowserPonies = (function () {
 				msg = "no movement";
 			}
 			console.log(this.pony.name+" does "+behavior.name+": "+msg+" in "+duration+
-				" seconds ("+behavior.effects.length+" effects)");
+				" seconds");
 
 			// TODO: effects
 		},
@@ -1007,13 +1066,15 @@ var BrowserPonies = (function () {
 	var EffectInstance = function EffectInstance (pony, start_time, effect) {
 		this.pony       = pony;
 		this.start_time = start_time;
-		this.end_time   = start_time + effect.duration * 1000;
+		// XXX: browser gif animations speed is buggy!
+		this.end_time   = start_time + effect.duration * 1000 * 0.5;
 		this.effect     = effect;
 		this.img        = tag('img', {
 			draggable: 'false',
 			src: pony.facing_right ? this.effect.rightimage : this.effect.leftimage,
 			style: {
 				position:        "fixed",
+				pointerEvents:   "none",
 				borderStyle:     "none",
 				margin:          "0",
 				padding:         "0",
@@ -1042,20 +1103,14 @@ var BrowserPonies = (function () {
 
 			this[name] = loc;
 		}
-
-		this.updatePosition(start_time, 0);
-		
-		if (this.effect.follow) {
-			var ponyPos = pony.position();
-			var pos = this.position();
-			this.offset = {
-				x: ponyPos.x - pos.x,
-				y: ponyPos.y - pos.y
-			};
-		}
 	};
 
 	EffectInstance.prototype = extend(new Instance(), {
+		clear: function () {
+			if (this.img.parentNode) {
+				this.img.parentNode.removeChild(this.img);
+			}
+		},
 		updatePosition: function (currentTime, passedTime) {
 			var loc, center;
 			if (this.pony.facing_right) {
@@ -1072,63 +1127,62 @@ var BrowserPonies = (function () {
 
 			switch (center) {
 				case Locations.Top:
-					pos = {x: size.width * 0.5, y: 0};
+					pos = {x: -size.width * 0.5, y: 0};
 					break;
 				case Locations.Bottom:
-					pos = {x: size.width * 0.5, y: size.height};
+					pos = {x: -size.width * 0.5, y: -size.height};
 					break;
 				case Locations.Left:
-					pos = {x: 0, y: size.height * 0.5};
+					pos = {x: 0, y: -size.height * 0.5};
 					break;
 				case Locations.Right:
-					pos = {x: size.width, y: size.height * 0.5};
+					pos = {x: -size.width, y: -size.height * 0.5};
 					break;
 				case Locations.BottomRight:
-					pos = {x: size.width, y: size.height};
+					pos = {x: -size.width, y: -size.height};
 					break;
 				case Locations.BottomLeft:
-					pos = {x: 0, y: size.height};
+					pos = {x: 0, y: -size.height};
 					break;
 				case Locations.TopRight:
-					pos = {x: size.width, y: 0};
+					pos = {x: -size.width, y: 0};
 					break;
 				case Locations.TopLeft:
 					pos = {x: 0, y: 0};
 					break;
 				case Locations.Center:
-					pos = {x: size.width * 0.5, y: size.height * 0.5};
+					pos = {x: -size.width * 0.5, y: -size.height * 0.5};
 					break;
 			}
 			
-			// TODO
 			var ponyRect = this.pony.rect();
 			switch (loc) {
 				case Locations.Top:
-					pos.x = ponyRect.x - pos.x;
-					pos.y = ponyRect.y - pos.y;
+					pos.x += ponyRect.x + ponyRect.width * 0.5;
+					pos.y += ponyRect.y;
 					break;
 				case Locations.Bottom:
-					pos.x += ponyRect.x;
-					pos.y += ponyRect.y;
+					pos.x += ponyRect.x + ponyRect.width * 0.5;
+					pos.y += ponyRect.y + ponyRect.height;
 					break;
 				case Locations.Left:
 					pos.x += ponyRect.x;
-					pos.y += ponyRect.y;
+					pos.y += ponyRect.y + ponyRect.height * 0.5;
 					break;
 				case Locations.Right:
-					pos.x += ponyRect.x;
-					pos.y += ponyRect.y;
+					pos.x += ponyRect.x + ponyRect.width;
+					pos.y += ponyRect.y + ponyRect.height * 0.5;
 					break;
 				case Locations.BottomRight:
-					pos.x += ponyRect.x;
-					pos.y += ponyRect.y;
+					pos.x += ponyRect.x + ponyRect.width;
+					pos.y += ponyRect.y + ponyRect.height;
 					break;
 				case Locations.BottomLeft:
 					pos.x += ponyRect.x;
-					pos.y += ponyRect.y;
+					pos.y += ponyRect.y + ponyRect.height;
 					break;
 				case Locations.TopRight:
-					pos.x += ponyRect.x;
+					pos.x += ponyRect.x + ponyRect.width;
 					pos.y += ponyRect.y;
 					break;
 				case Locations.TopLeft:
@@ -1136,24 +1190,16 @@ var BrowserPonies = (function () {
 					pos.y += ponyRect.y;
 					break;
 				case Locations.Center:
-					pos.x += ponyRect.x;
-					pos.y += ponyRect.y;
+					pos.x += ponyRect.x + ponyRect.width  * 0.5;
+					pos.y += ponyRect.y + ponyRect.height * 0.5;
 					break;
 			}
-			// TODO
-					pos.x = ponyRect.x;
-					pos.y = ponyRect.y;
-			console.log(ponyRect.x,ponyRect.y,pos.x,pos.y);
 
 			this.setPosition(pos);
 		},
 		update: function (currentTime, passedTime, winsize) {
 			if (this.effect.follow) {
-				var ponyPos = this.pony.position();
-				this.setPosition({
-					x: ponyPos.x - this.offset.x,
-					y: ponyPos.y - this.offset.y
-				});
+				this.updatePosition(currentTime, passedTime);
 				
 				var imgurl;
 				if (this.pony.facing_right) {
@@ -1323,18 +1369,26 @@ var BrowserPonies = (function () {
 						break;
 
 					default:
-						console.error("unknown pony setting:",row);
+						console.log(escape(row[0]));
+						console.error(baseurl+": unknown pony setting:",row);
 				}
+			}
+			
+			if (!('name' in pony)) {
+				console.error(baseurl+':',pony);
+				throw new Error('Pony with following base URL has no name: '+pony.baseurl);
 			}
 
 			for (var i = 0, n = effects.length; i < n; ++ i) {
 				var effect = effects[i];
 				if (!Object.prototype.hasOwnProperty.call(behaviors_by_name,effect.behavior)) {
-					throw new Error("effect "+effect.name+" of pony "+pony.name+
+					console.error(baseurl+": Effect "+effect.name+" of pony "+pony.name+
 						" references non-existing behavior "+effect.behavior);
 				}
-				behaviors_by_name[effect.behavior].effects.push(effect);
-				delete effect.behavior;
+				else {
+					behaviors_by_name[effect.behavior].effects.push(effect);
+					delete effect.behavior;
+				}
 			}
 
 			return pony;
@@ -1374,6 +1428,9 @@ var BrowserPonies = (function () {
 			return interactions;
 		},
 		addInteractions: function (interactions) {
+			if (typeof(interactions) === "string") {
+				interactions = this.convertInteractions(interactions);
+			}
 			for (var i = 0, n = interactions.length; i < n; ++ i) {
 				this.addInteraction(interactions[i]);
 			}
@@ -1387,6 +1444,9 @@ var BrowserPonies = (function () {
 			}
 		},
 		addPony: function (pony) {
+			if (pony.ini) {
+				pony = this.convertPony(pony.ini, pony.baseurl);
+			}
 			ponies[pony.name] = new Pony(pony);
 		},
 		spawn: function (pony, count) {
@@ -1397,15 +1457,13 @@ var BrowserPonies = (function () {
 			}
 		},
 		start: function () {
-			var overlay = getOverlay();
-			overlay.innerHTML = '';
 			onload(function () {
+				var overlay = getOverlay();
+				overlay.innerHTML = '';
 				for (var i = 0, n = instances.length; i < n; ++ i) {
 					var inst = instances[i];
+					inst.clear();
 					overlay.appendChild(inst.img);
-					for (var j = 0, m = inst.effects.length; j < m; ++ j) {
-						overlay.appendChild(inst.effects[j].img);
-					}
 					inst.teleport();
 					inst.nextBehavior();
 				}
@@ -1418,6 +1476,7 @@ var BrowserPonies = (function () {
 		stop: function () {
 			if (overlay) {
 				overlay.parentNode.removeChild(overlay);
+				overlay.innerHTML = '';
 				overlay = null;
 			}
 			if (timer !== null) {
@@ -1452,22 +1511,30 @@ var BrowserPonies = (function () {
 		},
 		running: function () {
 			return timer !== null;
+		},
+		ponies: function () {
+			return ponies;
+		},
+		interactions: function () {
+			return interactions;
+		},
+		instances: function () {
+			return instances;
 		}
 	};
 })();
 
 (function () {
 	if (typeof(BrowserPoniesConfig) !== "undefined") {
-		if (BrowserPoniesConfig.interactions) {
-			BrowserPonies.addInteractions(BrowserPoniesConfig.interactions);
-		}
 		if (BrowserPoniesConfig.ponies) {
 			BrowserPonies.addPonies(BrowserPoniesConfig.ponies);
 		}
+		if (BrowserPoniesConfig.interactions) {
+			BrowserPonies.addInteractions(BrowserPoniesConfig.interactions);
+		}
 		if (BrowserPoniesConfig.spawn) {
-			for (var i = 0, n = BrowserPoniesConfig.spawn.length; i < n; ++ i) {
-				var spawn = BrowserPoniesConfig.spawn[i];
-				BrowserPonies.spawn(spawn.name, spawn.count);
+			for (var name in BrowserPoniesConfig.spawn) {
+				BrowserPonies.spawn(name, BrowserPoniesConfig.spawn[name]);
 			}
 		}
 	}

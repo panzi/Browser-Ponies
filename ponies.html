@@ -5,14 +5,29 @@
 <script type="text/javascript" src="browserponies.js"></script>
 
 <script type="text/javascript">
-function convert () {
+function convertPonies () {
 	try {
 		var what = document.getElementById('what').value;
-		var src = document.getElementById('ini').value;
+		var src = document.getElementById('input').value;
 		var converted = what === 'Pony' ?
 			BrowserPonies.convertPony(src, document.getElementById('baseurl').value) :
 			BrowserPonies.convertInteractions(src);
-		document.getElementById('json').value = JSON.stringify(converted);
+		document.getElementById('output').value = JSON.stringify(converted);
+	}
+	catch (e) {
+		console.error(e);
+		alert("Error during Conversion:\n"+e.name+": "+e.message);
+	}
+}
+
+function escapePonies () {
+	try {
+		var what = document.getElementById('what').value;
+		var src = document.getElementById('input').value;
+		document.getElementById('output').value = JSON.stringify(
+			what === 'Pony' ?
+				{ini: src, baseurl: document.getElementById('baseurl').value} :
+				src);
 	}
 	catch (e) {
 		console.error(e);
@@ -30,21 +45,22 @@ function convert () {
 <button onclick="BrowserPonies.resume();">Resume</button>
 </p>
 <p>
-<label for="ini">Pony.ini / Interactions.ini:</label>
-<select id="what" onchange="document.getElementById('baseurlcont').style.display = this.value === 'Pony' ? '' : 'none';">
+<label for="input">Pony.ini / Interactions.ini:</label>
+<select id="what" onchange="document.getElementById('baseurlcont').style.visibility = this.value === 'Pony' ? '' : 'hidden';">
 <option selected="selected">Pony</option>
 <option>Interactions</option>
 </select>
 <span id="baseurlcont"><label for="baseurl">Base URL:</label><input type="text" id="baseurl"/></span>
 <br/>
-<textarea id="ini" cols="100" rows="15"></textarea>
+<textarea id="input" cols="100" rows="15"></textarea>
 </p>
 <p>
-<button onclick="convert();">Convert</button>
+<button onclick="escapePonies();">Escape</button>
+<button onclick="convertPonies();">Convert</button>
 </p>
 <p>
-<label for="json">BrowserPonies JSON:</label><br/>
-<textarea id="json" cols="100" rows="15"></textarea>
+<label for="output">BrowserPonies JSON:</label><br/>
+<textarea id="output" cols="100" rows="15"></textarea>
 </p>
 </body>
 </html>
