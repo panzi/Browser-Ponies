@@ -103,7 +103,6 @@ var BrowserPonies = (function () {
 			element.detachEvent('on'+event,handler._eventHandlingWrapper);
 		};
 
-
 	var windowSize = 
 		'innerWidth' in window ?
 		function () {
@@ -214,6 +213,21 @@ var BrowserPonies = (function () {
 			add(element, arguments[i]);
 		}
 		return element;
+	};
+
+	var has = function (obj, name) {
+		return Object.prototype.hasOwnProperty.call(obj, name);
+	};
+
+	var removeAll = function (array, item) {
+		for (var i = 0; i < array.length;) {
+			if (array[i] === item) {
+				array.splice(i,1);
+			}
+			else {
+				++ i;
+			}
+		}
 	};
 
 	var PonyINI = {
@@ -499,11 +513,12 @@ var BrowserPonies = (function () {
 		}
 	};
 
+	// TODO: extend for other media and don't do it for all but only for spawned media
 	var images = {};
 	var onload_callbacks = [];
 	var allloaded = true;
 	var preload = function (imgurl) {
-		if (!Object.prototype.hasOwnProperty.call(images,imgurl)) {
+		if (!has(images,imgurl)) {
 			var image = new Image();
 			image.src = imgurl;
 			observe(image, 'load', function () {
@@ -539,14 +554,48 @@ var BrowserPonies = (function () {
 		this.baseurl   = pony.baseurl;
 		this.behaviors = [];
 		this.mouseover_behaviors = [];
-		this.behaviors_by_name = {};
-		this.speeches  = pony.speeches;
+		this.behaviors_by_name   = {};
+		this.speeches  = [];
+		this.random_speeches  = [];
+		this.speeches_by_name = {};
 		this.interactions = []; // TODO
 		
+		if (pony.speeches) {
+			for (var i = 0, n = pony.speeches.length; i < n; ++ i) {
+				var speech = extend({},pony.speeches[i]);
+				if (speech.file) {
+					speech.file = pony.baseurl + speech.file;
+				}
+				if (speech.name) {
+					this.speeches_by_name[speech.name.toLowerCase()] = speech;
+				}
+				if (!speech.skip) {
+					this.random_speeches.push(speech);
+				}
+				this.speeches.push(speech);
+			}
+		}
+
+		var speakevents = ['speakstart','speakend'];
 		if ('behaviors' in pony) {
 			for (var i = 0, n = pony.behaviors.length; i < n; ++ i) {
 				var behavior = new Behavior(this.baseurl, pony.behaviors[i]);
 				this.behaviors_by_name[behavior.name] = behavior;
+				for (var j = 0; j < speakevents.length; ++ j) {
+					var speakevent = speakevents[j];
+					var speechname = behavior[speakevent];
+					if (speechname) {
+						speechname = speechname.toLowerCase();
+						if (has(this.speeches_by_name,speechname)) {
+							behavior[speakevent] = this.speeches_by_name[speechname];
+						}
+						else {
+							console.warn(pony.baseurl+': Behavior '+behavior.name+' of pony '+pony.name+
+								' references non-existing speech '+behavior[speakevent]);
+							delete behavior[speakevent];
+						}
+					}
+				}
 				this.behaviors.push(behavior);
 
 				if (behavior.movement === AllowedMoves.MouseOver) {
@@ -557,11 +606,11 @@ var BrowserPonies = (function () {
 			for (var i = 0, n = this.behaviors.length; i < n; ++ i) {
 				var behavior = this.behaviors[i];
 				if (behavior.linked) {
-					if (Object.prototype.hasOwnProperty.call(this.behaviors_by_name, behavior.linked)) {
+					if (has(this.behaviors_by_name, behavior.linked)) {
 						behavior.linked = this.behaviors_by_name[behavior.linked];
 					}
 					else {
-						console.error(pony.baseurl+': Behavior '+behavior.name+' of pony '+this.name+
+						console.warn(pony.baseurl+': Behavior '+behavior.name+' of pony '+this.name+
 							' references non-existing behavior '+behavior.linked);
 						delete behavior.linked;
 					}
@@ -650,24 +699,46 @@ var BrowserPonies = (function () {
 			draggable: 'false',
 			style: {
 				position:        "fixed",
+				userSelect:      "none",
 				borderStyle:     "none",
 				margin:          "0",
 				padding:         "0",
 				backgroundColor: "transparent",
 				zIndex:          String(BaseZIndex)
 			},
-			onmousedown: function (event) {
-				// TODO: drag pony
-				if (this.pony.mouseover_behaviors.length > 0) {
+			ondblclick: function () {
+				// debug output
+				var pos = this.position();
+				var duration = String((this.end_time-this.start_time)/1000).split('.');
+				if (duration.length > 1) {
+					duration = duration[0]+'.'+duration[1].slice(0,2);
+				}
+				else {
+					duration = duration[0];
+				}
+				console.log(this.pony.name+' does '+this.current_behavior.name+
+					' for '+duration+' seconds'+
+					', is at '+pos.x+' x '+pos.y+
+					(this.following ?
+						' and follows '+this.following.pony.name :
+						' and wants to go to '+this.dest_position.x+' x '+this.dest_position.y)+
+					'. See:',this);
+			}.bind(this),
+			onmousedown: function () {
+				// timer === null means paused/not runnung
+				if (this.pony.mouseover_behaviors.length > 0 && timer !== null) {
 					this.behave(this.randomBehavior(true));
 				}
 				dragged = this;
+				document.body.style.userSelect    = 'none';
+				document.body.style.MozUserSelect = 'none';
 			}.bind(this),
 			onmousemove: function () {
 				if (!this.mouseover) {
 					this.mouseover = true;
 					if ((!this.current_behavior || this.current_behavior.movement !== AllowedMoves.MouseOver) &&
-							this.pony.mouseover_behaviors.length > 0) {
+							// timer === null means paused/not runnung
+							this.pony.mouseover_behaviors.length > 0 && timer !== null) {
 						this.behave(this.randomBehavior(true));
 					}
 				}
@@ -680,9 +751,6 @@ var BrowserPonies = (function () {
 //				if (this.mouseover && (target === this.img || !descendantOf(target, this.img))) {
 				if (this.mouseover) {
 					this.mouseover = false;
-//					if (!this.current_behavior || this.current_behavior.movement === AllowedMoves.MouseOver) {
-//						this.nextBehavior();
-//					}
 				}
 			}.bind(this)
 		});
@@ -698,6 +766,14 @@ var BrowserPonies = (function () {
 					this.effects[i].clear();
 				}
 			}
+			if (this.removing) {
+				for (var i = 0, n = this.removing.length; i < n; ++ i) {
+					var what = this.removing[i];
+					if (what.element.parentNode) {
+						what.element.parentNode.removeChild(what.element);
+					}
+				}
+			}
 			if (this.img.parentNode) {
 				this.img.parentNode.removeChild(this.img);
 			}
@@ -708,6 +784,40 @@ var BrowserPonies = (function () {
 			this.end_at_dest      = false;
 			this.effects          = [];
 			this.repeating        = [];
+			this.removing         = [];
+		},
+		speak: function (currentTime,speech) {
+			if (speech.text) {
+//				console.log(this.pony.name+' says: '+speech.text);
+				var duration = Math.max(speech.text.length * 200, 800);
+				var text = tag('div',{
+					style: {
+						color:      "black",
+						background: "white",
+						position:   "fixed",
+						visibility: "hidden",
+						margin:     "0",
+						padding:    "0",
+						zIndex:     String(BaseZIndex + 1000)
+					}}, speech.text);
+				var rect = this.rect();
+				getOverlay().appendChild(text);
+				var x = Math.round(rect.x + rect.width * 0.5 - text.offsetWidth * 0.5);
+				var y = rect.y + rect.height;
+				text.style.left = x+'px';
+				text.style.top  = y+'px';
+				text.style.visibility = '';
+				this.removing.push({
+					element: text,
+					at: currentTime + duration
+				});
+			}
+			if (speech.file) {
+				// TODO: preload
+				var audio = new Audio();
+				audio.src = speech.file;
+				audio.play();
+			}
 		},
 		update: function (currentTime, passedTime, winsize) {
 			var curr = this.rect();
@@ -770,14 +880,16 @@ var BrowserPonies = (function () {
 				pos = curr;
 			}
 
-			var neweffects = [];
-			for (var i = 0, n = this.effects.length; i < n; ++ i) {
+			for (var i = 0; i < this.effects.length;) {
 				var effect = this.effects[i];
 				if (effect.update(currentTime, passedTime, winsize)) {
-					neweffects.push(effect);
+					++ i;
 				}
-				else if (effect.img.parentNode) {
-					effect.img.parentNode.removeChild(effect.img);
+				else {
+					if (effect.img.parentNode) {
+						effect.img.parentNode.removeChild(effect.img);
+					}
+					this.effects.splice(i, 1);
 				}
 			}
 			
@@ -787,13 +899,25 @@ var BrowserPonies = (function () {
 					var inst = new EffectInstance(this, currentTime, what.effect);
 					overlay.appendChild(inst.img);
 					inst.updatePosition(currentTime, 0);
-					neweffects.push(inst);
+					this.effects.push(inst);
 					what.at += what.effect.delay * 1000;
 				}
 			}
-			this.effects = neweffects;
+			
+			for (var i = 0; i < this.removing.length;) {
+				var what = this.removing[i];
+				if (what.at <= currentTime) {
+					if (what.element.parentNode) {
+						what.element.parentNode.removeChild(what.element);
+					}
+					this.removing.splice(i, 1);
+				}
+				else {
+					++ i;
+				}
+			}
 
-			if (currentTime >= this.end_time || (!this.following && // this.end_at_dest &&
+			if (currentTime >= this.end_time || (this.end_at_dest && // !this.following && 
 					this.dest_position.x === pos.x &&
 					this.dest_position.y === pos.y)) {
 				this.nextBehavior();
@@ -838,11 +962,16 @@ var BrowserPonies = (function () {
 			}
 		},
 		behave: function (behavior, moveIntoScreen) {
-			this.current_behavior = behavior;
+			this.start_time = Date.now();
 			var duration = behavior.minduration +
 				(behavior.maxduration - behavior.minduration) * Math.random();
-			this.start_time = Date.now();
-			this.end_time   = this.start_time + duration * 1000;
+			this.end_time = this.start_time + duration * 1000;
+
+			if (this.current_behavior && this.current_behavior.speakend) {
+				this.speak(this.start_time, this.current_behavior.speakend);
+			}
+
+			this.current_behavior = behavior;
 
 			var neweffects = [];
 			for (var i = 0, n = this.effects.length; i < n; ++ i) {
@@ -861,6 +990,15 @@ var BrowserPonies = (function () {
 			if (behavior.follow) {
 				this.following = this.getNearestInstance(behavior.follow);
 			}
+
+			if (behavior.speakstart) {
+				this.speak(this.start_time, behavior.speakstart);
+			}
+			else if (!behavior.speakend && !this.following &&
+				this.pony.random_speeches.length > 0 &&
+				Math.random() <= speakChance) {
+				this.speak(this.start_time, randomSelect(this.pony.random_speeches));
+			}
 			
 			var pos = this.position();
 			var size = this.size();
@@ -877,7 +1015,8 @@ var BrowserPonies = (function () {
 				};
 			}
 			else {
-				var movements = null;
+				// TODO: reduce change of going off-screen
+				var movements  = null;
 				switch (behavior.movement) {
 					case AllowedMoves.HorizontalOnly:
 						movements = [Movements.Left, Movements.Right];
@@ -921,12 +1060,42 @@ var BrowserPonies = (function () {
 					this.dest_position = pos;
 				}
 				else {
+					var nearTop    = pos.y < 200;
+					var nearBottom = pos.y + size.heigth + 200 > winsize.height;
+					var nearLeft   = pos.x < 200;
+					var nearRight  = pos.x + size.width + 200 > winsize.width;
+					var reducedMovements = movements.slice();
+
+					if (nearTop) {
+						removeAll(reducedMovements, Movements.Up);
+						removeAll(reducedMovements, Movements.UpLeft);
+						removeAll(reducedMovements, Movements.UpRight);
+					}
+					
+					if (nearBottom) {
+						removeAll(reducedMovements, Movements.Down);
+						removeAll(reducedMovements, Movements.DownLeft);
+						removeAll(reducedMovements, Movements.DownRight);
+					}
+					
+					if (nearLeft) {
+						removeAll(reducedMovements, Movements.Left);
+						removeAll(reducedMovements, Movements.UpLeft);
+						removeAll(reducedMovements, Movements.DownLeft);
+					}
+					
+					if (nearRight) {
+						removeAll(reducedMovements, Movements.Right);
+						removeAll(reducedMovements, Movements.UpRight);
+						removeAll(reducedMovements, Movements.DownRight);
+					}
+
 					// speed is in pixels/100ms, duration is in sec
 					// XXX: why so slow?
 					var dist = behavior.speed * duration * 100 * 3;
 
 					var a;
-					switch (randomSelect(movements)) {
+					switch (randomSelect(reducedMovements.length === 0 ? movements : reducedMovements)) {
 						case Movements.Up:
 							this.dest_position = {
 								x: pos.x,
@@ -983,6 +1152,7 @@ var BrowserPonies = (function () {
 
 					if (moveIntoScreen) {
 						this.dest_position = clipToScreen(extend(this.dest_position, size));
+						this.end_at_dest   = true;
 					}
 
 					this.dest_position.x = Math.round(this.dest_position.x);
@@ -1012,10 +1182,10 @@ var BrowserPonies = (function () {
 				}
 			}
 			this.effects = neweffects;
-
+/*
 			var msg;
 			if (this.following) {
-				msg = "following "+this.following.name;
+				msg = "following "+this.following.pony.name;
 			}
 			else if (this.dest_position.x !== pos.x || this.dest_position.y !== pos.y) {
 				msg = "move from "+pos.x+" x "+pos.y+" to "+
@@ -1027,8 +1197,7 @@ var BrowserPonies = (function () {
 			}
 			console.log(this.pony.name+" does "+behavior.name+": "+msg+" in "+duration+
 				" seconds");
-
-			// TODO: effects
+*/
 		},
 		teleport: function () {
 			var winsize = windowSize();
@@ -1038,7 +1207,6 @@ var BrowserPonies = (function () {
 				y: Math.random() * (winsize.height - (size.height || 96))
 			});
 		},
-		// randomly select behavior
 		randomBehavior: function (mouseover, forceMovement) {
 			var behaviors = mouseover ?
 				this.pony.mouseover_behaviors :
@@ -1046,20 +1214,21 @@ var BrowserPonies = (function () {
 			var sumprob = 0;
 			for (var i = 0, n = behaviors.length; i < n; ++ i) {
 				var behavior = behaviors[i];
-				if (behaviors.skip || (forceMovement && !behavior.isMoving())) continue;
+				if (behavior.skip || (forceMovement && !behavior.isMoving())) continue;
 				sumprob += behavior.probability;
 			}
 			var dice = Math.random() * sumprob;
 			var last = 0;
 			for (var i = 0, n = behaviors.length; i < n; ++ i) {
 				var behavior = behaviors[i];
-				if (behaviors.skip || (forceMovement && !behavior.isMoving())) continue;
+				if (behavior.skip || (forceMovement && !behavior.isMoving())) continue;
 				var next = last + behavior.probability;
 				if (last <= dice && dice <= next) {
 					return behavior;
 				}
 				last = next;
 			}
+			return null;
 		}
 	});
 
@@ -1074,6 +1243,7 @@ var BrowserPonies = (function () {
 			src: pony.facing_right ? this.effect.rightimage : this.effect.leftimage,
 			style: {
 				position:        "fixed",
+				userSelect:      "none",
 				pointerEvents:   "none",
 				borderStyle:     "none",
 				margin:          "0",
@@ -1243,6 +1413,7 @@ var BrowserPonies = (function () {
 		}
 	};
 
+	var speakChance = 0.25;
 	var interval = 40;
 	var ponies = {};
 	var interactions = {};
@@ -1280,7 +1451,11 @@ var BrowserPonies = (function () {
 	});
 	
 	observe(window, 'mouseup', function (event) {
-		dragged = null;
+		if (dragged) {
+			dragged = null;
+			document.body.style.userSelect    = '';
+			document.body.style.MozUserSelect = '';
+		}
 	});
 
 	return {
@@ -1352,7 +1527,6 @@ var BrowserPonies = (function () {
 						var speak;
 						if (row.length === 2) {
 							speak = {
-								name: "Unnamed",
 								text: row[1],
 								skip: false
 							};
@@ -1369,20 +1543,18 @@ var BrowserPonies = (function () {
 						break;
 
 					default:
-						console.log(escape(row[0]));
-						console.error(baseurl+": unknown pony setting:",row);
+						console.warn(baseurl+": Unknown pony setting:",row);
 				}
 			}
 			
 			if (!('name' in pony)) {
-				console.error(baseurl+':',pony);
 				throw new Error('Pony with following base URL has no name: '+pony.baseurl);
 			}
 
 			for (var i = 0, n = effects.length; i < n; ++ i) {
 				var effect = effects[i];
-				if (!Object.prototype.hasOwnProperty.call(behaviors_by_name,effect.behavior)) {
-					console.error(baseurl+": Effect "+effect.name+" of pony "+pony.name+
+				if (!has(behaviors_by_name,effect.behavior)) {
+					console.warn(baseurl+": Effect "+effect.name+" of pony "+pony.name+
 						" references non-existing behavior "+effect.behavior);
 				}
 				else {
@@ -1509,6 +1681,12 @@ var BrowserPonies = (function () {
 		getInterval: function () {
 			return interval;
 		},
+		setSpeakChance: function (chance) {
+			speakChance = chance;
+		},
+		getSpeakChance: function () {
+			return speakChance;
+		},
 		running: function () {
 			return timer !== null;
 		},
@@ -1536,6 +1714,12 @@ var BrowserPonies = (function () {
 			for (var name in BrowserPoniesConfig.spawn) {
 				BrowserPonies.spawn(name, BrowserPoniesConfig.spawn[name]);
 			}
+		}
+		if ('speakChance' in BrowserPoniesConfig) {
+			BrowserPonies.setSpeakChance(BrowserPoniesConfig.speakChance);
+		}
+		if ('interval' in BrowserPoniesConfig) {
+			BrowserPonies.setInterval(BrowserPoniesConfig.interval);
 		}
 	}
 })();
