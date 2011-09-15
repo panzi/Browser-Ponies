@@ -514,29 +514,38 @@ var BrowserPonies = (function () {
 	};
 
 	// TODO: extend for other media and don't do it for all but only for spawned media
-	var images = {};
+	var resources = {};
 	var onload_callbacks = [];
-	var allloaded = true;
+	var allloaded = false;
+	var checkAllLoaded = function () {
+		for (var url in resources) {
+			if (!resources[url]) {
+				return;
+			}
+		}
+		allloaded = true;
+		for (var i = 0, n = onload_callbacks.length; i < n; ++ i) {
+			onload_callbacks[i]();
+		}
+		onload_callbacks = [];
+	};
 	var preload = function (imgurl) {
-		if (!has(images,imgurl)) {
+		if (!has(resources,imgurl)) {
 			var image = new Image();
 			image.src = imgurl;
 			observe(image, 'load', function () {
-				images[imgurl] = true;
-				for (var url in images) {
-					if (!images[url])
-						return;
-				}
-				allloaded = true;
-				for (var i = 0, n = onload_callbacks.length; i < n; ++ i) {
-					onload_callbacks[i]();
-				}
-				onload_callbacks = [];
+				resources[imgurl] = true;
+				checkAllLoaded();
 			});
 			allloaded = false;
-			images[imgurl] = false;
+			resources[imgurl] = false;
 		}
 	};
+	resources[document.location.href] = false;
+	observe(window,'load',function () {
+		resources[document.location.href] = true;
+		checkAllLoaded();
+	});
 	var onload = function (callback) {
 		if (allloaded) {
 			callback();
@@ -1624,7 +1633,15 @@ var BrowserPonies = (function () {
 		spawn: function (pony, count) {
 			if (count === undefined) count = 1;
 			while (count > 0) {
-				instances.push(new PonyInstance(ponies[pony]));
+				var inst = new PonyInstance(ponies[pony]);
+				instances.push(inst);
+				if (timer !== null) {
+					onload(function () {
+						getOverlay().appendChild(inst.img);
+						inst.teleport();
+						inst.nextBehavior();
+					});
+				}
 				-- count;
 			}
 		},
