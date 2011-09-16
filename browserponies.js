@@ -1030,18 +1030,6 @@ var BrowserPonies = (function () {
 		},
 		update: function (currentTime, passedTime, winsize) {
 			var curr = this.rect();
-
-			// move back into screen:
-			// TODO: implement bounce
-			var wh = curr.width  * 0.5;
-			var hh = curr.height * 0.5;
-			if (curr.x + wh < 0 || 
-				curr.y + hh < 0 ||
-				curr.x - wh > winsize.width < 0 ||
-				curr.y - hh > winsize.height) {
-				this.behave(this.randomBehavior(false, true), true);
-			}
-
 			var dest = null;
 			var dist;
 			if (this.following) {
@@ -1138,10 +1126,31 @@ var BrowserPonies = (function () {
 				}
 			}
 
-			if (currentTime >= this.end_time || (this.end_at_dest && // !this.following && 
+			/*
+			if (this.pony.interactions.length > 0) {
+				TODO: select appropriate interaction by matching near targets	
+			}
+			*/
+
+			// move back into screen:
+			// TODO: implement bounce
+			var wh = curr.width  * 0.5;
+			var hh = curr.height * 0.5;
+			var fullOffscreen = (
+				curr.x + wh < 0 || 
+				curr.y + hh < 0 ||
+				curr.x - wh > winsize.width < 0 ||
+				curr.y - hh > winsize.height);
+			
+			if (fullOffscreen || currentTime >= this.end_time || (this.end_at_dest && // !this.following && 
 					this.dest_position.x === pos.x &&
 					this.dest_position.y === pos.y)) {
-				this.nextBehavior();
+				if (fullOffscreen) {
+					this.behave(this.randomBehavior(false, true), true);
+				}
+				else {
+					this.nextBehavior();
+				}
 			}
 		},
 		getNearestInstance: function (name) {
@@ -1664,7 +1673,6 @@ var BrowserPonies = (function () {
 				}
 				this.setImage(imgurl);
 			}
-			// TODO: repeat. where? when?
 			return !this.effect.duration || currentTime < this.end_time;
 		}
 	});
