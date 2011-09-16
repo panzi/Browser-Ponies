@@ -1,8 +1,13 @@
 var BrowserPoniesConfig = {
 	speakChance: 0.25,
 	spawn: {
+		"Pinkie Pie": 1,
+		"Applejack": 1,
+		"Princess Celestia": 1,
+		"Parasprite": 2
+
 //		"Rainbow Dash": 1
-		"Rainbow Dash": 1,
+/*		"Rainbow Dash": 1,
 		"Pinkie Pie": 1,
 		"Applejack": 1,
 		"Twilight Sparkle": 1,

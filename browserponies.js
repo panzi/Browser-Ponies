@@ -470,7 +470,7 @@ var BrowserPonies = (function () {
 	var Interaction = function Interaction (interaction) {
 		this.name        = interaction.name;
 		this.probability = interaction.probability;
-		this.proximity   = interaction.proximity;
+		this.proximity   = interaction.proximity === "default" ? 640 : interaction.proximity;
 		this.all         = !!interaction.all;
 		this.delay       = interaction.delay;
 		this.targets     = [];
@@ -503,8 +503,18 @@ var BrowserPonies = (function () {
 	};
 
 	Interaction.prototype = {
-		getPonies: function () {
-			// TODO
+		reachableTargets: function (pos) {
+			var targets = [];
+			for (var i = 0, n = this.targets.length; i < n; ++ i) {
+				var pony = this.targets[i];
+				for (var j = 0, m = pony.instances.length; j < m; ++ j) {
+					var inst = pony.instances[j];
+					if (distance(pos, inst.position()) < this.proximity) {
+						targets.push(inst);
+					}
+				}
+			}
+			return targets;
 		}
 	};
 
@@ -583,6 +593,7 @@ var BrowserPonies = (function () {
 	
 	var Effect = function Effect (baseurl, effect) {
 		extend(this, effect);
+		this.name = effect.name.toLowerCase();
 
 		var locs = ['rightloc','leftloc','rightcenter','leftcenter'];
 		for (var i = 0; i < locs.length; ++ i) {
@@ -800,28 +811,32 @@ var BrowserPonies = (function () {
 	
 	var isOffscreen = function (rect) {
 		var winsize = windowSize();
-		return rect.x < 0 || rect.y < 0 ||
-			rect.x + rect.width  > winsize.width || 
-			rect.y + rect.height > winsize.height;
+		var wh = rect.width  * 0.5;
+		var hh = rect.height * 0.5;
+		return rect.x < wh || rect.y < hh ||
+			rect.x + wh > winsize.width || 
+			rect.y + hh > winsize.height;
 	};
 
 	var clipToScreen = function (rect) {
 		var winsize = windowSize();
 		var x = rect.x;
 		var y = rect.y;
+		var wh = rect.width  * 0.5;
+		var hh = rect.height * 0.5;
 
-		if (x < 0) {
-			x = 0;
+		if (x < wh) {
+			x = wh;
 		}
-		else if (x + rect.width > winsize.width) {
-			x = winsize.width - rect.width;
+		else if (x + wh > winsize.width) {
+			x = winsize.width - wh;
 		}
 
-		if (y < 0) {
-			y = 0;
+		if (y < hh) {
+			y = hh;
 		}
-		else if (y + rect.height > winsize.height) {
-			y = winsize.height - rect.height;
+		else if (y + hh > winsize.height) {
+			y = winsize.height - hh;
 		}
 
 		return {x: x, y: y};
@@ -829,39 +844,41 @@ var BrowserPonies = (function () {
 
 	var Instance = function Instance () {};
 	Instance.prototype = {
-		setPosition: function (pos) {
+		setTopLeftPosition: function (pos) {
 			this.img.style.left = Math.round(pos.x)+'px';
 			this.img.style.top  = Math.round(pos.y)+'px';
 		},
+		setPosition: function (pos) {
+			this.img.style.left = Math.round(pos.x - this.current_size.width  * 0.5)+'px';
+			this.img.style.top  = Math.round(pos.y - this.current_size.height * 0.5)+'px';
+		},
 		moveBy: function (offset) {
-			var pos = this.position();
-			pos.x += offset.x;
-			pos.y += offset.y;
-			this.setPosition(pos);
+			this.img.style.left = Math.round(this.img.offsetLeft + offset.x)+'px';
+			this.img.style.top  = Math.round(this.img.offsetTop  + offset.y)+'px';
 		},
 		clipToScreen: function () {
 			this.setPosition(clipToScreen(this.rect()));
 		},
-		position: function () {
+		topLeftPosition: function () {
 			return {
 				x: this.img.offsetLeft,
 				y: this.img.offsetTop
 			};
 		},
+		position: function () {
+			return {
+				x: this.img.offsetLeft + this.current_size.width  * 0.5,
+				y: this.img.offsetTop  + this.current_size.height * 0.5
+			};
+		},
 		size: function () {
 			return this.current_size;
-			/*
-			return {
-				// What the Bug?
-				width:  this.img.width,
-				height: this.img.height
-//				width:  this.img.offsetWidth,
-//				height: this.img.offsetHeight
-			};
-			*/
 		},
 		rect: function () {
 			return extend(this.position(), this.size());
+		},
+		topLeftRect: function () {
+			return extend(this.topLeftPosition(), this.size());
 		},
 		isOffscreen: function () {
 			return isOffscreen(this.rect());
@@ -954,6 +971,7 @@ var BrowserPonies = (function () {
 			}
 			this.start_time       = null;
 			this.end_time         = null;
+			this.interaction_wait = 0;
 			this.current_size     = {width: 0, height: 0};
 			this.current_behavior = null;
 			this.facing_right     = true;
@@ -961,6 +979,21 @@ var BrowserPonies = (function () {
 			this.effects          = [];
 			this.repeating        = [];
 			this.removing         = [];
+		},
+		interact: function (currentTime,interaction,targets) {
+			this.interaction_wait = currentTime + interaction.delay;
+			var behavior = randomSelect(interaction.behaviors);
+			this.behave(this.pony.behaviors_by_name[behavior]);
+			if (interaction.all) {
+				for (var i = 0, n = targets.length; i < n; ++ i) {
+					var pony = targets[i];
+					pony.behave(pony.pony.behaviors_by_name[behavior]);
+				}
+			}
+			else {
+				var pony = randomSelect(targets);
+				pony.behave(pony.pony.behaviors_by_name[behavior]);
+			}
 		},
 		speak: function (currentTime,speech) {
 			if (speech.text) {
@@ -976,7 +1009,7 @@ var BrowserPonies = (function () {
 						padding:    "0",
 						zIndex:     String(BaseZIndex + 1000)
 					}}, speech.text);
-				var rect = this.rect();
+				var rect = this.topLeftRect();
 				getOverlay().appendChild(text);
 				var x = Math.round(rect.x + rect.width * 0.5 - text.offsetWidth * 0.5);
 				var y = rect.y + rect.height;
@@ -999,10 +1032,13 @@ var BrowserPonies = (function () {
 			var curr = this.rect();
 
 			// move back into screen:
-			if (curr.x + curr.width < 0 || 
-				curr.y + curr.height < 0 ||
-				curr.x > winsize.width < 0 ||
-				curr.y > winsize.height) {
+			// TODO: implement bounce
+			var wh = curr.width  * 0.5;
+			var hh = curr.height * 0.5;
+			if (curr.x + wh < 0 || 
+				curr.y + hh < 0 ||
+				curr.x - wh > winsize.width < 0 ||
+				curr.y - hh > winsize.height) {
 				this.behave(this.randomBehavior(false, true), true);
 			}
 
@@ -1011,8 +1047,12 @@ var BrowserPonies = (function () {
 			if (this.following) {
 				if (this.following.img.parentNode) {
 					dest = this.following.position();
+					dest.x += this.following.facing_right ?
+						this.current_behavior.x : -this.current_behavior.x;
+					dest.y += this.current_behavior.y;
 					dist = distance(curr, dest);
-					if (dist <= curr.width * 0.5) {
+					if (!this.current_behavior.x && !this.current_behavior.y &&
+						dist <= curr.width * 0.5) {
 						dest = null;
 					}
 				}
@@ -1105,21 +1145,39 @@ var BrowserPonies = (function () {
 			}
 		},
 		getNearestInstance: function (name) {
-			var nearPonies = [];
+			var nearObjects = [];
 			var pos = this.position();
-			var instances = ponies[name.toLowerCase()].instances;
+			var pony = ponies[name];
+			var objs;
 			
-			for (var i = 0, n = instances.length; i < n; ++ i) {
-				var inst = instances[i];
-				if (this !== inst) {
-					nearPonies.push([distance(pos, inst.position()), inst]);
+			if (!pony) {
+				objs = [];
+				// FIXME: slow
+				for (var i = 0, n = instances.length; i < n; ++ i) {
+					var inst = instances[i];
+					for (var j = 0, m = inst.effects.length; j < m; ++ j) {
+						var effect = inst.effects[j];
+						if (effect.effect.name === name) {
+							objs.push(effect);
+						}
+					}
 				}
 			}
-			if (nearPonies.length === 0) {
+			else {
+				objs = pony.instances;
+			}
+			
+			for (var i = 0, n = objs.length; i < n; ++ i) {
+				var inst = objs[i];
+				if (this !== inst) {
+					nearObjects.push([distance(pos, inst.position()), inst]);
+				}
+			}
+			if (nearObjects.length === 0) {
 				return null;
 			}
-			nearPonies.sort();
-			return nearPonies[0][1];
+			nearObjects.sort();
+			return nearObjects[0][1];
 		},
 		nextBehavior: function () {
 			if (this.current_behavior && this.current_behavior.linked) {
@@ -1244,10 +1302,10 @@ var BrowserPonies = (function () {
 					this.dest_position = pos;
 				}
 				else {
-					var nearTop    = pos.y < 200;
-					var nearBottom = pos.y + size.height + 200 > winsize.height;
-					var nearLeft   = pos.x < 200;
-					var nearRight  = pos.x + size.width + 200 > winsize.width;
+					var nearTop    = pos.y - size.height * 0.5 < 100;
+					var nearBottom = pos.y + size.height * 0.5 + 100 > winsize.height;
+					var nearLeft   = pos.x - size.width * 0.5 < 100;
+					var nearRight  = pos.x + size.width * 0.5 + 100 > winsize.width;
 					var reducedMovements = movements.slice();
 
 					if (nearTop) {
@@ -1528,7 +1586,7 @@ var BrowserPonies = (function () {
 					break;
 			}
 			
-			var ponyRect = this.pony.rect();
+			var ponyRect = this.pony.topLeftRect();
 			switch (loc) {
 				case Locations.Top:
 					pos.x += ponyRect.x + ponyRect.width * 0.5;
@@ -1568,7 +1626,7 @@ var BrowserPonies = (function () {
 					break;
 			}
 
-			this.setPosition(pos);
+			this.setTopLeftPosition(pos);
 		},
 		/*
 		setImage: function (url) {
@@ -1811,11 +1869,13 @@ var BrowserPonies = (function () {
 					}
 				}
 
+				var proximity = row[3].trim().toLowerCase();
+				if (proximity !== "default") proximity = parseFloat(proximity);
 				interactions.push({
 					name:        row[0],
 					pony:        row[1],
 					probability: parseFloat(row[2]),
-					proximity:   parseFloat(row[3]),
+					proximity:   proximity,
 					targets:     row[4],
 					all:         all,
 					behaviors:   row[6],
