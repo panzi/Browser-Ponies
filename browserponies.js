@@ -1443,9 +1443,9 @@ var BrowserPonies = (function () {
 		teleport: function () {
 			var winsize = windowSize();
 			var size = this.size();
-			this.setPosition({
-				x: Math.random() * (winsize.width  - (size.width || 106)),
-				y: Math.random() * (winsize.height - (size.height || 96))
+			this.setTopLeftPosition({
+				x: Math.random() * (winsize.width  - size.width),
+				y: Math.random() * (winsize.height - size.height)
 			});
 		},
 		randomBehavior: function (mouseover, forceMovement) {
