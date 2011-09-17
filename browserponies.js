@@ -329,7 +329,7 @@ var BrowserPonies = (function () {
 						if (line.length > 0) {
 							ch = line.charAt(0);
 							if (ch !== '}') {
-								console.log("data after list:",line);
+								console.error("data after list:",line);
 							}
 							else {
 								line = line.slice(1).trimLeft();
@@ -507,11 +507,17 @@ var BrowserPonies = (function () {
 			var targets = [];
 			for (var i = 0, n = this.targets.length; i < n; ++ i) {
 				var pony = this.targets[i];
+				var reachable = false;
 				for (var j = 0, m = pony.instances.length; j < m; ++ j) {
 					var inst = pony.instances[j];
-					if (distance(pos, inst.position()) < this.proximity) {
+					// XXX: is it me or is the proximity much to low for all these interactions?
+					if (distance(pos, inst.position()) < this.proximity * 3) {
 						targets.push(inst);
+						reachable = true;
 					}
+				}
+				if (this.all && !reachable) {
+					return [];
 				}
 			}
 			return targets;
@@ -705,7 +711,7 @@ var BrowserPonies = (function () {
 		this.speeches  = [];
 		this.random_speeches  = [];
 		this.speeches_by_name = {};
-		this.interactions = []; // TODO
+		this.interactions = [];
 		this.instances    = [];
 		
 		if (pony.speeches) {
@@ -769,6 +775,11 @@ var BrowserPonies = (function () {
 	};
 
 	Pony.prototype = {
+		unspawnAll: function () {
+			while (this.instances.length > 0) {
+				this.instances[0].unspawn();
+			}
+		},
 		addInteraction: function (interaction) {
 			interaction = new Interaction(interaction);
 
@@ -912,7 +923,7 @@ var BrowserPonies = (function () {
 					' for '+duration+' seconds'+
 					', is at '+pos.x+' x '+pos.y+
 					(this.following ?
-						' and follows '+this.following.pony.name :
+						' and follows '+this.following.name() :
 						' and wants to go to '+this.dest_position.x+' x '+this.dest_position.y)+
 					'. See:',this);
 			}.bind(this),
@@ -951,7 +962,14 @@ var BrowserPonies = (function () {
 	};
 
 	PonyInstance.prototype = extend(new Instance(), {
-		// TODO
+		name: function () {
+			return this.pony.name;
+		},
+		unspawn: function () {
+			this.clear();
+			removeAll(this.pony.instances,this);
+			removeAll(instances,this);
+		},
 		clear: function () {
 			if (this.effects) {
 				for (var i = 0, n = this.effects.length; i < n; ++ i) {
@@ -969,19 +987,21 @@ var BrowserPonies = (function () {
 			if (this.img.parentNode) {
 				this.img.parentNode.removeChild(this.img);
 			}
-			this.start_time       = null;
-			this.end_time         = null;
-			this.interaction_wait = 0;
-			this.current_size     = {width: 0, height: 0};
-			this.current_behavior = null;
-			this.facing_right     = true;
-			this.end_at_dest      = false;
-			this.effects          = [];
-			this.repeating        = [];
-			this.removing         = [];
+			this.start_time          = null;
+			this.end_time            = null;
+			this.current_interaction = null;
+			this.interaction_targets = null;
+			this.current_imgurl      = null;
+			this.interaction_wait    = 0;
+			this.current_size        = {width: 0, height: 0};
+			this.current_behavior    = null;
+			this.facing_right        = true;
+			this.end_at_dest         = false;
+			this.effects             = [];
+			this.repeating           = [];
+			this.removing            = [];
 		},
 		interact: function (currentTime,interaction,targets) {
-			this.interaction_wait = currentTime + interaction.delay;
 			var behavior = randomSelect(interaction.behaviors);
 			this.behave(this.pony.behaviors_by_name[behavior]);
 			if (interaction.all) {
@@ -994,6 +1014,8 @@ var BrowserPonies = (function () {
 				var pony = randomSelect(targets);
 				pony.behave(pony.pony.behaviors_by_name[behavior]);
 			}
+			this.current_interaction = interaction;
+			this.interaction_targets = targets;
 		},
 		speak: function (currentTime,speech) {
 			if (speech.text) {
@@ -1039,6 +1061,7 @@ var BrowserPonies = (function () {
 						this.current_behavior.x : -this.current_behavior.x;
 					dest.y += this.current_behavior.y;
 					dist = distance(curr, dest);
+					this.dest_position = dest;
 					if (!this.current_behavior.x && !this.current_behavior.y &&
 						dist <= curr.width * 0.5) {
 						dest = null;
@@ -1126,11 +1149,42 @@ var BrowserPonies = (function () {
 				}
 			}
 
-			/*
-			if (this.pony.interactions.length > 0) {
-				TODO: select appropriate interaction by matching near targets	
+			if (this.interaction_wait <= currentTime &&
+					this.pony.interactions.length > 0 &&
+					!this.current_interaction) {
+				var sumprob = 0;
+				var interactions = [];
+				var interaction = null;
+				for (var i = 0, n = this.pony.interactions.length; i < n; ++ i) {
+					interaction = this.pony.interactions[i];
+					var targets = interaction.reachableTargets(curr);
+					if (targets.length > 0) {
+						sumprob += interaction.probability;
+						interactions.push([interaction, targets]);
+					}
+				}
+				
+				if (interactions.length > 0) {
+					var dice = Math.random() * sumprob;
+					var diceiter = 0;
+					for (var i = 0, n = interactions.length; i < n; ++ i) {
+						interaction = interactions[i];
+						if (dice <= diceiter) {
+							break;
+						}
+					}
+
+					// The probability is meant for a execution evere 100ms,
+					// but I use a configurable interaction interval.
+					dice = Math.random() * (100 / interactionInterval);
+					if (dice <= interaction[0].probability) {
+						this.interact(currentTime,interaction[0],interaction[1]);
+						return;
+					}
+				}
+
+				this.interaction_wait += interactionInterval;
 			}
-			*/
 
 			// move back into screen:
 			// TODO: implement bounce
@@ -1142,7 +1196,14 @@ var BrowserPonies = (function () {
 				curr.x - wh > winsize.width < 0 ||
 				curr.y - hh > winsize.height);
 			
-			if (fullOffscreen || currentTime >= this.end_time || (this.end_at_dest && // !this.following && 
+			if ((fullOffscreen && isOffscreen(extend({
+					width: curr.width,
+					height: curr.height,
+					x: this.dest_position.x,
+					y: this.dest_position.y
+				}))) ||
+					currentTime >= this.end_time ||
+					(this.end_at_dest && // !this.following && 
 					this.dest_position.x === pos.x &&
 					this.dest_position.y === pos.y)) {
 				if (fullOffscreen) {
@@ -1192,7 +1253,17 @@ var BrowserPonies = (function () {
 			if (this.current_behavior && this.current_behavior.linked) {
 				this.behave(this.current_behavior.linked, this.isOffscreen());
 			}
-			else {
+			else {				
+				if (this.current_interaction) {
+					var currentTime = Date.now();
+					this.interaction_wait = currentTime + this.current_interaction.delay * 1000;
+					for (var i = 0, n = this.interaction_targets.length; i < n; ++ i) {
+						this.interaction_targets[i].interaction_wait = this.interaction_wait;
+					}
+					this.interaction_targets = null;
+					this.current_interaction = null;
+				}
+
 				this.behave(this.randomBehavior(this.pony.mouseover_behaviors.length > 0 && this.mouseover),
 					this.isOffscreen());
 			}
@@ -1208,8 +1279,8 @@ var BrowserPonies = (function () {
 				newimg = this.current_behavior.leftimage;
 				this.current_size = this.current_behavior.leftsize;
 			}
-			if (newimg !== this.img.getAttribute("src")) {
-				this.img.src = newimg;
+			if (newimg !== this.current_imgurl) {
+				this.img.src = this.current_imgurl = newimg;
 			}
 		},
 		behave: function (behavior, moveIntoScreen) {
@@ -1217,7 +1288,7 @@ var BrowserPonies = (function () {
 			var duration = behavior.minduration +
 				(behavior.maxduration - behavior.minduration) * Math.random();
 			this.end_time = this.start_time + duration * 1000;
-
+		
 			if (this.current_behavior && this.current_behavior.speakend) {
 				this.speak(this.start_time, this.current_behavior.speakend);
 			}
@@ -1435,7 +1506,7 @@ var BrowserPonies = (function () {
 /*
 			var msg;
 			if (this.following) {
-				msg = "following "+this.following.pony.name;
+				msg = "following "+behavior.follow;
 			}
 			else if (this.dest_position.x !== pos.x || this.dest_position.y !== pos.y) {
 				msg = "move from "+pos.x+" x "+pos.y+" to "+
@@ -1500,7 +1571,7 @@ var BrowserPonies = (function () {
 			this.current_size = this.effect.leftsize;
 		}
 
-		this.previous_image = null;
+		this.current_imgurl = null;
 		this.img = tag(Gecko ? 'img' : 'iframe', {
 			draggable: 'false',
 			style: {
@@ -1546,6 +1617,9 @@ var BrowserPonies = (function () {
 	};
 
 	EffectInstance.prototype = extend(new Instance(), {
+		name: function () {
+			return this.effect.name;
+		},
 		clear: function () {
 			if (this.img.parentNode) {
 				this.img.parentNode.removeChild(this.img);
@@ -1639,23 +1713,22 @@ var BrowserPonies = (function () {
 		},
 		/*
 		setImage: function (url) {
-			if (this.previous_image !== url) {
+			if (this.current_imgurl !== url) {
 				this.img.src = dataUrl('text/html',
 					'<html><head><title>'+Math.random()+
 					'</title><style text="text/css">html,body{margin:0;padding:0;background:transparent;}</style><body></body><img src="'+
 					escapeXml(absUrl(url))+'"/></html>');
 				this.img.style.width  = this.current_size.width+"px";
 				this.img.style.height = this.current_size.height+"px";
-				this.previous_image = url;
+				this.current_imgurl = url;
 			}
 		},
 		*/
 		setImage: function (url) {
-			if (this.previous_image !== url) {
-				this.img.src = url;
+			if (this.current_imgurl !== url) {
+				this.img.src = this.current_imgurl = url;
 				this.img.style.width  = this.current_size.width+"px";
 				this.img.style.height = this.current_size.height+"px";
-				this.previous_image = url;
 			}
 		},
 		update: function (currentTime, passedTime, winsize) {
@@ -1707,6 +1780,7 @@ var BrowserPonies = (function () {
 	var globalSpeed = 3; // why is it too slow otherwise?
 	var speakChance = 0.25;
 	var interval = 40;
+	var interactionInterval = 500;
 	var ponies = {};
 	var instances = [];
 	var overlay = null;
@@ -1948,7 +2022,28 @@ var BrowserPonies = (function () {
 			}
 			return true;
 		},
+		unspawn: function (name, count) {
+			var lowername = name.toLowerCase();
+			if (!has(ponies,lowername)) {
+				console.error("No such pony:",name);
+				return false;
+			}
+			var pony = ponies[lowername];
+			if (count === undefined || count >= pony.instances.length) {
+				pony.unspawnAll();
+			}
+			else {
+				while (count > 0) {
+					pony.instances[0].unspawn();
+					-- count;
+				}
+			}
+			return true;
+		},
 		unspawnAll: function () {
+			for (var i = 0, n = instances.length; i < n; ++ i) {
+				instances[i].clear();
+			}
 			instances = [];
 			for (var i = 0, n = ponies.length; i < n; ++ i) {
 				ponies[i].instances = [];
@@ -1997,8 +2092,8 @@ var BrowserPonies = (function () {
 				}
 			});
 		},
-		setInterval: function (time) {
-			interval = time;
+		setInterval: function (ms) {
+			interval = ms;
 			if (timer !== null) {
 				clearInterval(timer);
 				timer = setInterval(tick, interval);
@@ -2006,6 +2101,18 @@ var BrowserPonies = (function () {
 		},
 		getInterval: function () {
 			return interval;
+		},
+		setFps: function (fps) {
+			this.setInterval(fps * 1000);
+		},
+		getFps: function () {
+			return 1000 / interval;
+		},
+		setInteractionInterval: function (ms) {
+			interactionInterval = ms;
+		},
+		getInteractionInterval: function () {
+			return interactionInterval;
 		},
 		setSpeakChance: function (chance) {
 			speakChance = chance;
@@ -2044,6 +2151,12 @@ var BrowserPonies = (function () {
 		}
 		if ('interval' in BrowserPoniesConfig) {
 			BrowserPonies.setInterval(BrowserPoniesConfig.interval);
+		}
+		if ('fps' in BrowserPoniesConfig) {
+			BrowserPonies.setFps(BrowserPoniesConfig.fps);
+		}
+		if ('interactionInterval' in BrowserPoniesConfig) {
+			BrowserPonies.setInteractionInterval(BrowserPoniesConfig.interactionInterval);
 		}
 		if (BrowserPoniesConfig.ponies) {
 			BrowserPonies.addPonies(BrowserPoniesConfig.ponies);
