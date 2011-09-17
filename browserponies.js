@@ -95,8 +95,7 @@ var BrowserPonies = (function () {
 			element.detachEvent('on'+event,handler._eventHandlingWrapper);
 		};
 
-	var windowSize = 
-		'innerWidth' in window ?
+	var windowSize = 'innerWidth' in window ?
 		function () {
 			return {
 				width:  window.innerWidth,
@@ -117,8 +116,7 @@ var BrowserPonies = (function () {
 		};
 	};
 	
-	var scrollPosition =
-		'pageXOffset' in window ?
+	var scrollPosition = 'pageXOffset' in window ?
 		function () {
 			return {
 				left: window.pageXOffset,
@@ -131,6 +129,43 @@ var BrowserPonies = (function () {
 				top:  document.documentElement.scrollTop
 			};
 		};
+
+	var padd = function (s,fill,padding,right) {
+		if (s.length >= fill) {
+			return s;
+		}
+		padding = new Array(fill-s.length+1).join(padding);
+		return right ? (padding + s) : (s + padding);
+	};
+
+	var format = function (fmt) {
+		var s = '';
+		var argind = 1;
+		while (fmt) {
+			var m = /^([^%]*)%(-)?(0)?(\d+)?(?:\.(\d+)?)?([dfesj%])(.*)$/.exec(fmt);
+			if (!m) {
+				s += fmt;
+				break;
+			}
+			s += m[1];
+			fmt = m[7];
+
+			var right   = m[2] !== '-';
+			var fill    = m[4] ? parseInt(m[4]) : 0;
+			var decimal = m[5] ? parseInt(m[5]) : 6;
+			var padding = right ? (m[3] || ' ') : ' ';
+
+			switch (m[6]) {
+				case 'd': s += padd(parseInt(arguments[argind++]).toFixed(0),fill,padding,right); break;
+				case 'f': s += padd(parseFloat(arguments[argind++]).toFixed(decimal),fill,padding,right); break;
+				case 'e': s += padd(parseFloat(arguments[argind++]).toExponential(decimal),fill,padding,right); break;
+				case 's': s += padd(String(arguments[argind++]),fill,' ',right); break;
+				case 'j': s += padd(JSON.stringify(arguments[argind++]),fill,' ',right); break;
+				case '%': s += padd('%',fill,' ',right);
+			}
+		}
+		return s;
+	};
 
 	var Opera = Object.prototype.toString.call(window.opera) === '[object Opera]';
 	var IE = !!window.attachEvent && !Opera;
@@ -543,9 +578,10 @@ var BrowserPonies = (function () {
 		}
 
 		// Image preloading:
+		this.rightsize = {width: 0, height: 0};
 		if (behavior.rightimage) {
 			this.rightimage = baseurl + behavior.rightimage;
-			preload(this.rightimage, function (image) {
+			preloadImage(this.rightimage, function (image) {
 				this.rightsize = {
 					width:  image.width,
 					height: image.height
@@ -553,9 +589,10 @@ var BrowserPonies = (function () {
 			}.bind(this));
 		}
 		
+		this.leftsize = {width: 0, height: 0};
 		if (behavior.leftimage) {
 			this.leftimage = baseurl + behavior.leftimage;
-			preload(this.leftimage, function (image) {
+			preloadImage(this.leftimage, function (image) {
 				this.leftsize = {
 					width:  image.width,
 					height: image.height
@@ -611,8 +648,9 @@ var BrowserPonies = (function () {
 
 		// Image preloading:
 		if (effect.rightimage) {
+			this.rightsize = {width: 0, height: 0};
 			this.rightimage = baseurl + effect.rightimage;
-			preload(this.rightimage, function (image) {
+			preloadImage(this.rightimage, function (image) {
 				this.rightsize = {
 					width:  image.width,
 					height: image.height
@@ -621,8 +659,9 @@ var BrowserPonies = (function () {
 		}
 		
 		if (effect.leftimage) {
+			this.leftsize = {width: 0, height: 0};
 			this.leftimage = baseurl + effect.leftimage;
-			preload(this.leftimage, function (image) {
+			preloadImage(this.leftimage, function (image) {
 				this.leftsize = {
 					width:  image.width,
 					height: image.height
@@ -633,24 +672,37 @@ var BrowserPonies = (function () {
 
 	// TODO: extend for other media and don't do it for all but only for spawned media
 	var resources = {};
+	var resource_count = 0;
+	var resource_loaded_count = 0;
 	var onload_callbacks = [];
-	var allloaded = false;
-	var checkAllLoaded = function () {
-		for (var url in resources) {
-			if (!resources[url].loaded) {
-				return;
-			}
-		}
-		allloaded = true;
-		for (var i = 0, n = onload_callbacks.length; i < n; ++ i) {
-			onload_callbacks[i]();
-		}
-		onload_callbacks = [];
+
+	var loadImage = function (url,observer) {
+		var image = new Image();
+		observe(image, 'load', observer);
+		image.src = url;
+		return image;
 	};
-	var preload = function (imgurl,callback) {
-		if (has(resources,imgurl)) {
+	
+	var loadAudio = function (url,observer) {
+		var audio = new Audio();
+		observe(audio, 'loadeddata', observer);
+		audio.preload = 'auto';
+		audio.src = url;
+		return audio;
+	};
+	
+	var preloadImage = function (url,callback) {
+		preload(loadImage,url,callback);
+	};
+	
+	var preloadAudio = function (url,callback) {
+		preload(loadAudio,url,callback);
+	};
+
+	var preload = function (load,url,callback) {
+		if (has(resources,url)) {
 			if (callback) {
-				var loader = resources[imgurl];
+				var loader = resources[url];
 				if (loader.loaded) {
 					callback(loader.object);
 				}
@@ -660,38 +712,40 @@ var BrowserPonies = (function () {
 			}
 		}
 		else {
-			var image = new Image();
-			var loader = {
-				object: image,
+			++ resource_count;
+			var loader = resources[url] = {
 				loaded: false,
-				callbacks: []
+				callbacks: callback ? [callback] : [],
+				object: load(url, function () {
+					loader.loaded = true;
+					++ resource_loaded_count;
+					console.log(format('%3.0f%% loaded %d of %d: %s',
+						resource_loaded_count * 100 / resource_count,
+						resource_loaded_count, resource_count,
+						url));
+					for (var i = 0, n = loader.callbacks.length; i < n; ++ i) {
+						loader.callbacks[i](loader.object);
+					}
+					delete loader.callbacks;
+					
+					if (resource_loaded_count === resource_count) {
+						for (var i = 0, n = onload_callbacks.length; i < n; ++ i) {
+							onload_callbacks[i]();
+						}
+						onload_callbacks = [];
+					}
+				})
 			};
-			if (callback) {
-				loader.callbacks.push(callback);
-			}
-			allloaded = false;
-			resources[imgurl] = loader;
-			observe(image, 'load', function () {
-//				console.log('loaded',imgurl,image.width,'x',image.height);
-				loader.loaded = true
-				for (var i = 0, n = loader.callbacks.length; i < n; ++ i) {
-					loader.callbacks[i](image);
-				}
-				delete loader.callbacks;
-				checkAllLoaded();
-			});
-			image.src = imgurl;
 		}
 	};
-	var docurl = document.location.href;
-	resources[docurl] = {loaded: false};
-	observe(window,'load',function () {
-//		console.log('loaded',docurl);
-		resources[docurl].loaded = true;
-		checkAllLoaded();
-	});
+	
+	preload(function (url,observer) {
+		observe(window,'load',observer);
+		return document;
+	}, document.location.href);
+
 	var onload = function (callback) {
-		if (allloaded) {
+		if (resource_loaded_count === resource_count) {
 			callback();
 		}
 		else {
@@ -725,6 +779,9 @@ var BrowserPonies = (function () {
 				}
 				if (!speech.skip) {
 					this.random_speeches.push(speech);
+				}
+				if (speech.file) {
+					preloadAudio(speech.file);
 				}
 				this.speeches.push(speech);
 			}
@@ -912,20 +969,15 @@ var BrowserPonies = (function () {
 			ondblclick: function () {
 				// debug output
 				var pos = this.position();
-				var duration = String((this.end_time-this.start_time)/1000).split('.');
-				if (duration.length > 1) {
-					duration = duration[0]+'.'+duration[1].slice(0,2);
-				}
-				else {
-					duration = duration[0];
-				}
-				console.log(this.pony.name+' does '+this.current_behavior.name+
-					' for '+duration+' seconds'+
-					', is at '+pos.x+' x '+pos.y+
-					(this.following ?
-						' and follows '+this.following.name() :
-						' and wants to go to '+this.dest_position.x+' x '+this.dest_position.y)+
-					'. See:',this);
+				var duration = (this.end_time - this.start_time) / 1000;
+				console.log(
+					format('%s does %s for %.2f seconds, is at %d x %d and %s. See:',
+						this.pony.name, this.current_behavior.name, duration, pos.x, pos.y,
+						(this.following ?
+							'follows '+this.following.name() :
+							format('wants to go to %d x %d',
+								this.dest_position.x, this.dest_position.y))),
+					this);
 			}.bind(this),
 			onmousedown: function () {
 				// timer === null means paused/not runnung
@@ -1043,8 +1095,7 @@ var BrowserPonies = (function () {
 					at: currentTime + duration
 				});
 			}
-			if (HasAudio && speech.file) {
-				// TODO: preload
+			if (HasAudio && audioEnabled && speech.file) {
 				var audio = new Audio();
 				audio.src = speech.file;
 				audio.play();
@@ -1318,7 +1369,7 @@ var BrowserPonies = (function () {
 			}
 			else if (!behavior.speakend && !this.following &&
 				this.pony.random_speeches.length > 0 &&
-				Math.random() < speakChance) {
+				Math.random() < speakProbability) {
 				this.speak(this.start_time, randomSelect(this.pony.random_speeches));
 			}
 			
@@ -1776,9 +1827,11 @@ var BrowserPonies = (function () {
 		}
 	};
 
+	var preloadAll = false;
+	var audioEnabled = false;
 	var globalBaseUrl = '';
 	var globalSpeed = 3; // why is it too slow otherwise?
-	var speakChance = 0.25;
+	var speakProbability = 0.25;
 	var interval = 40;
 	var interactionInterval = 500;
 	var ponies = {};
@@ -2114,11 +2167,11 @@ var BrowserPonies = (function () {
 		getInteractionInterval: function () {
 			return interactionInterval;
 		},
-		setSpeakChance: function (chance) {
-			speakChance = chance;
+		setSpeakProbability: function (probability) {
+			speakProbability = probability;
 		},
-		getSpeakChance: function () {
-			return speakChance;
+		getSpeakProbability: function () {
+			return speakProbability;
 		},
 		setBaseUrl: function (url) {
 			globalBaseUrl = url;
@@ -2131,6 +2184,18 @@ var BrowserPonies = (function () {
 		},
 		getSpeed: function () {
 			return globalSpeed;
+		},
+		setAudioEnabled: function (enabled) {
+			audioEnabled = !!enabled;
+		},
+		isAudioEnabled: function () {
+			return audioEnabled;
+		},
+		setPreloadAll: function (all) {
+			preloadAll = !!all;
+		},
+		isPreloadAll: function () {
+			return preloadAll;
 		},
 		running: function () {
 			return timer !== null;
@@ -2146,8 +2211,8 @@ var BrowserPonies = (function () {
 		if ('baseurl' in BrowserPoniesConfig) {
 			BrowserPonies.setBaseUrl(BrowserPoniesConfig.baseurl);
 		}
-		if ('speakChance' in BrowserPoniesConfig) {
-			BrowserPonies.setSpeakChance(BrowserPoniesConfig.speakChance);
+		if ('speakProbability' in BrowserPoniesConfig) {
+			BrowserPonies.setSpeakProbability(BrowserPoniesConfig.speakProbability);
 		}
 		if ('interval' in BrowserPoniesConfig) {
 			BrowserPonies.setInterval(BrowserPoniesConfig.interval);
@@ -2157,6 +2222,12 @@ var BrowserPonies = (function () {
 		}
 		if ('interactionInterval' in BrowserPoniesConfig) {
 			BrowserPonies.setInteractionInterval(BrowserPoniesConfig.interactionInterval);
+		}
+		if ('audioEnabled' in BrowserPoniesConfig) {
+			BrowserPonies.setAudioEnabled(BrowserPoniesConfig.audioEnabled);
+		}
+		if ('preloadAll' in BrowserPoniesConfig) {
+			BrowserPonies.setPreloadAll(BrowserPoniesConfig.preloadAll);
 		}
 		if (BrowserPoniesConfig.ponies) {
 			BrowserPonies.addPonies(BrowserPoniesConfig.ponies);
