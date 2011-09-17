@@ -480,26 +480,11 @@ var BrowserPonies = (function () {
 		return "Not a Location";
 	};
 
-	var camelize = function (s) {
-		var parts = s.split(/[-_\s]/);
-		var buf = [];
-		for (var i = 0, n = parts.length; i < n; ++ i) {
-			var part = parts[i];
-			buf.push(part.slice(0,1).toUpperCase());
-			buf.push(part.slice(1).toLowerCase());
-		}
-		return buf.join('');
-	};
-
 	var extend = function (dest, src) {
 		for (var name in src) {
 			dest[name] = src[name];
 		}
 		return dest;
-	};
-
-	var clone = function (obj) {
-		return extend({}, obj);
 	};
 
 	var Interaction = function Interaction (interaction) {
@@ -577,27 +562,14 @@ var BrowserPonies = (function () {
 			throw new Error("illegal movement: "+behavior.movement);
 		}
 
-		// Image preloading:
 		this.rightsize = {width: 0, height: 0};
 		if (behavior.rightimage) {
 			this.rightimage = baseurl + behavior.rightimage;
-			preloadImage(this.rightimage, function (image) {
-				this.rightsize = {
-					width:  image.width,
-					height: image.height
-				};
-			}.bind(this));
 		}
 		
 		this.leftsize = {width: 0, height: 0};
 		if (behavior.leftimage) {
 			this.leftimage = baseurl + behavior.leftimage;
-			preloadImage(this.leftimage, function (image) {
-				this.leftsize = {
-					width:  image.width,
-					height: image.height
-				};
-			}.bind(this));
 		}
 
 		this.effects         = [];
@@ -612,7 +584,31 @@ var BrowserPonies = (function () {
 	};
 
 	Behavior.prototype = {
+		preload: function () {
+			for (var i = 0, n = this.effects.length; i < n; ++ i) {
+				this.effects[i].preload();
+			}
+
+			if (this.rightimage) {
+				preloadImage(this.rightimage, function (image) {
+					this.rightsize = {
+						width:  image.width,
+						height: image.height
+					};
+				}.bind(this));
+			}
+			
+			if (this.leftimage) {
+				preloadImage(this.leftimage, function (image) {
+					this.leftsize = {
+						width:  image.width,
+						height: image.height
+					};
+				}.bind(this));
+			}
+		},
 		isMoving: function () {
+			if (this.follow || this.x || this.x) return true;
 			switch (this.movement) {
 				case AllowedMoves.None:
 				case AllowedMoves.MouseOver:
@@ -646,27 +642,36 @@ var BrowserPonies = (function () {
 			}
 		}
 
-		// Image preloading:
+		this.rightsize = {width: 0, height: 0};
 		if (effect.rightimage) {
-			this.rightsize = {width: 0, height: 0};
 			this.rightimage = baseurl + effect.rightimage;
-			preloadImage(this.rightimage, function (image) {
-				this.rightsize = {
-					width:  image.width,
-					height: image.height
-				};
-			}.bind(this));
 		}
 		
+		this.leftsize = {width: 0, height: 0};
 		if (effect.leftimage) {
-			this.leftsize = {width: 0, height: 0};
 			this.leftimage = baseurl + effect.leftimage;
-			preloadImage(this.leftimage, function (image) {
-				this.leftsize = {
-					width:  image.width,
-					height: image.height
-				};
-			}.bind(this));
+		}
+	};
+
+	Effect.prototype = {
+		preload: function () {
+			if (this.rightimage) {
+				preloadImage(this.rightimage, function (image) {
+					this.rightsize = {
+						width:  image.width,
+						height: image.height
+					};
+				}.bind(this));
+			}
+			
+			if (this.leftimage) {
+				preloadImage(this.leftimage, function (image) {
+					this.leftsize = {
+						width:  image.width,
+						height: image.height
+					};
+				}.bind(this));
+			}
 		}
 	};
 
@@ -780,9 +785,6 @@ var BrowserPonies = (function () {
 				if (!speech.skip) {
 					this.random_speeches.push(speech);
 				}
-				if (speech.file) {
-					preloadAudio(speech.file);
-				}
 				this.speeches.push(speech);
 			}
 		}
@@ -832,6 +834,20 @@ var BrowserPonies = (function () {
 	};
 
 	Pony.prototype = {
+		preload: function () {
+			for (var i = 0, n = this.behaviors.length; i < n; ++ i) {
+				this.behaviors[i].preload();
+			}
+			
+			if (HasAudio && audioEnabled) {
+				for (var i = 0, n = this.speeches.length; i < n; ++ i) {
+					var speech = this.speeches[i];
+					if (speech.file) {
+						preloadAudio(speech.file);
+					}
+				}
+			}
+		},
 		unspawnAll: function () {
 			while (this.instances.length > 0) {
 				this.instances[0].unspawn();
@@ -1380,16 +1396,16 @@ var BrowserPonies = (function () {
 			if (this.following) {
 				this.dest_position = this.following.position();
 			}
-			else if (behavior.x && behavior.y) {
+			else if (behavior.x || behavior.y) {
 				this.end_at_dest = true;
 				this.dest_position = {
-					x: Math.round((winsize.width  - size.width)  * behavior.x / 100),
-					y: Math.round((winsize.height - size.height) * behavior.y / 100)
+					x: Math.round((winsize.width  - size.width)  * (behavior.x || 0) / 100),
+					y: Math.round((winsize.height - size.height) * (behavior.y || 0) / 100)
 				};
 			}
 			else {
 				// TODO: reduce change of going off-screen
-				var movements  = null;
+				var movements = null;
 				switch (behavior.movement) {
 					case AllowedMoves.HorizontalOnly:
 						movements = [Movements.Left, Movements.Right];
@@ -2052,6 +2068,14 @@ var BrowserPonies = (function () {
 			ponies[pony.name.toLowerCase()] = new Pony(pony);
 			return true;
 		},
+		spawnRandom: function (count) {
+			var names = [];
+			for (var name in ponies) {
+				names.push(name);
+			}
+			var name = randomSelect(names);
+			return this.spawn(name, count) ? name : null;
+		},
 		spawn: function (name, count) {
 			var lowername = name.toLowerCase();
 			if (!has(ponies,lowername)) {
@@ -2060,18 +2084,27 @@ var BrowserPonies = (function () {
 			}
 			var pony = ponies[lowername];
 			if (count === undefined) count = 1;
-			while (count > 0) {
-				var inst = new PonyInstance(pony);
-				instances.push(inst);
-				pony.instances.push(inst);
+			if (count > 0 && timer !== null) {
+				pony.preload();
+			}
+			var n = count;
+			while (n > 0) {
 				if (timer !== null) {
 					onload(function () {
+						var inst = new PonyInstance(pony);
+						instances.push(inst);
+						pony.instances.push(inst);
 						getOverlay().appendChild(inst.img);
 						inst.teleport();
 						inst.nextBehavior();
 					});
 				}
-				-- count;
+				else {
+					var inst = new PonyInstance(pony);
+					instances.push(inst);
+					pony.instances.push(inst);
+				}
+				-- n;
 			}
 			return true;
 		},
@@ -2098,11 +2131,30 @@ var BrowserPonies = (function () {
 				instances[i].clear();
 			}
 			instances = [];
-			for (var i = 0, n = ponies.length; i < n; ++ i) {
-				ponies[i].instances = [];
+			for (var name in ponies) {
+				ponies[name].instances = [];
+			}
+		},
+		preloadAll: function () {
+			for (var name in ponies) {
+				ponies[name].preload();
+			}
+		},
+		preloadSpawned: function () {
+			for (var name in ponies) {
+				var pony = ponies[name];
+				if (pony.instances.length > 0) {
+					pony.preload();
+				}
 			}
 		},
 		start: function () {
+			if (preloadAll) {
+				this.preloadAll();
+			}
+			else {
+				this.preloadSpawned();
+			}
 			onload(function () {
 				var overlay = getOverlay();
 				overlay.innerHTML = '';
@@ -2137,8 +2189,14 @@ var BrowserPonies = (function () {
 			}
 		},
 		resume: function () {
-			getOverlay();
+			if (preloadAll) {
+				this.preloadAll();
+			}
+			else {
+				this.preloadSpawned();
+			}
 			onload(function () {
+//				getOverlay();
 				if (timer === null) {
 					lastTime = Date.now();
 					timer = setInterval(tick, interval);
@@ -2202,43 +2260,59 @@ var BrowserPonies = (function () {
 		},
 		ponies: function () {
 			return ponies;
-		}
+		},
+		loadConfig: function (config) {
+			if ('baseurl' in config) {
+				this.setBaseUrl(config.baseurl);
+			}
+			if ('speakProbability' in config) {
+				this.setSpeakProbability(config.speakProbability);
+			}
+			if ('interval' in config) {
+				this.setInterval(config.interval);
+			}
+			if ('fps' in config) {
+				this.setFps(config.fps);
+			}
+			if ('interactionInterval' in config) {
+				this.setInteractionInterval(config.interactionInterval);
+			}
+			if ('audioEnabled' in config) {
+				this.setAudioEnabled(config.audioEnabled);
+			}
+			if ('preloadAll' in config) {
+				this.setPreloadAll(config.preloadAll);
+			}
+			if (config.ponies) {
+				this.addPonies(config.ponies);
+			}
+			if (config.interactions) {
+				this.addInteractions(config.interactions);
+			}
+			if (config.spawn) {
+				for (var name in config.spawn) {
+					this.spawn(name, config.spawn[name]);
+				}
+			}
+		},
+
+		// expose a few utils:
+		extend:        extend,
+		tag:           extend(tag,{add:add}),
+		format:        format,
+		observe:       observe,
+		stopObserving: stopObserving,
+		IE:            IE,
+		Opera:         Opera,
+		Gecko:         Gecko,
+		HasAudio:      HasAudio,
+		BaseZIndex:    BaseZIndex,
+		onload:        onload,
+		$:             $,
+		randomSelect:  randomSelect
 	};
 })();
 
-(function () {
-	if (typeof(BrowserPoniesConfig) !== "undefined") {
-		if ('baseurl' in BrowserPoniesConfig) {
-			BrowserPonies.setBaseUrl(BrowserPoniesConfig.baseurl);
-		}
-		if ('speakProbability' in BrowserPoniesConfig) {
-			BrowserPonies.setSpeakProbability(BrowserPoniesConfig.speakProbability);
-		}
-		if ('interval' in BrowserPoniesConfig) {
-			BrowserPonies.setInterval(BrowserPoniesConfig.interval);
-		}
-		if ('fps' in BrowserPoniesConfig) {
-			BrowserPonies.setFps(BrowserPoniesConfig.fps);
-		}
-		if ('interactionInterval' in BrowserPoniesConfig) {
-			BrowserPonies.setInteractionInterval(BrowserPoniesConfig.interactionInterval);
-		}
-		if ('audioEnabled' in BrowserPoniesConfig) {
-			BrowserPonies.setAudioEnabled(BrowserPoniesConfig.audioEnabled);
-		}
-		if ('preloadAll' in BrowserPoniesConfig) {
-			BrowserPonies.setPreloadAll(BrowserPoniesConfig.preloadAll);
-		}
-		if (BrowserPoniesConfig.ponies) {
-			BrowserPonies.addPonies(BrowserPoniesConfig.ponies);
-		}
-		if (BrowserPoniesConfig.interactions) {
-			BrowserPonies.addInteractions(BrowserPoniesConfig.interactions);
-		}
-		if (BrowserPoniesConfig.spawn) {
-			for (var name in BrowserPoniesConfig.spawn) {
-				BrowserPonies.spawn(name, BrowserPoniesConfig.spawn[name]);
-			}
-		}
-	}
-})();
+if (typeof(BrowserPoniesConfig) !== "undefined") {
+	BrowserPonies.loadConfig(BrowserPoniesConfig);
+}

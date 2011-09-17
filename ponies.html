@@ -2,6 +2,32 @@
 <html>
 <head>
 <title>OMG Pwnies!</title>
+<style type="text/css">
+#ponylist {
+	width: 400px;
+	max-height: 400px;
+	overflow: auto;
+	list-style: none;
+}
+
+#ponylist li {
+	margin-bottom: 40px;
+}
+
+#ponylist input[type="text"] {
+	text-align: right;
+}
+
+.ponyname {
+	font-weight: bold;
+}
+
+.ponyimg {
+	min-width: 200px;
+	text-align: center;
+	display: inline-block;
+}
+</style>
 <!--[if IE]>
 <script type="text/javascript" src="http://stringencoders.googlecode.com/svn-history/r230/trunk/javascript/base64.js"></script>
 <script type="text/javascript">
@@ -13,14 +39,15 @@ if (!window.atob) window.atob = base64.decode;
 <script type="text/javascript" src="browserponies.js"></script>
 
 <script type="text/javascript">
+// <!--
 function convertPonies () {
 	try {
-		var what = document.getElementById('what').value;
-		var src = document.getElementById('input').value;
+		var what = BrowserPonies.$('what').value;
+		var src = BrowserPonies.$('input').value;
 		var converted = what === 'Pony' ?
-			BrowserPonies.convertPony(src, document.getElementById('baseurl').value) :
+			BrowserPonies.convertPony(src, BrowserPonies.$('baseurl').value) :
 			BrowserPonies.convertInteractions(src);
-		document.getElementById('output').value = JSON.stringify(converted);
+		BrowserPonies.$('output').value = JSON.stringify(converted);
 	}
 	catch (e) {
 		console.error(e);
@@ -30,11 +57,11 @@ function convertPonies () {
 
 function escapePonies () {
 	try {
-		var what = document.getElementById('what').value;
-		var src = document.getElementById('input').value;
-		document.getElementById('output').value = JSON.stringify(
+		var what = BrowserPonies.$('what').value;
+		var src = BrowserPonies.$('input').value;
+		BrowserPonies.$('output').value = JSON.stringify(
 			what === 'Pony' ?
-				{ini: src, baseurl: document.getElementById('baseurl').value} :
+				{ini: src, baseurl: BrowserPonies.$('baseurl').value} :
 				src);
 	}
 	catch (e) {
@@ -42,9 +69,76 @@ function escapePonies () {
 		alert("Error during Conversion:\n"+e.name+": "+e.message);
 	}
 }
+
+function $x (xpath, context) {
+	var nodes = [];
+	try {
+		var doc = (context && context.ownerDocument) || document;
+		var results = doc.evaluate(xpath, context || doc, null, XPathResult.ANY_TYPE, null);
+		var node;
+		while (node = results.iterateNext())
+			nodes.push(node);
+	} catch (e) {
+		console.error(e);
+	}
+	return nodes;
+}
+
+function init () {
+	if (BrowserPonies.HasAudio) {
+		BrowserPonies.$('audiosupport').innerHTML = "(Your browser supports HTML 5 Audio.)";
+	}
+
+	var list = BrowserPonies.$('ponylist');
+	var ponies = BrowserPonies.ponies();
+	var names = [];
+
+	for (var name in ponies) {
+		names.push(name);
+	}
+	names.sort();
+
+	list.appendChild(render({
+		name: 'Random Pony',
+		behaviors: [{rightimage:'random.png'}]
+	}));
+	for (var i = 0, n = names.length; i < n; ++ i) {
+		list.appendChild(render(ponies[names[i]]));
+	}
+}
+
+function render (pony) {
+	var tag = BrowserPonies.tag;
+	var input_id = 'pony_'+pony.name.toLowerCase().replace(/[^a-z0-9]/ig,'_')+'_count';
+	var input = tag('input',{type:'text',value:'0',name:'count',id:input_id,size:3,onchange:function () {
+		this.value = String(Math.min(parseInt(this.value),0));
+		// TODO: generate bookmarklet
+	}});
+	
+	return tag('li',
+		tag('div',{'class':'ponyname'},pony.name),
+		tag('div',{'class':'ponyimg'},
+			tag('img',{src:pony.behaviors[0].rightimage})),
+		tag('label',{'for':input_id},'Count: '),
+		input,
+		tag('button',{onclick:function () {
+			this.value = String(parseInt(this.value)+1);
+		}.bind(input)},'+'),
+		tag('button',{onclick:function () {
+			this.value = String(Math.max(parseInt(this.value)-1,0));
+		}.bind(input)},'-'));
+}
+
+function setAllZero () {
+	var inputs = $x("//input[@name='count']",BrowserPonies.$('ponylist'));
+	for (var i = 0, n = inputs.length; i < n; ++ i) {
+		inputs[i].value = "0";
+	}
+}
+// -->
 </script>
 </head>
-<body>
+<body onload="init();">
 <h1>OMG Pwnies!</h1>
 <p>
 <button onclick="BrowserPonies.start();">Start</button>
@@ -52,9 +146,28 @@ function escapePonies () {
 <button onclick="BrowserPonies.pause();">Pause</button>
 <button onclick="BrowserPonies.resume();">Resume</button>
 </p>
+<h2>Make a Bookmarklet</h2>
+<p>
+<a href="javascript:void(0)" id="bookmarklet">Drag this into your Bookmark Toolbar</a><br/>
+</p
+>
+<p>
+<input type="checkbox" id="enableaudio"/>
+<label for="enableaudio">Enable Audio</label>
+<span id="audiosupport">(Your Browser does not support HTML5 Audio. Get a
+<a href="http://www.google.com/chrome" title="Goolge Chrome or ...">better</a>
+<a href="http://www.mozilla.org/firefox/" title="... Mozilla Firefox">browser</a>.)</span>
+</p>
+
+<p>
+<button onclick="setAllZero();">Set all Ponies to 0</button>
+<ul id="ponylist"></ul>
+</p>
+
+<h2>Convert INI to JSON</h2>
 <p>
 <label for="input">Pony.ini / Interactions.ini:</label>
-<select id="what" onchange="document.getElementById('baseurlcont').style.visibility = this.value === 'Pony' ? '' : 'hidden';">
+<select id="what" onchange="BrowserPonies.$('baseurlcont').style.visibility = this.value === 'Pony' ? '' : 'hidden';">
 <option selected="selected">Pony</option>
 <option>Interactions</option>
 </select>
