@@ -680,6 +680,7 @@ var BrowserPonies = (function () {
 	var resource_count = 0;
 	var resource_loaded_count = 0;
 	var onload_callbacks = [];
+	var onprogress_callbacks = [];
 
 	var loadImage = function (url,observer) {
 		var image = new Image();
@@ -730,6 +731,9 @@ var BrowserPonies = (function () {
 					resource_loaded_count * 100 / resource_count,
 					resource_loaded_count, resource_count,
 					url));
+				for (var i = 0, n = onprogress_callbacks.length; i < n; ++ i) {
+					onprogress_callbacks[i](resource_loaded_count, resource_count, url);
+				}
 				for (var i = 0, n = loader.callbacks.length; i < n; ++ i) {
 					loader.callbacks[i](loader.object);
 				}
@@ -763,6 +767,16 @@ var BrowserPonies = (function () {
 			onload_callbacks.push(callback);
 		}
 	};
+
+	var onprogress = function (callback) {
+		onprogress_callbacks.push(callback);
+	};
+
+	onprogress(function (resource_loaded_count, resource_count, url) {
+		if (showLoadProgress) {
+			// TODO
+		}
+	});
 
 	var Pony = function Pony (pony) {
 		this.baseurl = globalBaseUrl + pony.baseurl;
@@ -1850,6 +1864,7 @@ var BrowserPonies = (function () {
 	};
 
 	var preloadAll = false;
+	var showLoadProgress = false;
 	var audioEnabled = false;
 	var globalBaseUrl = absUrl('');
 	var globalSpeed = 3; // why is it too slow otherwise?
@@ -2209,7 +2224,6 @@ var BrowserPonies = (function () {
 				this.preloadSpawned();
 			}
 			onload(function () {
-//				getOverlay();
 				if (timer === null) {
 					lastTime = Date.now();
 					timer = setInterval(tick, interval);
@@ -2268,6 +2282,12 @@ var BrowserPonies = (function () {
 		isPreloadAll: function () {
 			return preloadAll;
 		},
+		setShowLoadProgress: function (show) {
+			showLoadProgress = show;
+		},
+		isShowLoadProgress: function () {
+			return showLoadProgress;
+		},
 		running: function () {
 			return timer !== null;
 		},
@@ -2298,6 +2318,9 @@ var BrowserPonies = (function () {
 			}
 			if ('preloadAll' in config) {
 				this.setPreloadAll(config.preloadAll);
+			}
+			if ('showLoadProgress' in config) {
+				this.setShowLoadProgress(config.showLoadProgress);
 			}
 			if (config.ponies) {
 				this.addPonies(config.ponies);
@@ -2338,6 +2361,7 @@ var BrowserPonies = (function () {
 			config.interactionInterval = this.getInteractionInterval();
 			config.audioEnabled = this.isAudioEnabled();
 			config.preloadAll = this.isPreloadAll();
+			config.showLoadProgress = this.isShowLoadProgress();
 			// TODO: optionally dump ponies and interactions
 			config.spawn = {};
 			for (var name in ponies) {
@@ -2351,6 +2375,7 @@ var BrowserPonies = (function () {
 		},
 
 		// expose a few utils:
+		onprogress:    onprogress,
 		extend:        extend,
 		tag:           extend(tag,{add:add}),
 		format:        format,

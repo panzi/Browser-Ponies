@@ -42,19 +42,24 @@ if (!window.atob) window.atob = base64.decodeo;
 </head>
 <body onload="init();">
 <h1>OMG Pwnies!</h1>
+<p>Try it!</p>
 <p>
 <a href="javascript:BrowserPonies.start();void(0)">Start</a>
 <a href="javascript:BrowserPonies.stop();void(0)">Stop</a>
 <a href="javascript:BrowserPonies.pause();void(0)">Pause</a>
 <a href="javascript:BrowserPonies.resume();void(0)">Resume</a>
+<a href="javascript:BrowserPonies.unspawnAll();BrowserPonies.stop();void(0)">Remove all Ponies</a>
 </p>
 <h2>Make a Bookmarklet</h2>
 <p>
 Drag this into your Bookmark Toolbar: <a href="javascript:void(0)" id="bookmarklet">Ponies!</a>
 </p>
 <p>
+You can also bookmark the control links above in order to have control over ponies on any website.
+</p>
+<p>
 <label for="embedcode">Or paste this into your webpage:</label><br/>
-<textarea id="embedcode" onclick="this.select();">test test</textarea>
+<textarea id="embedcode" onclick="this.select();"></textarea>
 </p>
 
 <p>
@@ -77,7 +82,6 @@ Drag this into your Bookmark Toolbar: <a href="javascript:void(0)" id="bookmarkl
 	onchange="intFieldChanged.call(this,event);"/>%
 <button onclick="increaseIntField.call($('speak'));">+</button>
 <button onclick="decreaseIntField.call($('speak'));">&ndash;</button>
-
 </p>
 
 <p>
