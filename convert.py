@@ -5,6 +5,7 @@ import os
 import json
 import chardet
 import codecs
+import urllib
 
 if os.path.sep != '/':
 	def normpath(path):
@@ -34,7 +35,7 @@ def convert(files,out):
 		dirname, filename = os.path.split(filepath)
 		with open(filepath,'rb') as f:
 			data = IGNORE.sub("", decode(f.read())).replace("\r\n","\n")
-			ponies.append({'ini': data, 'baseurl': normpath(dirname)+"/"})
+			ponies.append({'ini': data, 'baseurl': urllib.quote(normpath(dirname)+"/")})
 	json.dump(ponies,out)
 	out.write("\n")
 

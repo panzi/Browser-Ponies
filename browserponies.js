@@ -268,7 +268,7 @@ var BrowserPonies = (function () {
 			/</g, '&lt;').replace(/>/g, '&gt;').replace(
 			/"/g, '&quot;').replace(/'/g, '&apos;');
 	};
-
+	
 	var absUrl = function (url) {
 		if ((/^\/\//).test(url)) {
 			return window.location.protocol+url;
@@ -720,32 +720,38 @@ var BrowserPonies = (function () {
 			++ resource_count;
 			var loader = resources[url] = {
 				loaded: false,
-				callbacks: callback ? [callback] : [],
-				object: load(url, function () {
-					loader.loaded = true;
-					++ resource_loaded_count;
-					console.log(format('%3.0f%% loaded %d of %d: %s',
-						resource_loaded_count * 100 / resource_count,
-						resource_loaded_count, resource_count,
-						url));
-					for (var i = 0, n = loader.callbacks.length; i < n; ++ i) {
-						loader.callbacks[i](loader.object);
-					}
-					delete loader.callbacks;
-					
-					if (resource_loaded_count === resource_count) {
-						for (var i = 0, n = onload_callbacks.length; i < n; ++ i) {
-							onload_callbacks[i]();
-						}
-						onload_callbacks = [];
-					}
-				})
+				callbacks: callback ? [callback] : []
 			};
+
+			loader.object = load(url, function () {
+				loader.loaded = true;
+				++ resource_loaded_count;
+				console.log(format('%3.0f%% loaded %d of %d: %s',
+					resource_loaded_count * 100 / resource_count,
+					resource_loaded_count, resource_count,
+					url));
+				for (var i = 0, n = loader.callbacks.length; i < n; ++ i) {
+					loader.callbacks[i](loader.object);
+				}
+				delete loader.callbacks;
+					
+				if (resource_loaded_count === resource_count) {
+					for (var i = 0, n = onload_callbacks.length; i < n; ++ i) {
+						onload_callbacks[i]();
+					}
+					onload_callbacks = [];
+				}
+			});
 		}
 	};
 	
 	preload(function (url,observer) {
-		observe(window,'load',observer);
+		if (document.body) {
+			observer();
+		}
+		else {
+			observe(window,'load',observer);
+		}
 		return document;
 	}, document.location.href);
 
@@ -1845,7 +1851,7 @@ var BrowserPonies = (function () {
 
 	var preloadAll = false;
 	var audioEnabled = false;
-	var globalBaseUrl = '';
+	var globalBaseUrl = absUrl('');
 	var globalSpeed = 3; // why is it too slow otherwise?
 	var speakProbability = 0.25;
 	var interval = 40;
@@ -1919,8 +1925,8 @@ var BrowserPonies = (function () {
 							maxduration: parseFloat(row[3]),
 							minduration: parseFloat(row[4]),
 							speed:       parseFloat(row[5]),
-							rightimage:  row[6],
-							leftimage:   row[7],
+							rightimage:  encodeURIComponent(row[6]),
+							leftimage:   encodeURIComponent(row[7]),
 							movement:    row[8],
 							skip:        false,
 							effects:     []
@@ -1944,8 +1950,8 @@ var BrowserPonies = (function () {
 						var effect = {
 							name:        row[1],
 							behavior:    row[2],
-							rightimage:  row[3],
-							leftimage:   row[4],
+							rightimage:  encodeURIComponent(row[3]),
+							leftimage:   encodeURIComponent(row[4]),
 							duration:    parseFloat(row[5]),
 							delay:       parseFloat(row[6]),
 							rightloc:    row[7].trim(),
@@ -1971,7 +1977,7 @@ var BrowserPonies = (function () {
 								text: row[2].trim(),
 								skip: row[4] ? parseBoolean(row[4]) : false
 							};
-							if (row[3]) speak.file = row[3];
+							if (row[3]) speak.file = encodeURIComponent(row[3]);
 						}
 						pony.speeches.push(speak);
 						break;
@@ -2135,6 +2141,10 @@ var BrowserPonies = (function () {
 				ponies[name].instances = [];
 			}
 		},
+		clear: function () {
+			this.unspawnAll();
+			ponies = {};
+		},
 		preloadAll: function () {
 			for (var name in ponies) {
 				ponies[name].preload();
@@ -2170,6 +2180,9 @@ var BrowserPonies = (function () {
 					timer = setInterval(tick, interval);
 				}
 			});
+		},
+		timer: function () {
+			return timer;
 		},
 		stop: function () {
 			if (overlay) {
@@ -2214,7 +2227,7 @@ var BrowserPonies = (function () {
 			return interval;
 		},
 		setFps: function (fps) {
-			this.setInterval(fps * 1000);
+			this.setInterval(1000 / fps);
 		},
 		getFps: function () {
 			return 1000 / interval;
@@ -2265,6 +2278,9 @@ var BrowserPonies = (function () {
 			if ('baseurl' in config) {
 				this.setBaseUrl(config.baseurl);
 			}
+			if ('speed' in config) {
+				this.setSpeed(config.speed);
+			}
 			if ('speakProbability' in config) {
 				this.setSpeakProbability(config.speakProbability);
 			}
@@ -2294,6 +2310,44 @@ var BrowserPonies = (function () {
 					this.spawn(name, config.spawn[name]);
 				}
 			}
+			if ('spawnRandom' in config) {
+				this.spawnRandom(config.spawnRandom);
+			}
+			if (config.onload) {
+				if (Array.isArray(config.onload)) {
+					for (var i = 0, n = config.onload.length; i < n; ++ i) {
+						onload(config.onload[i]);
+					}
+				}
+				else {
+					onload(config.onload);
+				}
+			}
+			if (config.autostart && timer === null) {
+				this.start();
+			}
+		},
+		// currently excluding ponies and interactions
+		dumpConfig: function () {
+			var config = {};
+			config.baseurl = this.getBaseUrl();
+			config.speed = this.getSpeed();
+			config.speakProbability = this.getSpeakProbability();
+			config.interval = this.getInterval();
+			config.fps = this.getFps();
+			config.interactionInterval = this.getInteractionInterval();
+			config.audioEnabled = this.isAudioEnabled();
+			config.preloadAll = this.isPreloadAll();
+			// TODO: optionally dump ponies and interactions
+			config.spawn = {};
+			for (var name in ponies) {
+				var pony = ponies[name];
+				if (pony.instances.length > 0) {
+					config.spawn[pony.name] = pony.instances.length;
+				}
+			}
+
+			return config;
 		},
 
 		// expose a few utils:
@@ -2309,10 +2363,28 @@ var BrowserPonies = (function () {
 		BaseZIndex:    BaseZIndex,
 		onload:        onload,
 		$:             $,
-		randomSelect:  randomSelect
+		randomSelect:  randomSelect,
+		dataUrl:       dataUrl,
+		escapeXml:     escapeXml,
+		absUrl:        absUrl,
+		Base64:        Base64,
+		PonyINI:       PonyINI,
+		getOverlay:    getOverlay
 	};
 })();
 
 if (typeof(BrowserPoniesConfig) !== "undefined") {
 	BrowserPonies.loadConfig(BrowserPoniesConfig);
+	if (BrowserPoniesConfig.oninit) {
+		(function () {
+			if (Array.isArray(BrowserPoniesConfig.oninit)) {
+				for (var i = 0, n = BrowserPoniesConfig.oninit.length; i < n; ++ i) {
+					BrowserPoniesConfig.oninit[i]();
+				}
+			}
+			else {
+				BrowserPoniesConfig.oninit();
+			}
+		})();
+	}
 }

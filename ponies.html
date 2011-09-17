@@ -14,7 +14,7 @@
 	margin-bottom: 40px;
 }
 
-#ponylist input[type="text"] {
+input.number {
 	text-align: right;
 }
 
@@ -32,131 +32,52 @@
 <script type="text/javascript" src="http://stringencoders.googlecode.com/svn-history/r230/trunk/javascript/base64.js"></script>
 <script type="text/javascript">
 if (!window.btoa) window.btoa = base64.encode;
-if (!window.atob) window.atob = base64.decode;
+if (!window.atob) window.atob = base64.decodeo;
 </script>
 <![endif]-->
+<script type="text/javascript" src="https://raw.github.com/douglascrockford/JSON-js/master/json2.js"></script>
 <script type="text/javascript" src="ponycfg.js"></script>
 <script type="text/javascript" src="browserponies.js"></script>
-
-<script type="text/javascript">
-// <!--
-function convertPonies () {
-	try {
-		var what = BrowserPonies.$('what').value;
-		var src = BrowserPonies.$('input').value;
-		var converted = what === 'Pony' ?
-			BrowserPonies.convertPony(src, BrowserPonies.$('baseurl').value) :
-			BrowserPonies.convertInteractions(src);
-		BrowserPonies.$('output').value = JSON.stringify(converted);
-	}
-	catch (e) {
-		console.error(e);
-		alert("Error during Conversion:\n"+e.name+": "+e.message);
-	}
-}
-
-function escapePonies () {
-	try {
-		var what = BrowserPonies.$('what').value;
-		var src = BrowserPonies.$('input').value;
-		BrowserPonies.$('output').value = JSON.stringify(
-			what === 'Pony' ?
-				{ini: src, baseurl: BrowserPonies.$('baseurl').value} :
-				src);
-	}
-	catch (e) {
-		console.error(e);
-		alert("Error during Conversion:\n"+e.name+": "+e.message);
-	}
-}
-
-function $x (xpath, context) {
-	var nodes = [];
-	try {
-		var doc = (context && context.ownerDocument) || document;
-		var results = doc.evaluate(xpath, context || doc, null, XPathResult.ANY_TYPE, null);
-		var node;
-		while (node = results.iterateNext())
-			nodes.push(node);
-	} catch (e) {
-		console.error(e);
-	}
-	return nodes;
-}
-
-function init () {
-	if (BrowserPonies.HasAudio) {
-		BrowserPonies.$('audiosupport').innerHTML = "(Your browser supports HTML 5 Audio.)";
-	}
-
-	var list = BrowserPonies.$('ponylist');
-	var ponies = BrowserPonies.ponies();
-	var names = [];
-
-	for (var name in ponies) {
-		names.push(name);
-	}
-	names.sort();
-
-	list.appendChild(render({
-		name: 'Random Pony',
-		behaviors: [{rightimage:'random.png'}]
-	}));
-	for (var i = 0, n = names.length; i < n; ++ i) {
-		list.appendChild(render(ponies[names[i]]));
-	}
-}
-
-function render (pony) {
-	var tag = BrowserPonies.tag;
-	var input_id = 'pony_'+pony.name.toLowerCase().replace(/[^a-z0-9]/ig,'_')+'_count';
-	var input = tag('input',{type:'text',value:'0',name:'count',id:input_id,size:3,onchange:function () {
-		this.value = String(Math.min(parseInt(this.value),0));
-		// TODO: generate bookmarklet
-	}});
-	
-	return tag('li',
-		tag('div',{'class':'ponyname'},pony.name),
-		tag('div',{'class':'ponyimg'},
-			tag('img',{src:pony.behaviors[0].rightimage})),
-		tag('label',{'for':input_id},'Count: '),
-		input,
-		tag('button',{onclick:function () {
-			this.value = String(parseInt(this.value)+1);
-		}.bind(input)},'+'),
-		tag('button',{onclick:function () {
-			this.value = String(Math.max(parseInt(this.value)-1,0));
-		}.bind(input)},'-'));
-}
-
-function setAllZero () {
-	var inputs = $x("//input[@name='count']",BrowserPonies.$('ponylist'));
-	for (var i = 0, n = inputs.length; i < n; ++ i) {
-		inputs[i].value = "0";
-	}
-}
-// -->
-</script>
+<script type="text/javascript" src="gui.js"></script>
 </head>
 <body onload="init();">
 <h1>OMG Pwnies!</h1>
 <p>
-<button onclick="BrowserPonies.start();">Start</button>
-<button onclick="BrowserPonies.stop();">Stop</button>
-<button onclick="BrowserPonies.pause();">Pause</button>
-<button onclick="BrowserPonies.resume();">Resume</button>
+<a href="javascript:BrowserPonies.start();void(0)">Start</a>
+<a href="javascript:BrowserPonies.stop();void(0)">Stop</a>
+<a href="javascript:BrowserPonies.pause();void(0)">Pause</a>
+<a href="javascript:BrowserPonies.resume();void(0)">Resume</a>
 </p>
 <h2>Make a Bookmarklet</h2>
 <p>
-<a href="javascript:void(0)" id="bookmarklet">Drag this into your Bookmark Toolbar</a><br/>
-</p
->
+Drag this into your Bookmark Toolbar: <a href="javascript:void(0)" id="bookmarklet">Ponies!</a>
+</p>
 <p>
-<input type="checkbox" id="enableaudio"/>
+<label for="embedcode">Or paste this into your webpage:</label><br/>
+<textarea id="embedcode" onclick="this.select();">test test</textarea>
+</p>
+
+<p>
+<input type="checkbox" id="enableaudio" onchange="updateConfig();"/>
 <label for="enableaudio">Enable Audio</label>
-<span id="audiosupport">(Your Browser does not support HTML5 Audio. Get a
-<a href="http://www.google.com/chrome" title="Goolge Chrome or ...">better</a>
-<a href="http://www.mozilla.org/firefox/" title="... Mozilla Firefox">browser</a>.)</span>
+<span id="noaudio">(Your Browser does not support HTML5 Audio. Get a
+<a href="http://www.google.com/chrome" title="Goolge Chrome or&hellip;">better</a>
+<a href="http://www.mozilla.org/firefox/" title="&hellip;Mozilla Firefox">browser</a>.)</span>
+<span id="hasaudio" style="display:none;">(Your browser supports HTML 5 Audio.)</span>
+<br/>
+
+<label for="fps">Frames per Second:</label>
+<input type="text" class="number" id="fps" value="25" data-value="25" data-min="1" size="3"
+	onchange="intFieldChanged.call(this,event);"/>
+<button onclick="increaseIntField.call($('fps'));">+</button>
+<button onclick="decreaseIntField.call($('fps'));">&ndash;</button><br/>
+
+<label for="speak">Speak Probability:</label>
+<input type="text" class="number" id="speak" value="25" data-value="25" data-min="0" data-max="100" size="3"
+	onchange="intFieldChanged.call(this,event);"/>%
+<button onclick="increaseIntField.call($('speak'));">+</button>
+<button onclick="decreaseIntField.call($('speak'));">&ndash;</button>
+
 </p>
 
 <p>
@@ -167,7 +88,7 @@ function setAllZero () {
 <h2>Convert INI to JSON</h2>
 <p>
 <label for="input">Pony.ini / Interactions.ini:</label>
-<select id="what" onchange="BrowserPonies.$('baseurlcont').style.visibility = this.value === 'Pony' ? '' : 'hidden';">
+<select id="what" onchange="$('baseurlcont').style.visibility = this.value === 'Pony' ? '' : 'hidden';">
 <option selected="selected">Pony</option>
 <option>Interactions</option>
 </select>
