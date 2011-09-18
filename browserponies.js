@@ -1223,6 +1223,8 @@ var BrowserPonies = (function () {
 						padding:          "4px",
 						borderRadius:    "10px",
 						MozBorderRadius: "10px",
+						width:           'auto',
+						height:          'auto',
 						boxShadow:    "2px 2px 12px rgba(0,0,0,0.4)",
 						MozBoxShadow: "2px 2px 12px rgba(0,0,0,0.4)",
 						zIndex: String(BaseZIndex + 1000)
