@@ -34,7 +34,7 @@ function convertPonies () {
 function wrapPonies () {
 	try {
 		var what = $('what').value;
-		var src = $('input').value;
+		var src = $('input').value.replace(/^\s*'.*\n/gm,'').replace(/^\s*\n/gm,'');
 		$('output').value = JSON.stringify(
 			what === 'Pony' ?
 				{ini: src, baseurl: $('baseurl').value} :
@@ -109,7 +109,7 @@ function updateConfig () {
 	var code = '('+starter.toString()+')('+
 		JSON.stringify(PonyScripts)+','+
 		JSON.stringify(config)+');';
-	code = code.replace(/^\s*\/\/.*$/g,'').replace(/\s\s+/g,' ');
+	code = code.replace(/^\s*\/\/.*\n/gm,'').replace(/^\s*\n/gm,'');
 	$('bookmarklet').href = 'javascript:'+code+'void(0)';
 	$('embedcode').value = '\u003cscript type="text/javascript"\u003e\n//\u003c!--\n'+
 		code+'\n//--\u003e\n\u003c/script\u003e';
@@ -260,24 +260,19 @@ function decreaseNumberField (parse,step) {
 	updateConfig();
 }
 
-function curry (fn) {
-	var partial = Array.prototype.slice.call(arguments,1);
-	return function () {
-		return fn.apply(this,partial.concat(Array.prototype.slice.call(arguments)));
-	};
-}
+var partial = BrowserPonies.partial;
 
-var getIntFieldValue = curry(getNumberFieldValue,parseInt);
-var setIntFieldValue = curry(setNumberFieldValue,parseInt);
-var intFieldChanged = curry(numberFieldChanged,parseInt);
-var increaseIntField = curry(increaseNumberField,parseInt,1);
-var decreaseIntField = curry(decreaseNumberField,parseInt,1);
+var getIntFieldValue = partial(getNumberFieldValue,parseInt);
+var setIntFieldValue = partial(setNumberFieldValue,parseInt);
+var intFieldChanged = partial(numberFieldChanged,parseInt);
+var increaseIntField = partial(increaseNumberField,parseInt,1);
+var decreaseIntField = partial(decreaseNumberField,parseInt,1);
 
-var getFloatFieldValue = curry(getNumberFieldValue,parseFloat);
-var setFloatFieldValue = curry(setNumberFieldValue,parseFloat);
-var floatFieldChanged = curry(numberFieldChanged,parseFloat);
-var increaseFloatField = curry(increaseNumberField,parseFloat,0.1);
-var decreaseFloatField = curry(decreaseNumberField,parseFloat,0.1);
+var getFloatFieldValue = partial(getNumberFieldValue,parseFloat);
+var setFloatFieldValue = partial(setNumberFieldValue,parseFloat);
+var floatFieldChanged = partial(numberFieldChanged,parseFloat);
+var increaseFloatField = partial(increaseNumberField,parseFloat,0.1);
+var decreaseFloatField = partial(decreaseNumberField,parseFloat,0.1);
 
 function render (name,image,value) {
 	var tag = BrowserPonies.tag;

@@ -165,6 +165,13 @@ var BrowserPonies = (function () {
 			}
 		}
 		return s;
+	}
+	
+	var partial = function (fn) {
+		var args = Array.prototype.slice.call(arguments,1);
+		return function () {
+			return fn.apply(this,args.concat(Array.prototype.slice.call(arguments)));
+		};
 	};
 
 	var Opera = Object.prototype.toString.call(window.opera) === '[object Opera]';
@@ -517,7 +524,7 @@ var BrowserPonies = (function () {
 			}
 			else {
 				var pony = ponies[name];
-				for (var j = 0, m = this.behaviors.length; j < m;) {
+				for (var j = 0; j < this.behaviors.length;) {
 					var behavior = this.behaviors[j];
 					if (has(pony.behaviors_by_name, behavior)) {
 						 ++ j;
@@ -693,18 +700,18 @@ var BrowserPonies = (function () {
 
 	var loadImage = function (url,observer) {
 		var image = new Image();
-		observe(image, 'load',  observer);
-		observe(image, 'error', observer);
-		observe(image, 'abort', observer);
+		observe(image, 'load',  partial(observer,true));
+		observe(image, 'error', partial(observer,false));
+		observe(image, 'abort', partial(observer,false));
 		image.src = url;
 		return image;
 	};
 	
 	var loadAudio = function (url,observer) {
 		var audio = new Audio();
-		observe(audio, 'loadeddata', observer);
-		observe(audio, 'error', observer);
-		observe(audio, 'abort', observer);
+		observe(audio, 'loadeddata', partial(observer,true));
+		observe(audio, 'error', partial(observer,false));
+		observe(audio, 'abort', partial(observer,false));
 		audio.preload = 'auto';
 		audio.src = url;
 		return audio;
@@ -737,22 +744,30 @@ var BrowserPonies = (function () {
 				callbacks: callback ? [callback] : []
 			};
 
-			loader.object = load(url, function () {
+			loader.object = load(url, function (success) {
 				if (loader.loaded) {
 					console.error('resource loaded twice: '+url);
 					return;
 				}
 				loader.loaded = true;
 				++ resource_loaded_count;
-				console.log(format('%3.0f%% loaded %d of %d: %s',
-					resource_loaded_count * 100 / resource_count,
-					resource_loaded_count, resource_count,
-					url));
+				if (success) {
+					console.log(format('%3.0f%% loaded %d of %d: %s',
+						resource_loaded_count * 100 / resource_count,
+						resource_loaded_count, resource_count,
+						url));
+				}
+				else {
+					console.error(format('%3.0f%% error loading %d of %d: %s',
+						resource_loaded_count * 100 / resource_count,
+						resource_loaded_count, resource_count,
+						url));
+				}
 				for (var i = 0, n = onprogress_callbacks.length; i < n; ++ i) {
-					onprogress_callbacks[i](resource_loaded_count, resource_count, url);
+					onprogress_callbacks[i](resource_loaded_count, resource_count, url, success);
 				}
 				for (var i = 0, n = loader.callbacks.length; i < n; ++ i) {
-					loader.callbacks[i](loader.object);
+					loader.callbacks[i](loader.object, success);
 				}
 				delete loader.callbacks;
 					
@@ -2525,10 +2540,10 @@ var BrowserPonies = (function () {
 		},
 
 		// expose a few utils:
-		onprogress:    onprogress,
 		extend:        extend,
 		tag:           extend(tag,{add:add}),
 		format:        format,
+		partial:       partial,
 		observe:       observe,
 		stopObserving: stopObserving,
 		IE:            IE,
@@ -2537,6 +2552,7 @@ var BrowserPonies = (function () {
 		HasAudio:      HasAudio,
 		BaseZIndex:    BaseZIndex,
 		onload:        onload,
+		onprogress:    onprogress,
 		$:             $,
 		randomSelect:  randomSelect,
 		dataUrl:       dataUrl,
