@@ -1769,7 +1769,7 @@ var BrowserPonies = (function () {
 		}
 
 		this.current_imgurl = null;
-		this.img = tag(Gecko ? 'img' : 'iframe', {
+		this.img = tag(Gecko || Opera ? 'img' : 'iframe', {
 			draggable: 'false',
 			style: {
 				position:        "fixed",
@@ -1965,11 +1965,6 @@ var BrowserPonies = (function () {
 			var inst = instances[i];
 			var zIndex = String(BaseZIndex + i);
 			inst.img.style.zIndex = zIndex;
-			/* TODO
-			for (var j = 0, m = inst.length; j < m; ++ j) {
-				inst.effects[j].img.style.zIndex = zIndex;
-			}
-			*/
 		}
 	};
 
@@ -2196,16 +2191,41 @@ var BrowserPonies = (function () {
 				console.error("Pony "+pony.name+" has no behaviors.");
 				return false;
 			}
-			ponies[pony.name.toLowerCase()] = new Pony(pony);
+			var lowername = pony.name.toLowerCase();
+			if (has(ponies,lowername)) {
+				console.error("Pony "+pony.name+" already exists.");
+				return false;
+			}
+			ponies[lowername] = new Pony(pony);
 			return true;
+		},
+		removePonies: function (ponies) {
+			for (var i = 0, n = ponies.length; i < n; ++ i) {
+				this.removePony(ponies[i]);
+			}
+		},
+		removePony: function (name) {
+			var lowername = name.toLowerCase();
+			if (has(ponies,lowername)) {
+				ponies[lowername].unspawnAll();
+				delete ponies[lowername];
+			}
 		},
 		spawnRandom: function (count) {
 			var names = [];
 			for (var name in ponies) {
 				names.push(name);
 			}
-			var name = randomSelect(names);
-			return this.spawn(name, count) ? name : null;
+			if (count === undefined) count = 1;
+			var spawned = [];
+			while (count > 0) {
+				var name = randomSelect(names);
+				if (this.spawn(name)) {
+					spawned.push(name);
+				}
+				-- count;
+			}
+			return spawned;
 		},
 		spawn: function (name, count) {
 			var lowername = name.toLowerCase();
@@ -2251,7 +2271,7 @@ var BrowserPonies = (function () {
 			}
 			else {
 				while (count > 0) {
-					pony.instances[0].unspawn();
+					pony.instances[pony.instances.length - 1].unspawn();
 					-- count;
 				}
 			}
@@ -2341,10 +2361,12 @@ var BrowserPonies = (function () {
 			});
 		},
 		setInterval: function (ms) {
-			interval = ms;
-			if (timer !== null) {
-				clearInterval(timer);
-				timer = setInterval(tick, interval);
+			if (interval !== ms) {
+				interval = ms;
+				if (timer !== null) {
+					clearInterval(timer);
+					timer = setInterval(tick, interval);
+				}
 			}
 		},
 		getInterval: function () {

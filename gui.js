@@ -98,13 +98,12 @@ function dumpConfig () {
 			config.spawnRandom = value;
 		}
 		else {
-			config.spawn[name] = value;
+			config.spawn[name.toLowerCase()] = value;
 		}
 	}
 	return config;
 }
 
-var oldConfig = null;
 function updateConfig () {
 	var config = dumpConfig();
 	var code = '('+starter.toString()+')('+
@@ -115,12 +114,31 @@ function updateConfig () {
 	$('embedcode').value = '\u003cscript type="text/javascript"\u003e\n//\u003c!--\n'+
 		code+'\n//--\u003e\n\u003c/script\u003e';
 	
-	var fullReload = true;
-	if (oldConfig) {
-		// TODO: don't always respawn!
+	BrowserPonies.setFps(config.fps);
+	BrowserPonies.setSpeed(config.speed);
+	BrowserPonies.setAudioEnabled(config.audioEnabled);
+	BrowserPonies.setShowLoadProgress(config.showLoadProgress);
+	BrowserPonies.setSpeakProbability(config.speakProbability);
+
+	var random = config.spawnRandom || 0;
+	var ponies = BrowserPonies.ponies();
+	for (var name in ponies) {
+		var pony  = ponies[name];
+		var count = config.spawn[name] || 0;
+		var diff  = count - pony.instances.length;
+		
+		if (diff > 0) {
+			BrowserPonies.spawn(name, diff);
+		}
+		else if (random > -diff) {
+			random += diff;
+		}
+		else {
+			BrowserPonies.unspawn(name, -diff - random);
+			random = 0;
+		}
 	}
-	BrowserPonies.unspawnAll();
-	BrowserPonies.loadConfig(config);
+	BrowserPonies.spawnRandom(random);
 }
 
 var starter = function (srcs,cfg) {
@@ -129,7 +147,10 @@ var starter = function (srcs,cfg) {
 		-- cbcount;
 		if (cbcount === 0) {
 			BrowserPonies.setBaseUrl(cfg.baseurl);
-			BrowserPonies.loadConfig(BrowserPoniesBaseConfig);
+			if (!BrowserPoniesBaseConfig.loaded) {
+				BrowserPonies.loadConfig(BrowserPoniesBaseConfig);
+				BrowserPoniesBaseConfig.loaded = true;
+			}
 			BrowserPonies.loadConfig(cfg);
 			if (!BrowserPonies.running()) BrowserPonies.start();
 		}
@@ -281,4 +302,5 @@ function setAllZero () {
 	for (var i = 0, n = inputs.length; i < n; ++ i) {
 		setIntFieldValue(inputs[i], 0);
 	}
+	updateConfig();
 }

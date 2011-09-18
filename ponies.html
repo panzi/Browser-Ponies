@@ -7,6 +7,8 @@
 body {
 	margin: 0;
 	padding: 10px;
+	font-family: Sans-Serif;
+	font-size: 14px;
 
 background: #2d96c6;
 background: -moz-linear-gradient(top, #2d96c6 0%, #c9e6f4 100%);
@@ -48,6 +50,7 @@ a:hover {
 	display: inline-block; /* well just screw browsers that don't support this */
 	font-weight: bold;
 	padding: 5px 15px;
+	margin: 2px;
 	color: white;
 
 	border: 1px solid #70A5CB;
@@ -148,7 +151,7 @@ table, #embedcodewrap {
 }
 #ponylist {
 	margin: auto;
-	width: 390px;
+	width: 410px;
 	max-height: 400px;
 	overflow: auto;
 	list-style: none;
@@ -212,8 +215,8 @@ if (!window.atob) window.atob = base64.decodeo;
 
 <h2>What is this?</h2>
 <p>
-Browser Ponies lets you place ponies on websites (see the ponies here). You can create a bookmarklet
-which adds your favorite ponies below.
+Browser Ponies lets you place <a href="http://en.wikipedia.org/wiki/My_Little_Pony:_Friendship_Is_Magic">ponies</a>
+on websites (see the ponies here). You can create a bookmarklet which adds your favorite ponies to any website.
 </p>
 
 <p>
@@ -233,6 +236,12 @@ errors.
 <p>
 In Internet Explorer I managed to control GIF animation playback using iframes, but you can't make them
 transparent and borderless. In Chrome there is no problem.
+</p>
+
+<p>
+The artwork used is from <a href="http://desktopponies.co.cc/">Desktop Ponies</a>, <cite>My Little Pony: Friendship
+Is Magic</cite> is &copy; by <a href="http://www.hubworld.com/my-little-pony/shows/friendship-is-magic">Hasbro</a> and
+<a href="http://fyre-flye.deviantart.com/">Lauren Faust</a>.
 </p>
 
 <h2>Make a Bookmarklet</h2>
@@ -350,7 +359,7 @@ ponies are located. The image URLs are then constructed like this:
 </p>
 <p>
 <button onclick="wrapPonies();" title="Just wrap the INI into JSON. (smaller)">Wrap</button>
-<button onclick="convertPonies();" title="Convert them to the native Browser Pony JSON format. (larger)">Convert</button>
+<button onclick="convertPonies();" title="Convert the INI to the native Browser Pony JSON format. (larger)">Convert</button>
 </p>
 <p>
 <label for="output" class="codelabel">BrowserPonies JSON:</label><br/>
