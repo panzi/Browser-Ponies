@@ -444,6 +444,15 @@ var BrowserPonies = (function () {
 		DownRight: 7
 	};
 
+	var movementName = function (mov) {
+		for (var name in Movements) {
+			if (Movements[name] === mov) {
+				return name;
+			}
+		}
+		return "Not a Movement";
+	};
+
 	var AllowedMoves = {
 		None:               0,
 		HorizontalOnly:     1,
@@ -841,6 +850,7 @@ var BrowserPonies = (function () {
 					color:         'black',
 					fontWeight:     'bold',
 					fontSize:       '16px',
+					opacity:         '0.9',
 					visibility:   'hidden'
 				}}, progressbar.barcontainer, progressbar.label);
 			}
@@ -1202,16 +1212,20 @@ var BrowserPonies = (function () {
 		speak: function (currentTime,speech) {
 			if (speech.text) {
 //				console.log(this.pony.name+' says: '+speech.text);
-				var duration = Math.max(speech.text.length * 200, 800);
+				var duration = Math.max(speech.text.length * 150, 1000);
 				var text = tag('div',{
 					style: {
-						color:      "black",
-						background: "white",
-						position:   "fixed",
-						visibility: "hidden",
-						margin:     "0",
-						padding:    "0",
-						zIndex:     String(BaseZIndex + 1000)
+						color:          "black",
+						background:     "rgba(255,255,255,0.8)",
+						position:       "fixed",
+						visibility:    "hidden",
+						margin:             "0",
+						padding:          "4px",
+						borderRadius:    "10px",
+						MozBorderRadius: "10px",
+						boxShadow:    "2px 2px 12px rgba(0,0,0,0.4)",
+						MozBoxShadow: "2px 2px 12px rgba(0,0,0,0.4)",
+						zIndex: String(BaseZIndex + 1000)
 					}}, speech.text);
 				var rect = this.topLeftRect();
 				getOverlay().appendChild(text);
@@ -1962,7 +1976,7 @@ var BrowserPonies = (function () {
 	var audioEnabled = false;
 	var globalBaseUrl = absUrl('');
 	var globalSpeed = 3; // why is it too slow otherwise?
-	var speakProbability = 0.25;
+	var speakProbability = 0.15;
 	var interval = 40;
 	var interactionInterval = 500;
 	var ponies = {};

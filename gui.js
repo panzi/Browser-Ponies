@@ -31,7 +31,7 @@ function convertPonies () {
 	}
 }
 
-function escapePonies () {
+function wrapPonies () {
 	try {
 		var what = $('what').value;
 		var src = $('input').value;
@@ -51,6 +51,7 @@ function init () {
 	$('hasaudio').style.display = BrowserPonies.HasAudio ? "" : "none";
 	setIntFieldValue($('fps'), BrowserPonies.getFps());
 	setIntFieldValue($('speak'), Math.round(BrowserPonies.getSpeakProbability() * 100));
+	setFloatFieldValue($('speed'), BrowserPonies.getSpeed());
 	$('progressbar').checked = BrowserPonies.isShowLoadProgress();
 	$('enableaudio').checked = BrowserPonies.isAudioEnabled();
 
@@ -81,6 +82,7 @@ var PonyScripts = {
 function dumpConfig () {
 	var config = {baseurl: absUrl('')};
 	config.fps = getIntFieldValue($('fps'));
+	config.speed = getFloatFieldValue($('speed'));
 	config.audioEnabled = $('enableaudio').checked;
 	config.showLoadProgress = $('progressbar').checked;
 	config.speakProbability = getIntFieldValue($('speak')) / 100;
@@ -102,6 +104,7 @@ function dumpConfig () {
 	return config;
 }
 
+var oldConfig = null;
 function updateConfig () {
 	var config = dumpConfig();
 	var code = '('+starter.toString()+')('+
@@ -111,6 +114,11 @@ function updateConfig () {
 	$('bookmarklet').href = 'javascript:'+code+'void(0)';
 	$('embedcode').value = '\u003cscript type="text/javascript"\u003e\n//\u003c!--\n'+
 		code+'\n//--\u003e\n\u003c/script\u003e';
+	
+	var fullReload = true;
+	if (oldConfig) {
+		// TODO: don't always respawn!
+	}
 	BrowserPonies.unspawnAll();
 	BrowserPonies.loadConfig(config);
 }
@@ -161,24 +169,24 @@ var starter = function (srcs,cfg) {
 	callback();
 };
 
-function getIntFieldValue (field) {
+function getNumberFieldValue (parse, field) {
 	var value = field.getAttribute("data-value");
 	if (value === null) {
 		value = field.value;
 	}
-	return parseInt(value);
+	return parse(value);
 }
 
-function setIntFieldValue (field, value) {
+function setNumberFieldValue (parse, field, value) {
 	if (!isNaN(value)) {
-		value = parseInt(value);
+		value = parse(value);
 		var min = field.getAttribute("data-min");
 		var max = field.getAttribute("data-max");
 		if (min !== null) {
-			value = Math.max(parseInt(min),value);
+			value = Math.max(parse(min),value);
 		}
 		if (max !== null) {
-			value = Math.min(parseInt(max),value);
+			value = Math.min(parse(max),value);
 		}
 
 		field.value = String(value);
@@ -186,19 +194,19 @@ function setIntFieldValue (field, value) {
 	}
 }
 
-function intFieldChanged () {
+function numberFieldChanged (parse) {
 	if (isNaN(this.value)) {
 		this.value = this.getAttribute("data-value") || "0";
 	}
 	else {
-		var value = parseInt(this.value);
+		var value = parse(this.value);
 		var min = this.getAttribute("data-min");
 		var max = this.getAttribute("data-max");
 		if (min !== null) {
-			value = Math.max(parseInt(min),value);
+			value = Math.max(parse(min),value);
 		}
 		if (max !== null) {
-			value = Math.min(parseInt(max),value);
+			value = Math.min(parse(max),value);
 		}
 
 		this.value = String(value);
@@ -207,29 +215,48 @@ function intFieldChanged () {
 	updateConfig();
 }
 
-function increaseIntField () {
+function increaseNumberField (parse,step) {
 	var max = this.getAttribute("data-max");
 	if (max !== null) {
-		this.value = String(Math.min(parseInt(max),parseInt(this.value)+1));
+		this.value = String(Math.min(parse(max),parse(this.value)+step));
 	}
 	else {
-		this.value = String(parseInt(this.value)+1);
+		this.value = String(parse(this.value)+step);
 	}
 	this.setAttribute("data-value",this.value);
 	updateConfig();
 }
 
-function decreaseIntField () {
+function decreaseNumberField (parse,step) {
 	var min = this.getAttribute("data-min");
 	if (min !== null) {
-		this.value = String(Math.max(parseInt(min),parseInt(this.value)-1));
+		this.value = String(Math.max(parse(min),parse(this.value)-step));
 	}
 	else {
-		this.value = String(parseInt(this.value)-1);
+		this.value = String(parse(this.value)-step);
 	}
 	this.setAttribute("data-value",this.value);
 	updateConfig();
 }
+
+function curry (fn) {
+	var partial = Array.prototype.slice.call(arguments,1);
+	return function () {
+		return fn.apply(this,partial.concat(Array.prototype.slice.call(arguments)));
+	};
+}
+
+var getIntFieldValue = curry(getNumberFieldValue,parseInt);
+var setIntFieldValue = curry(setNumberFieldValue,parseInt);
+var intFieldChanged = curry(numberFieldChanged,parseInt);
+var increaseIntField = curry(increaseNumberField,parseInt,1);
+var decreaseIntField = curry(decreaseNumberField,parseInt,1);
+
+var getFloatFieldValue = curry(getNumberFieldValue,parseFloat);
+var setFloatFieldValue = curry(setNumberFieldValue,parseFloat);
+var floatFieldChanged = curry(numberFieldChanged,parseFloat);
+var increaseFloatField = curry(increaseNumberField,parseFloat,0.1);
+var decreaseFloatField = curry(decreaseNumberField,parseFloat,0.1);
 
 function render (name,image,value) {
 	var tag = BrowserPonies.tag;

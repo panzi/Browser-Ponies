@@ -1,13 +1,166 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
-<title>OMG Pwnies!</title>
+<meta http-equiv="content-type" content="text/html; charset=utf8"/>
+<title>Browser Ponies</title>
 <style type="text/css">
+body {
+	margin: 0;
+	padding: 10px;
+
+background: #2d96c6;
+background: -moz-linear-gradient(top, #2d96c6 0%, #c9e6f4 100%);
+background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#2d96c6), color-stop(100%,#c9e6f4));
+background: -webkit-linear-gradient(top, #2d96c6 0%,#c9e6f4 100%);
+background: -o-linear-gradient(top, #2d96c6 0%,#c9e6f4 100%);
+background: -ms-linear-gradient(top, #2d96c6 0%,#c9e6f4 100%);
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#c9e6f4', endColorstr='#c9e6f4',GradientType=0 );
+background: linear-gradient(top, #2d96c6 0%,#c9e6f4 100%);
+}
+body, option {
+	color: #294256;
+}
+h1 {
+	text-align: center;
+	margin: 0;
+}
+h1, h2, h3, h4, h5, h6 {
+	color: #458BC1;
+}
+#baseurl {
+	width: 220px;
+}
+a {
+	text-decoration: none;
+	font-weight: bold;
+	color: #245E8B;
+}
+a:visited {
+	color: #458BC1;
+}
+a:hover {
+	color: #72AEDB;
+}
+.codelabel {
+	font-weight: bold;
+}
+#controls a, button, #bookmarklet, select {
+	display: inline-block; /* well just screw browsers that don't support this */
+	font-weight: bold;
+	padding: 5px 15px;
+	color: white;
+
+	border: 1px solid #70A5CB;
+	text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.3);
+
+	border-radius: 20px;
+	-moz-border-radius: 20px;
+	
+	-moz-box-shadow: 2px 2px 5px #ccc;
+	-webkit-box-shadow: 2px 2px 5px #ccc;
+	box-shadow: 2px 2px 6px #ccc;
+
+	cursor: hand;
+	cursor: pointer;
+
+background: #b1dbed;
+background: -moz-linear-gradient(top, #b1dbed 0%, #4c92c4 100%);
+background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#b1dbed), color-stop(100%,#4c92c4));
+background: -webkit-linear-gradient(top, #b1dbed 0%,#4c92c4 100%);
+background: -o-linear-gradient(top, #b1dbed 0%,#4c92c4 100%);
+background: -ms-linear-gradient(top, #b1dbed 0%,#4c92c4 100%);
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#b1dbed', endColorstr='#4c92c4',GradientType=0 );
+background: linear-gradient(top, #b1dbed 0%,#4c92c4 100%);
+}
+#controls a:hover, button:hover, #bookmarklet:hover, select:hover {
+	border-color: #68B1E3;
+
+background: #c0e7f7;
+background: -moz-linear-gradient(top, #c0e7f7 0%, #61a4d3 100%);
+background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#c0e7f7), color-stop(100%,#61a4d3));
+background: -webkit-linear-gradient(top, #c0e7f7 0%,#61a4d3 100%);
+background: -o-linear-gradient(top, #c0e7f7 0%,#61a4d3 100%);
+background: -ms-linear-gradient(top, #c0e7f7 0%,#61a4d3 100%);
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#c0e7f7', endColorstr='#61a4d3',GradientType=0 );
+background: linear-gradient(top, #c0e7f7 0%,#61a4d3 100%);
+
+}
+#bookmarklet {
+	padding: 10px 30px;
+	font-size: 1.2em;
+}
+#bookmarkletwrapper {
+	text-align: center;
+}
+input, #ponylist button, table button {
+	padding: 3px 9px;
+	border-radius: 5px;
+	-moz-border-radius: 5px;
+}
+#controls, #zero {
+	text-align: center;
+}
+textarea.code {
+	width: 628px;
+}
+textarea {
+	margin: 0;
+	padding: 5px;
+	border-radius: 10px;
+	-moz-border-radius: 10px;
+}
+textarea, input {
+	border: 1px solid #8A8A8A;
+}
+pre.code {
+	margin-left: 20px;
+	margin-right: 20px;
+	padding: 15px;
+	border-radius: 20px;
+	-moz-border-radius: 20px;
+	color: white;
+	font-weight: bold;
+	background: #333333;
+}
+table, #embedcodewrap {
+	margin: auto;
+}
+#embedcodewrap {
+	width: 200px;
+}
+#embedcode {
+	width: 100%;
+	overflow: hidden;
+}
+#main {
+	width: 640px;
+	margin: auto;
+	background: white;
+	padding: 20px;
+	border-radius: 20px;
+	-moz-border-radius: 20px;
+	border: 5px solid #c9e6f4;
+}
+#footer {
+	text-align: center;
+	font-size: 0.8em;
+	color: #A1B4C3;
+}
 #ponylist {
-	width: 400px;
+	margin: auto;
+	width: 390px;
 	max-height: 400px;
 	overflow: auto;
 	list-style: none;
+	padding: 30px;
+
+	-webkit-box-shadow: inset 0 0 10px rgba(0,0,0,0.6);
+	-moz-box-shadow: inset 0 0 10px rgba(0,0,0,0.6);
+	box-shadow: inset 0 0 10px rgba(0,0,0,0.6);
+
+	-webkit-border-radius: 20px;
+	-moz-border-radius: 20px;
+	border-radius: 20px;
 }
 
 #ponylist li {
@@ -41,76 +194,171 @@ if (!window.atob) window.atob = base64.decodeo;
 <script type="text/javascript" src="gui.js"></script>
 </head>
 <body onload="init();">
-<h1>OMG Pwnies!</h1>
-<p>Try it!</p>
-<p>
-<a href="javascript:BrowserPonies.start();void(0)">Start</a>
-<a href="javascript:BrowserPonies.stop();void(0)">Stop</a>
-<a href="javascript:BrowserPonies.pause();void(0)">Pause</a>
-<a href="javascript:BrowserPonies.resume();void(0)">Resume</a>
-<a href="javascript:BrowserPonies.unspawnAll();BrowserPonies.stop();void(0)">Remove all Ponies</a>
+<div id="main">
+
+<!--
+<img src="ponies/Applejack/trotcycle_AJ_right.gif" style="float:left;"/>
+<img src="ponies/Rainbow%20Dash/flyzoom_rainbow_left.gif" style="float:right;"/>
+-->
+
+<h1>Browser Ponies</h1>
+<p id="controls">
+<a href="javascript:BrowserPonies.start();void(0)" title="Start">&#x25B6;</a>
+<a href="javascript:BrowserPonies.stop();void(0)" title="Stop">&#x25A0;</a>
+<a href="javascript:BrowserPonies.pause();void(0)" title="Pause">&#x25AE;&#x25AE;</a>
+<a href="javascript:BrowserPonies.resume();void(0)" title="Resume">&#x25AE;&#x25B6;</a>
+<a href="javascript:BrowserPonies.unspawnAll();BrowserPonies.stop();void(0)" title="Remove all Ponies">&times;</a>
 </p>
-<h2>Make a Bookmarklet</h2>
+
+<h2>What is this?</h2>
 <p>
-Drag this into your Bookmark Toolbar: <a href="javascript:void(0)" id="bookmarklet">Ponies!</a>
-</p>
-<p>
-You can also bookmark the control links above in order to have control over ponies on any website.
-</p>
-<p>
-<label for="embedcode">Or paste this into your webpage:</label><br/>
-<textarea id="embedcode" onclick="this.select();"></textarea>
+Browser Ponies lets you place ponies on websites (see the ponies here). You can create a bookmarklet
+which adds your favorite ponies below.
 </p>
 
 <p>
-<input type="checkbox" id="enableaudio" onchange="updateConfig();"/>
-<label for="enableaudio">Enable Audio</label>
+This is a reimplementation of <a href="http://desktopponies.co.cc/">Desktop Ponies</a> in JavaScript.
+It doesn't behave exactly like the original but is close enough (no cursor avoidance and ponies wander
+off screen, though then they wander back in again).
+</p>
+
+<p>
+Browser Ponies work best with <a href="http://www.google.com/chrome">Google Chrome</a>, but also work
+ok in <a href="http://www.mozilla.org/firefox/">Mozilla Firefox</a>. Firefox has a bug concernig the
+animation speed of animated GIFs (I tried to work around this by shortening all effects). Also I found
+no way to control the animation playback of individual images in Firefox, which sometimes causes animation
+errors.
+</p>
+
+<p>
+In Internet Explorer I managed to control GIF animation playback using iframes, but you can't make them
+transparent and borderless. In Chrome there is no problem.
+</p>
+
+<h2>Make a Bookmarklet</h2>
+<p>Drag this link into your Bookmark Toolbar:</p>
+<p id="bookmarkletwrapper">
+<a href="javascript:void(0)" id="bookmarklet">Ponies!</a>
+</p>
+<p>Click it whenever you feel a website needs more ponies.</p>
+<p>You can also bookmark the control links above in order to have control over ponies on any website.</p>
+<p><label for="embedcode">Or paste this into your webpage:</label>
+<div id="embedcodewrap"><textarea id="embedcode" onclick="this.select();"></textarea></div>
+</p>
+
+<h3>Change settings and choose your ponies</h3>
+
+<table>
+<tbody>
+<tr>
+<td><input type="checkbox" id="enableaudio" onchange="updateConfig();"/></td>
+<td><label for="enableaudio">Enable Audio</label>
 <span id="noaudio">(Your Browser does not support HTML5 Audio. Get a
 <a href="http://www.google.com/chrome" title="Goolge Chrome or&hellip;">better</a>
 <a href="http://www.mozilla.org/firefox/" title="&hellip;Mozilla Firefox">browser</a>.)</span>
 <span id="hasaudio" style="display:none;">(Your browser supports HTML 5 Audio.)</span>
-<br/>
+</td>
+</tr>
+<tr>
+<td><input type="checkbox" id="progressbar" onchange="updateConfig();" checked/></td>
+<td><label for="progressbar">Show Progress Bar</label></td>
+</tr>
+</tbody>
+</table>
+<!--
+<img src="ponies/Fluttershy/stand_fluttershy_right.gif" style="float:left;"/>
+<img src="ponies/Pinkie/bounce_pinkiepie_left.gif" style="float:right;"/>
+-->
 
-<input type="checkbox" id="progressbar" onchange="updateConfig();" checked/>
-<label for="progressbar">Show Progress Bar</label>
-<br/>
+<table>
+<tbody>
+<tr>
+<td><label for="speed">Speed Multiplier:</label></td>
+<td>
+<input type="text" class="number" id="speed" value="3" data-value="3" data-min="0.1" size="3"
+	onchange="floatFieldChanged.call(this,event);"/>
+</td>
+<td></td>
+<td>
+<button onclick="increaseFloatField.call($('speed'));">+</button>
+<button onclick="decreaseFloatField.call($('speed'));">&ndash;</button>
+</td>
+</tr>
 
-<label for="fps">Frames per Second:</label>
-<input type="text" class="number" id="fps" value="25" data-value="25" data-min="1" size="3"
+<tr>
+<td><label for="speak">Speak Probability:</label></td>
+<td>
+<input type="text" class="number" id="speak" value="15"
+	data-value="15" data-min="0" data-max="100" size="3"
 	onchange="intFieldChanged.call(this,event);"/>
-<button onclick="increaseIntField.call($('fps'));">+</button>
-<button onclick="decreaseIntField.call($('fps'));">&ndash;</button><br/>
-
-<label for="speak">Speak Probability:</label>
-<input type="text" class="number" id="speak" value="25" data-value="25" data-min="0" data-max="100" size="3"
-	onchange="intFieldChanged.call(this,event);"/>%
+</td>
+<td>%</td>
+<td>
 <button onclick="increaseIntField.call($('speak'));">+</button>
 <button onclick="decreaseIntField.call($('speak'));">&ndash;</button>
-</p>
+</td>
+</tr>
 
-<p>
-<button onclick="setAllZero();">Set all Ponies to 0</button>
+<tr>
+<td><label for="fps">Frames per Second:</label></td>
+<td>
+<input type="text" class="number" id="fps" value="25" data-value="25" data-min="1" size="3"
+	onchange="intFieldChanged.call(this,event);"/>
+</td>
+<td></td>
+<td>
+<button onclick="increaseIntField.call($('fps'));">+</button>
+<button onclick="decreaseIntField.call($('fps'));">&ndash;</button>
+</td>
+</tr>
+</tbody>
+</table>
+
+<p id="zero"><button onclick="setAllZero();">Set all Ponies to 0</button></p>
+
 <ul id="ponylist"></ul>
+
+<h2>Advanced User Stuff</h2>
+
+<!--
+<img src="ponies/Rarity/trotcycle_rarity_right.gif" style="float:left;"/>
+<img src="ponies/Twilight/Read.gif" style="float:right;"/>
+-->
+
+<p>
+If you want to use your own ponies you can use this to convert the INI files into JSON files that can be
+used with Browser Ponies. I'll write later more how to use this. I'll probably add some user interface
+that helps you creating embed codes/bookmarklets that use your own ponies.
 </p>
 
-<h2>Convert INI to JSON</h2>
 <p>
-<label for="input">Pony.ini / Interactions.ini:</label>
+For now in case you understand JavaScript just look at <a href="basecfg.js">basecfg.js</a> and the
+<a href="#embedcode">embed code</a>. You need to replace basecfg.js and set the baseurl to where your
+ponies are located. The image URLs are then constructed like this:
+</p>
+<pre class="code">BrowserPoniesConfig.baseurl + pony.baseurl + behavior.rightimage</pre>
+<p>
+<label for="input" class="codelabel">Pony.ini / Interactions.ini:</label>
 <select id="what" onchange="$('baseurlcont').style.visibility = this.value === 'Pony' ? '' : 'hidden';">
 <option selected="selected">Pony</option>
 <option>Interactions</option>
 </select>
-<span id="baseurlcont"><label for="baseurl">Base URL:</label><input type="text" id="baseurl"/></span>
+<span id="baseurlcont"><label for="baseurl">Base URL:</label>
+<input type="text" id="baseurl"/></span>
 <br/>
-<textarea id="input" cols="100" rows="8"></textarea>
+<textarea class="code" id="input" rows="8"></textarea>
 </p>
 <p>
-<button onclick="escapePonies();">Escape</button>
-<button onclick="convertPonies();">Convert</button>
+<button onclick="wrapPonies();" title="Just wrap the INI into JSON. (smaller)">Wrap</button>
+<button onclick="convertPonies();" title="Convert them to the native Browser Pony JSON format. (larger)">Convert</button>
 </p>
 <p>
-<label for="output">BrowserPonies JSON:</label><br/>
-<textarea id="output" cols="100" rows="8"></textarea>
+<label for="output" class="codelabel">BrowserPonies JSON:</label><br/>
+<textarea class="code" id="output" rows="8"></textarea>
 </p>
+<div id="footer">
+&copy; 2011 Mathias Panzenb&ouml;ck
+</div>
+</div>
 </body>
 </html>

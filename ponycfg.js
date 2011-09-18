@@ -1,5 +1,5 @@
 var BrowserPoniesConfig = {
-	speakChance: 0.25,
+	autostart: true,
 	spawn: {
 /*		"Pinkie Pie": 1,
 		"Applejack": 1,
@@ -14,9 +14,9 @@ var BrowserPoniesConfig = {
 		"Fluttershy": 1,
 		"Rarity": 1,
 		"Parasprite": 0,
-		"Scootaloo": 1,
-		"Sweetie Belle": 1,
-		"Apple Bloom": 1
+		"Scootaloo": 0,
+		"Sweetie Belle": 0,
+		"Apple Bloom": 0
 //		*/
 	},
 	interactions: "fluttershy_photoshoot,\"Fluttershy\",0.5,100,{\"Elsie\",\"Photo Finish\"},True,{\"photo_shoot_start\"},120\nPinkie_Lures_Parasprites,\"Pinkie Pie\",0.35,125,{\"ParaSprite\",\"Princess Celestia\"},True,{\"parasprite_follow_circle\"},120\nCMC,\"Apple Bloom\",0.05,200,{\"Scootaloo\",\"Sweetie Belle\"},True,{\"CMC\"},300\nTheme 1,\"Princess Celestia\",0.2,125,{\"Applejack\",\"Fluttershy\",\"Pinkie Pie\",\"Rainbow Dash\",\"Rarity\",\"Twilight Sparkle\"},True,{\"theme 1\"},300\nmiss parents,\"Princess Luna\",0.2,125,{\"Filly Celestia\"},False,{\"miss parents 1\"},120\nalfalfa monster,\"Princess Luna\",0.2,125,{\"Filly Celestia\"},False,{\"alfalfa monster\"},60\nflapping,\"Princess Luna\",0.2,125,{\"Filly Celestia\"},False,{\"flapping\"},90\n",
