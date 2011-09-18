@@ -59,7 +59,7 @@ if (!('now' in Date)) {
 })();
 
 var BrowserPonies = (function () {
-	var BaseZIndex = 900000;
+	var BaseZIndex = 9000000;
 	var observe = document.addEventListener ?
 		function (element, event, handler) {
 			element.addEventListener(event, handler, false);
@@ -1053,16 +1053,21 @@ var BrowserPonies = (function () {
 	var Instance = function Instance () {};
 	Instance.prototype = {
 		setTopLeftPosition: function (pos) {
-			this.img.style.left = Math.round(pos.x)+'px';
-			this.img.style.top  = Math.round(pos.y)+'px';
+			this.img.style.left   = Math.round(pos.x)+'px';
+			this.img.style.top    = Math.round(pos.y)+'px';
+			this.img.style.zIndex = Math.round(BaseZIndex+pos.y+this.current_size.height);
 		},
 		setPosition: function (pos) {
-			this.img.style.left = Math.round(pos.x - this.current_size.width  * 0.5)+'px';
-			this.img.style.top  = Math.round(pos.y - this.current_size.height * 0.5)+'px';
+			var top = Math.round(pos.y - this.current_size.height * 0.5);
+			this.img.style.left   = Math.round(pos.x - this.current_size.width * 0.5)+'px';
+			this.img.style.top    = top+'px';
+			this.img.style.zIndex = Math.round(BaseZIndex+top+this.current_size.height);
 		},
 		moveBy: function (offset) {
-			this.img.style.left = Math.round(this.img.offsetLeft + offset.x)+'px';
-			this.img.style.top  = Math.round(this.img.offsetTop  + offset.y)+'px';
+			var top = Math.round(this.img.offsetTop + offset.y);
+			this.img.style.left   = Math.round(this.img.offsetLeft + offset.x)+'px';
+			this.img.style.top    = top+'px';
+			this.img.style.zIndex = Math.round(BaseZIndex+top+this.current_size.height);
 		},
 		clipToScreen: function () {
 			this.setPosition(clipToScreen(this.rect()));
@@ -1227,7 +1232,7 @@ var BrowserPonies = (function () {
 						height:          'auto',
 						boxShadow:    "2px 2px 12px rgba(0,0,0,0.4)",
 						MozBoxShadow: "2px 2px 12px rgba(0,0,0,0.4)",
-						zIndex: String(BaseZIndex + 1000)
+						zIndex: String(BaseZIndex + 2000)
 					}}, speech.text);
 				var rect = this.topLeftRect();
 				getOverlay().appendChild(text);
@@ -1780,7 +1785,7 @@ var BrowserPonies = (function () {
 				margin:          "0",
 				padding:         "0",
 				backgroundColor: "transparent",
-				zIndex:          String(BaseZIndex + 1000)
+				zIndex:          String(BaseZIndex)
 			}});
 		if (IE) {
 			this.img.frameborder  = "0";
@@ -1956,16 +1961,6 @@ var BrowserPonies = (function () {
 			instances[i].update(time, span, winsize);
 		}
 		lastTime = time;
-
-		// fix stacking order:
-		instances.sort(function (lhs, rhs) {
-			return (lhs.img.offsetTop + lhs.img.offsetHeight) - (rhs.img.offsetTop + rhs.img.offsetHeight);
-		});
-		for (var i = 0, n = instances.length; i < n; ++ i) {
-			var inst = instances[i];
-			var zIndex = String(BaseZIndex + i);
-			inst.img.style.zIndex = zIndex;
-		}
 	};
 
 	var preloadAll = false;
