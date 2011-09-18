@@ -693,7 +693,9 @@ var BrowserPonies = (function () {
 
 	var loadImage = function (url,observer) {
 		var image = new Image();
-		observe(image, 'load', observer);
+		observe(image, 'load',  observer);
+		observe(image, 'error', observer);
+		observe(image, 'abort', observer);
 		image.src = url;
 		return image;
 	};
@@ -701,6 +703,8 @@ var BrowserPonies = (function () {
 	var loadAudio = function (url,observer) {
 		var audio = new Audio();
 		observe(audio, 'loadeddata', observer);
+		observe(audio, 'error', observer);
+		observe(audio, 'abort', observer);
 		audio.preload = 'auto';
 		audio.src = url;
 		return audio;
@@ -734,6 +738,10 @@ var BrowserPonies = (function () {
 			};
 
 			loader.object = load(url, function () {
+				if (loader.loaded) {
+					console.error('resource loaded twice: '+url);
+					return;
+				}
 				loader.loaded = true;
 				++ resource_loaded_count;
 				console.log(format('%3.0f%% loaded %d of %d: %s',
@@ -787,7 +795,7 @@ var BrowserPonies = (function () {
 		centerProgressbar();
 		setTimeout(function () {
 			if (progressbar && !progressbar.finished) {
-				progressbar.container.style.visibility = '';
+				progressbar.container.style.display = '';
 			}
 		}, 250);
 		observe(window,'resize',centerProgressbar);
@@ -796,11 +804,22 @@ var BrowserPonies = (function () {
 
 	var centerProgressbar = function () {
 		var winsize = windowSize();
+		var hide = false;
+		if (progressbar.container.style.display === "none") {
+			hide = true;
+			progressbar.container.style.visibility = 'hidden';
+			progressbar.container.style.display = '';
+		}
 		var width  = progressbar.container.offsetWidth;
 		var height = progressbar.container.offsetHeight;
+		var labelHeight = progressbar.label.offsetHeight;
+		if (hide) {
+			progressbar.container.style.display = 'none';
+			progressbar.container.style.visibility = '';
+		}
 		progressbar.container.style.left = Math.round((winsize.width  - width)  * 0.5)+'px';
 		progressbar.container.style.top  = Math.round((winsize.height - height) * 0.5)+'px';
-		progressbar.label.style.top = Math.round((height - progressbar.label.offsetHeight) * 0.5)+'px';
+		progressbar.label.style.top = Math.round((height - labelHeight) * 0.5)+'px';
 	};
 
 	onprogress(function (resource_loaded_count, resource_count, url) {
@@ -851,7 +870,11 @@ var BrowserPonies = (function () {
 					fontWeight:     'bold',
 					fontSize:       '16px',
 					opacity:         '0.9',
-					visibility:   'hidden'
+					display:        'none'
+				}, onclick: function () {
+					if (progressbar && progressbar.container.parentNode) {
+						progressbar.container.parentNode.removeChild(progressbar.container);
+					}
 				}}, progressbar.barcontainer, progressbar.label);
 			}
 			
