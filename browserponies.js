@@ -89,10 +89,10 @@ var BrowserPonies = (function () {
 
 	var stopObserving = document.removeEventListener ?
 		function (element, event, handler) {
-			element.removeEventListener(event, hander, false);
+			element.removeEventListener(event, handler, false);
 		} :
 		function (element, event, handler) {
-			element.detachEvent('on'+event,handler._eventHandlingWrapper);
+			element.detachEvent('on'+event, handler._eventHandlingWrapper);
 		};
 
 	var windowSize = 'innerWidth' in window ?
@@ -772,9 +772,103 @@ var BrowserPonies = (function () {
 		onprogress_callbacks.push(callback);
 	};
 
+	var progressbar = null;
+	var insertProgressbar = function () {
+		document.body.appendChild(progressbar.container);
+		centerProgressbar();
+		setTimeout(function () {
+			if (progressbar && !progressbar.finished) {
+				progressbar.container.style.visibility = '';
+			}
+		}, 250);
+		observe(window,'resize',centerProgressbar);
+		stopObserving(window,'load',insertProgressbar);
+	};
+
+	var centerProgressbar = function () {
+		var winsize = windowSize();
+		var width  = progressbar.container.offsetWidth;
+		var height = progressbar.container.offsetHeight;
+		progressbar.container.style.left = Math.round((winsize.width  - width)  * 0.5)+'px';
+		progressbar.container.style.top  = Math.round((winsize.height - height) * 0.5)+'px';
+		progressbar.label.style.top = Math.round((height - progressbar.label.offsetHeight) * 0.5)+'px';
+	};
+
 	onprogress(function (resource_loaded_count, resource_count, url) {
-		if (showLoadProgress) {
-			// TODO
+		if (showLoadProgress || progressbar) {
+			if (!progressbar) {
+				progressbar = {
+					bar: tag('div', {style:{
+						margin:            '0',
+						padding:           '0',
+						borderStyle:    'none',
+						width:             '0',
+						height:         '100%',
+						background:  '#9BD6F4',
+						MozBorderRadius: '5px',
+						borderRadius:    '5px',
+					}}),
+					label: tag('div', {style:{
+						position: 'absolute',
+						margin:          '0',
+						padding:         '0',
+						borderStyle:  'none',
+						top:           '0px',
+						left:          '0px',
+						width:        '100%',
+						textAlign:  'center'
+					}})
+				};
+				progressbar.barcontainer = tag('div', {style:{
+					margin:            '0',
+					padding:           '0',
+					borderStyle:    'none',
+					width:          '100%',
+					height:         '100%',
+					background:  '#D8D8D8',
+					MozBorderRadius: '5px',
+					borderRadius:    '5px'
+				}}, progressbar.bar);
+				progressbar.container = tag('div', {style:{
+					position:      'fixed',
+					width:         '450px',
+					height:         '30px',
+					background:    'white',
+					padding:        '10px',
+					margin:            '0',
+					MozBorderRadius: '5px',
+					borderRadius:    '5px',
+					color:         'black',
+					fontWeight:     'bold',
+					fontSize:       '16px',
+					visibility:   'hidden'
+				}}, progressbar.barcontainer, progressbar.label);
+			}
+			
+			progressbar.finished = resource_loaded_count === resource_count;
+			var progress = resource_loaded_count / resource_count;
+			progressbar.bar.style.width = Math.round(progress * 450)+'px';
+			progressbar.label.innerHTML = format('Loading Ponies&hellip; %d%%',progress * 100);
+
+			if (!progressbar.container.parentNode) {
+				if (document.body) {
+					insertProgressbar();
+				}
+				else {
+					observe(window,'load',insertProgressbar);
+				}
+			}
+
+			if (progressbar.finished) {
+				setTimeout(function () {
+					if (progressbar && progressbar.container.parentNode) {
+						progressbar.container.parentNode.removeChild(progressbar.container);
+					}
+					progressbar = null;
+					stopObserving(window,'resize',centerProgressbar);
+					stopObserving(window,'load',insertProgressbar);
+				}, 500);
+			}
 		}
 	});
 
@@ -1864,7 +1958,7 @@ var BrowserPonies = (function () {
 	};
 
 	var preloadAll = false;
-	var showLoadProgress = false;
+	var showLoadProgress = true;
 	var audioEnabled = false;
 	var globalBaseUrl = absUrl('');
 	var globalSpeed = 3; // why is it too slow otherwise?

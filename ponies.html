@@ -71,6 +71,10 @@ You can also bookmark the control links above in order to have control over poni
 <span id="hasaudio" style="display:none;">(Your browser supports HTML 5 Audio.)</span>
 <br/>
 
+<input type="checkbox" id="progressbar" onchange="updateConfig();" checked/>
+<label for="progressbar">Show Progress Bar</label>
+<br/>
+
 <label for="fps">Frames per Second:</label>
 <input type="text" class="number" id="fps" value="25" data-value="25" data-min="1" size="3"
 	onchange="intFieldChanged.call(this,event);"/>

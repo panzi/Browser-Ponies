@@ -51,6 +51,8 @@ function init () {
 	$('hasaudio').style.display = BrowserPonies.HasAudio ? "" : "none";
 	setIntFieldValue($('fps'), BrowserPonies.getFps());
 	setIntFieldValue($('speak'), Math.round(BrowserPonies.getSpeakProbability() * 100));
+	$('progressbar').checked = BrowserPonies.isShowLoadProgress();
+	$('enableaudio').checked = BrowserPonies.isAudioEnabled();
 
 	var list = $('ponylist');
 	var ponies = BrowserPonies.ponies();
@@ -79,6 +81,8 @@ var PonyScripts = {
 function dumpConfig () {
 	var config = {baseurl: absUrl('')};
 	config.fps = getIntFieldValue($('fps'));
+	config.audioEnabled = $('enableaudio').checked;
+	config.showLoadProgress = $('progressbar').checked;
 	config.speakProbability = getIntFieldValue($('speak')) / 100;
 	config.spawn = {};
 
