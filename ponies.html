@@ -199,11 +199,6 @@ if (!window.atob) window.atob = base64.decodeo;
 <body onload="init();">
 <div id="main">
 
-<!--
-<img src="ponies/Applejack/trotcycle_AJ_right.gif" style="float:left;"/>
-<img src="ponies/Rainbow%20Dash/flyzoom_rainbow_left.gif" style="float:right;"/>
--->
-
 <h1>Browser Ponies</h1>
 <p id="controls">
 <a href="javascript:BrowserPonies.start();void(0)" title="Start">&#x25B6;</a>
@@ -236,6 +231,12 @@ errors.
 <p>
 In Internet Explorer I managed to control GIF animation playback using iframes, but you can't make them
 transparent and borderless. In Chrome there is no problem.
+</p>
+
+<p>
+Please note that currently I just load the WAV files as they are included in Desktop Ponies when audio
+is enabled. (They aren't loaded if audio is disabled.) In future I might convert them to MP3 and OGG in
+order to reduce the download size.
 </p>
 
 <p>
@@ -274,10 +275,6 @@ Is Magic</cite> is &copy; by <a href="http://www.hubworld.com/my-little-pony/sho
 </tr>
 </tbody>
 </table>
-<!--
-<img src="ponies/Fluttershy/stand_fluttershy_right.gif" style="float:left;"/>
-<img src="ponies/Pinkie/bounce_pinkiepie_left.gif" style="float:right;"/>
--->
 
 <table>
 <tbody>
@@ -328,11 +325,6 @@ Is Magic</cite> is &copy; by <a href="http://www.hubworld.com/my-little-pony/sho
 <ul id="ponylist"></ul>
 
 <h2>Advanced User Stuff</h2>
-
-<!--
-<img src="ponies/Rarity/trotcycle_rarity_right.gif" style="float:left;"/>
-<img src="ponies/Twilight/Read.gif" style="float:right;"/>
--->
 
 <p>
 If you want to use your own ponies you can use this to convert the INI files into JSON files that can be
