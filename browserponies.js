@@ -882,7 +882,7 @@ var BrowserPonies = (function () {
 					margin:            '0',
 					MozBorderRadius: '5px',
 					borderRadius:    '5px',
-					color:         'black',
+					color:       '#294256',
 					fontWeight:     'bold',
 					fontSize:       '16px',
 					opacity:         '0.9',
@@ -1310,7 +1310,7 @@ var BrowserPonies = (function () {
 				var duration = Math.max(speech.text.length * 150, 1000);
 				var text = tag('div',{
 					style: {
-						color:          "black",
+						color:        "#294256",
 						background:     "rgba(255,255,255,0.8)",
 						position:       "fixed",
 						visibility:    "hidden",
