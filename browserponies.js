@@ -1189,15 +1189,17 @@ var BrowserPonies = (function () {
 								this.dest_position.x, this.dest_position.y))),
 					this);
 			}.bind(this),
-			onmousedown: function () {
-				dragged = this;
-				this.mouseover = true;
-				// timer === null means paused/not running
-				if (timer !== null) {
-					this.nextBehavior(true);
+			onmousedown: function (event) {
+				if (event.button === 0 || (IE && (event.button & 1))) {
+					dragged = this;
+					this.mouseover = true;
+					// timer === null means paused/not running
+					if (timer !== null) {
+						this.nextBehavior(true);
+					}
+					document.body.style.userSelect    = 'none';
+					document.body.style.MozUserSelect = 'none';
 				}
-				document.body.style.userSelect    = 'none';
-				document.body.style.MozUserSelect = 'none';
 			}.bind(this),
 			onmousemove: function () {
 				if (!this.mouseover) {
@@ -1374,8 +1376,8 @@ var BrowserPonies = (function () {
 					};
 				}
 
-				if (curr.x !== dest.x) {
-					this.setFacingRight(curr.x < dest.x);
+				if (pos.x !== dest.x) {
+					this.setFacingRight(pos.x < dest.x);
 				}
 				this.setPosition(pos);
 /*
@@ -1482,10 +1484,10 @@ var BrowserPonies = (function () {
 			*/
 			if (currentTime >= this.end_time || (
 				// full offscreen?
-				curr.x + wh < 0 || 
-				curr.y + hh < 0 ||
-				curr.x - wh > winsize.width < 0 ||
-				curr.y - hh > winsize.height) ||
+				pos.x + wh < 0 || 
+				pos.y + hh < 0 ||
+				pos.x - wh > winsize.width < 0 ||
+				pos.y - hh > winsize.height) ||
 				(this.end_at_dest && // !this.following && 
 				 this.dest_position.x === pos.x &&
 				 this.dest_position.y === pos.y)) {
@@ -2104,7 +2106,9 @@ var BrowserPonies = (function () {
 			dragged = null;
 			document.body.style.userSelect    = '';
 			document.body.style.MozUserSelect = '';
-			inst.nextBehavior();
+			if (timer !== null) {
+				inst.nextBehavior();
+			}
 		}
 	});
 
