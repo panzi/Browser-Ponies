@@ -2513,7 +2513,19 @@ var BrowserPonies = (function () {
 			return globalSpeed;
 		},
 		setAudioEnabled: function (enabled) {
-			audioEnabled = !!enabled;
+			enabled = !!enabled;
+			if (audioEnabled !== enabled && enabled) {
+				audioEnabled = enabled;
+				if (preloadAll) {
+					this.preloadAll();
+				}
+				else {
+					this.preloadSpawned();
+				}
+			}
+			else {
+				audioEnabled = enabled;
+			}
 		},
 		isAudioEnabled: function () {
 			return audioEnabled;
