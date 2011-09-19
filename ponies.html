@@ -285,13 +285,14 @@ Is Magic</cite> is &copy; by <a href="http://www.hubworld.com/my-little-pony/sho
 <tr>
 <td><label for="speed">Speed Multiplier:</label></td>
 <td>
-<input type="text" class="number" id="speed" value="3" data-value="3" data-min="0.1" size="3"
-	onchange="floatFieldChanged.call(this,event);"/>
+<input type="text" class="number" id="speed" value="3.0" data-value="3.0"
+	data-min="0.1" data-fixed="1" data-step="0.1" size="3"
+	onchange="numberFieldChanged.call(this,event);"/>
 </td>
 <td></td>
 <td>
-<button onclick="increaseFloatField.call($('speed'));">+</button>
-<button onclick="decreaseFloatField.call($('speed'));">&ndash;</button>
+<button onclick="increaseNumberField.call($('speed'));">+</button>
+<button onclick="decreaseNumberField.call($('speed'));">&ndash;</button>
 </td>
 </tr>
 
@@ -299,26 +300,27 @@ Is Magic</cite> is &copy; by <a href="http://www.hubworld.com/my-little-pony/sho
 <td><label for="speak">Speak Probability:</label></td>
 <td>
 <input type="text" class="number" id="speak" value="15"
-	data-value="15" data-min="0" data-max="100" size="3"
-	onchange="intFieldChanged.call(this,event);"/>
+	data-value="15" data-min="0" data-max="100" data-fixed="0" size="3"
+	onchange="numberFieldChanged.call(this,event);"/>
 </td>
 <td>%</td>
 <td>
-<button onclick="increaseIntField.call($('speak'));">+</button>
-<button onclick="decreaseIntField.call($('speak'));">&ndash;</button>
+<button onclick="increaseNumberField.call($('speak'));">+</button>
+<button onclick="decreaseNumberField.call($('speak'));">&ndash;</button>
 </td>
 </tr>
 
 <tr>
 <td><label for="fps">Frames per Second:</label></td>
 <td>
-<input type="text" class="number" id="fps" value="25" data-value="25" data-min="1" size="3"
-	onchange="intFieldChanged.call(this,event);"/>
+<input type="text" class="number" id="fps" value="25"
+	data-value="25" data-min="1" data-fixed="0" size="3"
+	onchange="numberFieldChanged.call(this,event);"/>
 </td>
 <td></td>
 <td>
-<button onclick="increaseIntField.call($('fps'));">+</button>
-<button onclick="decreaseIntField.call($('fps'));">&ndash;</button>
+<button onclick="increaseNumberField.call($('fps'));">+</button>
+<button onclick="decreaseNumberField.call($('fps'));">&ndash;</button>
 </td>
 </tr>
 </tbody>

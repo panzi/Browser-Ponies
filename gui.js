@@ -49,9 +49,9 @@ function wrapPonies () {
 function init () {
 	$('noaudio').style.display  = BrowserPonies.HasAudio ? "none" : "";
 	$('hasaudio').style.display = BrowserPonies.HasAudio ? "" : "none";
-	setIntFieldValue($('fps'), BrowserPonies.getFps());
-	setIntFieldValue($('speak'), Math.round(BrowserPonies.getSpeakProbability() * 100));
-	setFloatFieldValue($('speed'), BrowserPonies.getSpeed());
+	setNumberFieldValue($('fps'), BrowserPonies.getFps());
+	setNumberFieldValue($('speak'), Math.round(BrowserPonies.getSpeakProbability() * 100));
+	setNumberFieldValue($('speed'), BrowserPonies.getSpeed());
 	$('progressbar').checked = BrowserPonies.isShowLoadProgress();
 	$('enableaudio').checked = BrowserPonies.isAudioEnabled();
 
@@ -81,17 +81,17 @@ var PonyScripts = {
 
 function dumpConfig () {
 	var config = {baseurl: absUrl('')};
-	config.fps = getIntFieldValue($('fps'));
-	config.speed = getFloatFieldValue($('speed'));
+	config.fps = getNumberFieldValue($('fps'));
+	config.speed = getNumberFieldValue($('speed'));
 	config.audioEnabled = $('enableaudio').checked;
 	config.showLoadProgress = $('progressbar').checked;
-	config.speakProbability = getIntFieldValue($('speak')) / 100;
+	config.speakProbability = getNumberFieldValue($('speak')) / 100;
 	config.spawn = {};
 
 	var inputs = $x('//input[@name="count"]',$('ponylist'));
 	for (var i = 0, n = inputs.length; i < n; ++ i) {
 		var input = inputs[i];
-		var value = getIntFieldValue(input);
+		var value = getNumberFieldValue(input);
 		if (value <= 0) continue;
 		var name = input.getAttribute("data-pony");
 		if (name === "Random Pony") {
@@ -190,97 +190,88 @@ var starter = function (srcs,cfg) {
 	callback();
 };
 
-function getNumberFieldValue (parse, field) {
+function getNumberFieldValue (field) {
 	var value = field.getAttribute("data-value");
 	if (value === null) {
-		value = field.value;
+		var fixed = field.getAttribute("data-fixed");
+
+		value = parseFloat(field.value);
+		if (fixed !== null) {
+			value = parseFloat(value.toFixed(parseInt(fixed)));
+		}
 	}
-	return parse(value);
+	else {
+		value = parseFloat(value);
+	}
+	return value;
 }
 
-function setNumberFieldValue (parse, field, value) {
+function setNumberFieldValue (field, value) {
 	if (!isNaN(value)) {
-		value = parse(value);
-		var min = field.getAttribute("data-min");
-		var max = field.getAttribute("data-max");
+		value = parseFloat(value);
+		var min   = field.getAttribute("data-min");
+		var max   = field.getAttribute("data-max");
+		var fixed = field.getAttribute("data-fixed");
 		if (min !== null) {
-			value = Math.max(parse(min),value);
+			value = Math.max(parseFloat(min),value);
 		}
 		if (max !== null) {
-			value = Math.min(parse(max),value);
+			value = Math.min(parseFloat(max),value);
+		}
+		if (fixed !== null) {
+			value = value.toFixed(parseInt(fixed));
+		}
+		else {
+			value = String(value);
 		}
 
-		field.value = String(value);
-		field.setAttribute("data-value",field.value);
+		field.value = value;
+		field.setAttribute("data-value",value);
 	}
 }
 
-function numberFieldChanged (parse) {
+function numberFieldChanged () {
 	if (isNaN(this.value)) {
-		this.value = this.getAttribute("data-value") || "0";
+		this.value = this.getAttribute("data-value") ||
+			this.getAttribute("data-min") || "0";
 	}
 	else {
-		var value = parse(this.value);
-		var min = this.getAttribute("data-min");
-		var max = this.getAttribute("data-max");
-		if (min !== null) {
-			value = Math.max(parse(min),value);
-		}
-		if (max !== null) {
-			value = Math.min(parse(max),value);
-		}
-
-		this.value = String(value);
-		this.setAttribute("data-value",this.value);
+		setNumberFieldValue(this,this.value);
 	}
 	updateConfig();
 }
 
-function increaseNumberField (parse,step) {
-	var max = this.getAttribute("data-max");
-	if (max !== null) {
-		this.value = String(Math.min(parse(max),parse(this.value)+step));
+function increaseNumberField () {
+	var step = this.getAttribute("data-step");
+	if (step === null) {
+		step = 1;
 	}
 	else {
-		this.value = String(parse(this.value)+step);
+		step = parseFloat(step);
 	}
-	this.setAttribute("data-value",this.value);
+	setNumberFieldValue(this,getNumberFieldValue(this) + step);
 	updateConfig();
 }
 
-function decreaseNumberField (parse,step) {
-	var min = this.getAttribute("data-min");
-	if (min !== null) {
-		this.value = String(Math.max(parse(min),parse(this.value)-step));
+function decreaseNumberField () {
+	var step = this.getAttribute("data-step");
+	if (step === null) {
+		step = 1;
 	}
 	else {
-		this.value = String(parse(this.value)-step);
+		step = parseFloat(step);
 	}
-	this.setAttribute("data-value",this.value);
+	setNumberFieldValue(this,getNumberFieldValue(this) - step);
 	updateConfig();
 }
-
-var partial = BrowserPonies.partial;
-
-var getIntFieldValue = partial(getNumberFieldValue,parseInt);
-var setIntFieldValue = partial(setNumberFieldValue,parseInt);
-var intFieldChanged = partial(numberFieldChanged,parseInt);
-var increaseIntField = partial(increaseNumberField,parseInt,1);
-var decreaseIntField = partial(decreaseNumberField,parseInt,1);
-
-var getFloatFieldValue = partial(getNumberFieldValue,parseFloat);
-var setFloatFieldValue = partial(setNumberFieldValue,parseFloat);
-var floatFieldChanged = partial(numberFieldChanged,parseFloat);
-var increaseFloatField = partial(increaseNumberField,parseFloat,0.1);
-var decreaseFloatField = partial(decreaseNumberField,parseFloat,0.1);
 
 function render (name,image,value) {
 	var tag = BrowserPonies.tag;
 	var input_id = 'pony_'+name.toLowerCase().replace(/[^a-z0-9]/ig,'_')+'_count';
 	var input = tag('input',
 		{type:'text','class':'number',name:'count',value:value,
-		 'data-value':value,'data-min':0,'data-pony':name,
-		 id:input_id,size:3,onchange:intFieldChanged});
+		 'data-value':value,'data-min':0,'data-fixed':0,'data-pony':name,
+		 id:input_id,size:3,onchange:numberFieldChanged});
 	
 	return tag('li',
 		tag('div',{'class':'ponyname'},name),
@@ -288,14 +279,14 @@ function render (name,image,value) {
 			tag('img',{src:image})),
 		tag('label',{'for':input_id},'Count: '),
 		input,
-		tag('button',{onclick:increaseIntField.bind(input)},'+'),
-		tag('button',{onclick:decreaseIntField.bind(input)},'\u2013'));
+		tag('button',{onclick:increaseNumberField.bind(input)},'+'),
+		tag('button',{onclick:decreaseNumberField.bind(input)},'\u2013'));
 }
 
 function setAllZero () {
 	var inputs = $x("//input[@name='count']",$('ponylist'));
 	for (var i = 0, n = inputs.length; i < n; ++ i) {
-		setIntFieldValue(inputs[i], 0);
+		setNumberFieldValue(inputs[i], 0);
 	}
 	updateConfig();
 }
