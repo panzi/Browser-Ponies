@@ -1125,45 +1125,66 @@ var BrowserPonies = (function () {
 	var Instance = function Instance () {};
 	Instance.prototype = {
 		setTopLeftPosition: function (pos) {
-			this.img.style.left   = Math.round(pos.x)+'px';
-			this.img.style.top    = Math.round(pos.y)+'px';
-			this.img.style.zIndex = Math.round(BaseZIndex+pos.y+this.current_size.height);
+			this.current_position.x = pos.x + this.current_size.width  * 0.5;
+			this.current_position.y = pos.y + this.current_size.height * 0.5;
+			this.img.style.left = Math.round(pos.x)+'px';
+			this.img.style.top  = Math.round(pos.y)+'px';
+			var zIndex = Math.round(BaseZIndex + pos.y + this.current_size.height);
+			if (this.zIndex !== zIndex) {
+				this.img.style.zIndex = zIndex;
+			}
 		},
 		setPosition: function (pos) {
-			var top = Math.round(pos.y - this.current_size.height * 0.5);
-			this.img.style.left   = Math.round(pos.x - this.current_size.width * 0.5)+'px';
-			this.img.style.top    = top+'px';
-			this.img.style.zIndex = Math.round(BaseZIndex+top+this.current_size.height);
+			var x = this.current_position.x = pos.x;
+			var y = this.current_position.y = pos.y;
+			var top = Math.round(y - this.current_size.height * 0.5);
+			this.img.style.left = Math.round(x - this.current_size.width * 0.5)+'px';
+			this.img.style.top  = top+'px';
+			var zIndex = Math.round(BaseZIndex + top + this.current_size.height);
+			if (this.zIndex !== zIndex) {
+				this.img.style.zIndex = zIndex;
+			}
 		},
 		moveBy: function (offset) {
-			var top = Math.round(this.img.offsetTop + offset.y);
-			this.img.style.left   = Math.round(this.img.offsetLeft + offset.x)+'px';
-			this.img.style.top    = top+'px';
-			this.img.style.zIndex = Math.round(BaseZIndex+top+this.current_size.height);
+			this.setPosition({
+				x: this.current_position.x + offset.x,
+				y: this.current_position.y + offset.y
+			});
 		},
 		clipToScreen: function () {
 			this.setPosition(clipToScreen(this.rect()));
 		},
 		topLeftPosition: function () {
 			return {
-				x: this.img.offsetLeft,
-				y: this.img.offsetTop
+				x: this.current_position.x - this.current_size.width  * 0.5,
+				y: this.current_position.y - this.current_size.height * 0.5
 			};
 		},
 		position: function () {
-			return {
-				x: this.img.offsetLeft + this.current_size.width  * 0.5,
-				y: this.img.offsetTop  + this.current_size.height * 0.5
-			};
+			return this.current_position;
 		},
 		size: function () {
 			return this.current_size;
 		},
 		rect: function () {
-			return extend(this.position(), this.size());
+			var pos  = this.position();
+			var size = this.size();
+			return {
+				x: pos.x,
+				y: pos.y,
+				width:  size.width,
+				height: size.height
+			};
 		},
 		topLeftRect: function () {
-			return extend(this.topLeftPosition(), this.size());
+			var pos  = this.topLeftPosition();
+			var size = this.size();
+			return {
+				x: pos.x,
+				y: pos.y,
+				width:  size.width,
+				height: size.height
+			};
 		},
 		isOffscreen: function () {
 			return isOffscreen(this.rect());
@@ -1276,7 +1297,9 @@ var BrowserPonies = (function () {
 			this.interaction_targets = null;
 			this.current_imgurl      = null;
 			this.interaction_wait    = 0;
+			this.current_position    = {x: 0, y: 0};
 			this.current_size        = {width: 0, height: 0};
+			this.zIndex              = BaseZIndex;
 			this.current_behavior    = null;
 			this.facing_right        = true;
 			this.end_at_dest         = false;
@@ -1405,6 +1428,7 @@ var BrowserPonies = (function () {
 				pos = curr;
 			}
 
+			// update associated effects:
 			for (var i = 0; i < this.effects.length;) {
 				var effect = this.effects[i];
 				if (effect.update(currentTime, passedTime, winsize)) {
@@ -1418,10 +1442,10 @@ var BrowserPonies = (function () {
 				}
 			}
 			
+			// check if some effects need to be repeated:
 			for (var i = 0, n = this.repeating.length; i < n; ++ i) {
 				var what = this.repeating[i];
 				if (what.at <= currentTime) {
-//					console.log("repeating",what.effect.name);
 					var inst = new EffectInstance(this, currentTime, what.effect);
 					overlay.appendChild(inst.img);
 					inst.updatePosition(currentTime, 0);
@@ -1430,6 +1454,7 @@ var BrowserPonies = (function () {
 				}
 			}
 			
+			// check if something needs to be removed:
 			for (var i = 0; i < this.removing.length;) {
 				var what = this.removing[i];
 				if (what.at <= currentTime) {
@@ -1878,6 +1903,8 @@ var BrowserPonies = (function () {
 			imgurl = this.effect.leftimage;
 			this.current_size = this.effect.leftsize;
 		}
+		this.current_position = {x: 0, y: 0};
+		this.zIndex = BaseZIndex;
 
 		this.current_imgurl = null;
 		this.img = tag(Gecko || Opera ? 'img' : 'iframe', {
