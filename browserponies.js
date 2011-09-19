@@ -937,6 +937,13 @@ var BrowserPonies = (function () {
 		this.speeches_by_name = {};
 		this.interactions = [];
 		this.instances    = [];
+		this.categories   = [];
+
+		if (pony.categories) {
+			for (var i = 0, n = pony.categories.length; i < n; ++ i) {
+				this.categories.push(pony.categories[i].toLowerCase());
+			}
+		}
 		
 		if (pony.speeches) {
 			for (var i = 0, n = pony.speeches.length; i < n; ++ i) {
@@ -1307,6 +1314,8 @@ var BrowserPonies = (function () {
 						visibility:    "hidden",
 						margin:             "0",
 						padding:          "4px",
+						maxWidth:       "250px",
+						textAlign:     "center",
 						borderRadius:    "10px",
 						MozBorderRadius: "10px",
 						width:           'auto',
