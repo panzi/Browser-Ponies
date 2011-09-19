@@ -64,7 +64,7 @@ function init () {
 	}
 	names.sort();
 
-	list.appendChild(render('Random Pony', 'random.png', 0));
+	list.appendChild(render('Random Pony', 'ponies/Random%20Pony/Mystery_Thumb.png', 0));
 	for (var i = 0, n = names.length; i < n; ++ i) {
 		var pony = ponies[names[i]];
 		list.appendChild(render(pony.name, pony.all_behaviors[0].rightimage, pony.instances.length));
