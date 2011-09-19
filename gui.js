@@ -220,6 +220,16 @@ function filterPonies (catmap) {
 	}
 }
 
+function toggleBrowserPoniesToBackground () {
+	var main = $('main');
+	if (main.style.zIndex === '') {
+		main.style.zIndex = '100000000';
+	}
+	else {
+		main.style.zIndex = '';
+	}
+}
+
 function titelize (s) {
 	var buf = [];
 	while (s.length > 0) {

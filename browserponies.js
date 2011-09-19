@@ -1324,7 +1324,7 @@ var BrowserPonies = (function () {
 						height:          'auto',
 						boxShadow:    "2px 2px 12px rgba(0,0,0,0.4)",
 						MozBoxShadow: "2px 2px 12px rgba(0,0,0,0.4)",
-						zIndex: String(BaseZIndex + 2000)
+						zIndex: String(BaseZIndex + 9000)
 					}}, speech.text);
 				var rect = this.topLeftRect();
 				getOverlay().appendChild(text);
@@ -2614,6 +2614,15 @@ var BrowserPonies = (function () {
 			}
 
 			return config;
+		},
+
+		togglePoniesToBackground: function () {
+			if (typeof(toggleBrowserPoniesToBackground) === "undefined") {
+				alert("This website does not support bringing Browser Ponies to the background.");
+			}
+			else {
+				toggleBrowserPoniesToBackground();
+			}
 		},
 
 		// expose a few utils:

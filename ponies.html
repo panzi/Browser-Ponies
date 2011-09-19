@@ -126,8 +126,17 @@ pre.code {
 	border-radius: 20px;
 	-moz-border-radius: 20px;
 	color: white;
-	font-weight: bold;
 	background: #333333;
+}
+.keyword {
+	font-weight: bold;
+	color: #B8A36E;
+}
+.const {
+	color: #F69B9B;
+}
+.comment {
+	color: #7C7C7C;
 }
 table, #embedcodewrap {
 	margin: auto;
@@ -140,13 +149,18 @@ table, #embedcodewrap {
 	overflow: hidden;
 }
 #main {
+	position: relative;
 	width: 640px;
 	margin: auto;
-	background: white;
 	padding: 20px;
 	border-radius: 20px;
 	-moz-border-radius: 20px;
-	border: 5px solid #c9e6f4;
+	border: 5px solid #A3CCDE;
+	border: 5px solid rgba(163,204,222,0.8);
+}
+#main, textarea, input {
+	background: white;
+	background: rgba(255,255,255,0.8);
 }
 #footer {
 	text-align: center;
@@ -283,6 +297,8 @@ if (typeof(JSON) === "undefined") {
 <a class="button" href="javascript:BrowserPonies.pause();void(0)" title="Pause">&#x25AE;&#x25AE;</a>
 <a class="button" href="javascript:BrowserPonies.resume();void(0)" title="Resume">&#x25AE;&#x25B6;</a>
 <a class="button" href="javascript:BrowserPonies.unspawnAll();BrowserPonies.stop();void(0)" title="Remove all Ponies">&times;</a>
+<a class="button" href="javascript:BrowserPonies.togglePoniesToBackground();void(0)"
+	title="Toggle ponies in background">&#x2195;</a>
 </p>
 
 <h2>What is this?</h2>
@@ -328,7 +344,11 @@ Is Magic</cite> is &copy; by <a href="http://www.hubworld.com/my-little-pony/sho
 <a class="button" href="javascript:void(0)" id="bookmarklet">Ponies!</a>
 </p>
 <p>Click it whenever you feel a website needs more ponies.</p>
-<p>You can also bookmark the control links above in order to have control over ponies on any website.</p>
+<p>
+You can also bookmark the control links above in order to have control over ponies on any website.
+However, the <cite>Toggle ponies in background</cite> function needs special support by the website
+in order to work.
+</p>
 <p><label for="embedcode">Or paste this into your webpage:</label>
 <div id="embedcodewrap"><textarea id="embedcode" onclick="this.select();"></textarea></div>
 </p>
@@ -415,6 +435,47 @@ Is Magic</cite> is &copy; by <a href="http://www.hubworld.com/my-little-pony/sho
 <p id="zero"><button onclick="setAllZero();">Set all Ponies to 0</button></p>
 
 <h2>Advanced User Stuff</h2>
+
+<h3>Toggle ponies in background</h3>
+
+<p>
+In order to support the <cite>Toggle ponies in background</cite> function websites need special
+to define a special function called <tt>toggleBrowserPoniesToBackground</tt>. This function
+basically has to change the z-index of everything that should appear in front of the ponies.
+The ponies have a z-index of <tt>9000000 + distance from top window border to bottom of the pony</tt>.
+The speak bubbles are all located at <tt>9009000</tt> (I assumed noone has a screen higher than
+9000 pixels).
+</p>
+
+<p>
+For instance, this webpage defines the <tt>toggleBrowserPoniesToBackground</tt> function like so:
+</p>
+
+<pre class="code">
+<span class="keyword">function</span> toggleBrowserPoniesToBackground () {
+	<span class="keyword">var</span> main = document.getElementById(<span class="const">'main'</span>);
+	<span class="keyword">if</span> (main.style.zIndex === <span class="const">''</span>) {
+		main.style.zIndex = <span class="const">'100000000'</span>;
+	}
+	<span class="keyword">else</span> {
+		main.style.zIndex = <span class="const">''</span>;
+	}
+}
+</pre>
+
+<p>
+In addition to that it defines these style rules:
+</p>
+
+<pre class="code">
+<span class="keyword">#main</span> {
+	position: <span class="keyword">relative</span>;
+	background: <span class="keyword">rgba</span>(<span class="const">255</span>, <span class="const">255</span>, <span class="const">255</span>, <span class="const">0.8</span>)</span>;
+	border: <span class="const">5px</span> <span class="keyword">solid</span> <span class="keyword">rgba</span>(<span class="const">163</span>, <span class="const">204</span>, <span class="const">222</span>, <span class="const">0.8</span>);
+}
+</pre>
+
+<h3>Using your own ponies</h3>
 
 <p>
 If you want to use your own ponies you can use this to convert the INI files into JSON files that can be
