@@ -954,7 +954,7 @@ var BrowserPonies = (function () {
 				if (speech.name) {
 					var lowername = speech.name.toLowerCase();
 					if (has(this.speeches_by_name,lowername)) {
-						console.warn(format("%s: Speech name %s of pony %s is not uniqe.",
+						console.warn(format("%s: Speech name %s of pony %s is not unique.",
 							this.baseurl, speech.name, pony.name));
 					}
 					else {
@@ -1197,7 +1197,7 @@ var BrowserPonies = (function () {
 					this);
 			}.bind(this),
 			onmousedown: function (event) {
-				if (event.button === 0 || (IE && (event.button & 1))) {
+				if (IE ? event.button & 1 : event.button === 0) {
 					dragged = this;
 					this.mouseover = true;
 					// timer === null means paused/not running
@@ -1303,6 +1303,8 @@ var BrowserPonies = (function () {
 			this.interaction_targets = targets;
 		},
 		speak: function (currentTime,speech) {
+			// this might be triggered often when I try to reroute a pony back into the screen
+			if (this.isOffscreen()) return;
 			if (speech.text) {
 //				console.log(this.pony.name+' says: '+speech.text);
 				var duration = Math.max(speech.text.length * 150, 1000);
@@ -1623,7 +1625,7 @@ var BrowserPonies = (function () {
 			if (this.following) {
 				this.dest_position = this.following.position();
 			}
-			else if (behavior.x || behavior.y) {
+			else if (!behavior.follow && (behavior.x || behavior.y)) {
 				this.end_at_dest = true;
 				this.dest_position = {
 					x: Math.round((winsize.width  - size.width)  * (behavior.x || 0) / 100),
@@ -2072,7 +2074,7 @@ var BrowserPonies = (function () {
 	var audioEnabled = false;
 	var globalBaseUrl = absUrl('');
 	var globalSpeed = 3; // why is it too slow otherwise?
-	var speakProbability = 0.15;
+	var speakProbability = 0.1;
 	var interval = 40;
 	var interactionInterval = 500;
 	var ponies = {};
@@ -2617,6 +2619,7 @@ var BrowserPonies = (function () {
 		// expose a few utils:
 		extend:        extend,
 		tag:           extend(tag,{add:add}),
+		has:           has,
 		format:        format,
 		partial:       partial,
 		observe:       observe,
