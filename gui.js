@@ -1,4 +1,9 @@
-var $ = BrowserPonies.$;
+var observe = BrowserPonies.observe;
+var tag     = BrowserPonies.tag;
+var $       = BrowserPonies.$;
+var absUrl  = BrowserPonies.absUrl;
+var has     = BrowserPonies.has;
+var partial = BrowserPonies.partial;
 
 if (typeof($x) === "undefined") {
 	window.$x = function (xpath, context) {
@@ -64,16 +69,173 @@ function init () {
 	}
 	names.sort();
 
-	list.appendChild(render('Random Pony', 'ponies/Random%20Pony/Mystery_Thumb.png', 0));
+	var categorymap = {};
+	
+	// find all categories:
 	for (var i = 0, n = names.length; i < n; ++ i) {
 		var pony = ponies[names[i]];
-		list.appendChild(render(pony.name, pony.all_behaviors[0].rightimage, pony.instances.length));
+		for (var j = 0, m = pony.categories.length; j < m; ++ j) {
+			categorymap[pony.categories[j]] = true;
+		}
+	}
+	var categories = [];
+	for (var name in categorymap) {
+		categories.push(name);
+	}
+	categories.sort();
+
+	// build pony list:
+	list.appendChild(render('Random Pony',
+		'ponies/Random%20Pony/Mystery_Thumb.png', 0, categories));
+	for (var i = 0, n = names.length; i < n; ++ i) {
+		var pony = ponies[names[i]];
+		list.appendChild(render(pony.name, pony.all_behaviors[0].rightimage,
+			pony.instances.length, pony.categories));
+	}
+
+	// build pony filter:
+	var catselect = $('catselect');
+	var catlist   = $('catlist');
+
+	for (var i = 0, n = categories.length; i < n; ++ i) {
+		var name = categories[i];
+		var pretty = titelize(name);
+		catselect.appendChild(tag('li',
+			{style:'display:none;',
+			 onclick:partial(changeCategory,name,true),
+			 'data-category':name},
+			pretty));
+		catlist.appendChild(tag('li',
+			{'data-category':name},
+			pretty,' ',
+			tag('span',
+				{'class':'delcat',
+				 onclick:partial(changeCategory,name,false)},
+				'\u00d7')));
 	}
 
 	updateConfig();
 }
 
-var absUrl = BrowserPonies.absUrl;
+observe(window,'click',function (event) {
+	var target = (event.target || event.srcElement);
+	if (target.id !== 'addcat') {
+		$('catselect').style.display = 'none';
+	}
+});
+
+function items (list) {
+	var node = list.firstChild;
+	var items = [];
+	while (node) {
+		if (node.nodeName === "LI") {
+			items.push(node);
+		}
+		node = node.nextSibling;
+	}
+	return items;
+}
+
+function showCategorySelect () {
+	var addcat = $('addcat');
+	var catselect = $('catselect');
+	catselect.style.top  = (addcat.offsetTop + addcat.offsetHeight)+'px';
+	catselect.style.left = addcat.offsetLeft+'px';
+	catselect.style.display = '';
+}
+
+function changeCategory (category,add) {
+	var categories = {};
+	var catselect = $('catselect');
+	var catlist   = $('catlist');
+
+	var selectors = items(catselect);
+	for (var i = 0, n = selectors.length; i < n; ++ i) {
+		var selector = selectors[i];
+		var name = selector.getAttribute('data-category');
+		if (name === category) {
+			selector.style.display = add ? 'none' : '';
+			break;
+		}
+	}
+
+	var catnodes = items(catlist);
+	var all = true, no = true;
+	for (var i = 0, n = catnodes.length; i < n; ++ i) {
+		var catnode = catnodes[i];
+		var name = catnode.getAttribute('data-category');
+		if (name === category) {
+			catnode.style.display = add ? '' : 'none';
+		}
+		if (catnode.style.display === 'none') {
+			all = false;
+		}
+		else {
+			no = false;
+			categories[name] = true;
+		}
+	}
+
+	$('allcatsadded').style.display = all ? '' : 'none';
+	$('nocatadded').style.display = no ? '' : 'none';
+
+	filterPonies(categories);
+}
+
+function removeAllCategories () {
+	var catselect = $('catselect');
+	var catlist   = $('catlist');
+
+	var selectors = items(catselect);
+	for (var i = 0, n = selectors.length; i < n; ++ i) {
+		selectors[i].style.display = '';
+	}
+
+	var catnodes = items(catlist);
+	for (var i = 0, n = catnodes.length; i < n; ++ i) {
+		catnodes[i].style.display = 'none';
+	}
+
+	$('allcatsadded').style.display = 'none';
+	$('nocatadded').style.display = '';
+
+	filterPonies({});
+}
+
+function filterPonies (catmap) {
+	var ponies = items($('ponylist'));
+
+	for (var i = 0, n = ponies.length; i < n; ++ i) {
+		var pony = ponies[i];
+		var categories = pony.getAttribute('data-categories').split(',');
+		var matches = false;
+		for (var j = 0, m = categories.length; j < m; ++ j) {
+			var category = categories[j].trim();
+			if (has(catmap,category)) {
+				matches = true;
+				break;
+			}
+		}
+		pony.style.display = matches ? '' : 'none';
+	}
+}
+
+function titelize (s) {
+	var buf = [];
+	while (s.length > 0) {
+		var i = s.search(/[^0-9a-z]/i);
+		if (i < 0) {
+			i = s.length;
+		}
+		var word = s.slice(0,i);
+		buf.push(word.slice(0,1).toUpperCase());
+		buf.push(word.slice(1).toLowerCase());
+		buf.push(s.slice(i,i+1));
+		s = s.slice(i+1);
+	}
+	return buf.join('');
+}
+
 var PonyScripts = {
 	'browser-ponies-script': absUrl('browserponies.js'),
 	'browser-ponies-config': absUrl('basecfg.js')
@@ -265,15 +427,15 @@ function decreaseNumberField () {
 	updateConfig();
 }
 
-function render (name,image,value) {
-	var tag = BrowserPonies.tag;
+function render (name,image,count,categories) {
 	var input_id = 'pony_'+name.toLowerCase().replace(/[^a-z0-9]/ig,'_')+'_count';
 	var input = tag('input',
-		{type:'text','class':'number',name:'count',value:value,
-		 'data-value':value,'data-min':0,'data-fixed':0,'data-pony':name,
+		{type:'text','class':'number',name:'count',value:count,
+		 'data-value':count,'data-min':0,'data-fixed':0,'data-pony':name,
 		 id:input_id,size:3,onchange:numberFieldChanged});
 	
 	return tag('li',
+		{'data-categories':categories.join(", ")},
 		tag('div',{'class':'ponyname'},name),
 		tag('div',{'class':'ponyimg'},
 			tag('img',{src:image})),

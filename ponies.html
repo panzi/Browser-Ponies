@@ -9,6 +9,7 @@ body {
 	padding: 10px;
 	font-family: Sans-Serif;
 	font-size: 14px;
+	line-height: 1.5;
 
 background: #2d96c6;
 background: -moz-linear-gradient(top, #2d96c6 0%, #c9e6f4 100%);
@@ -43,10 +44,13 @@ a:visited {
 a:hover {
 	color: #72AEDB;
 }
+.button:hover {
+	color: white;
+}
 .codelabel {
 	font-weight: bold;
 }
-#controls a, button, #bookmarklet, select {
+.button, button, select {
 	display: inline-block; /* well just screw browsers that don't support this */
 	font-weight: bold;
 	padding: 5px 15px;
@@ -75,7 +79,7 @@ background: -ms-linear-gradient(top, #b1dbed 0%,#4c92c4 100%);
 filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#b1dbed', endColorstr='#4c92c4',GradientType=0 );
 background: linear-gradient(top, #b1dbed 0%,#4c92c4 100%);
 }
-#controls a:hover, button:hover, #bookmarklet:hover, select:hover {
+.button:hover, button:hover, select:hover {
 	border-color: #68B1E3;
 
 background: #c0e7f7;
@@ -183,6 +187,75 @@ input.number {
 	text-align: center;
 	display: inline-block;
 }
+#catselect {
+	position: absolute;
+	background: white;
+	cursor: hand;
+	cursor: pointer;
+}
+#catlist {
+	display: inline;
+}
+#catlist, #catselect {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+#catselect {
+	border-radius:      10px;
+	-moz-border-radius: 10px;
+
+	box-shadow:      2px 2px 12px rgba(0,0,0,0.4);
+	-moz-box-shadow: 2px 2px 12px rgba(0,0,0,0.4);
+
+	padding: 3px;
+}
+#catselect li {
+	padding: 3px 5px;
+	border-radius: 10px;
+	-moz-border-radius: 10px;
+}
+#catselect li:hover {
+	background: #458BC1;
+	color: white;
+}
+#catlist li {
+	padding: 2px 5px;
+	margin: 2px;
+	display: inline-block;
+	border-radius: 10px;
+	-moz-border-radius: 10px;
+	background: #D3DBE1;
+	border: 1px solid #8A8A8A;
+}
+#catlist li, #nocatadded {
+	font-size: 0.85em;
+}
+.delcat {
+	cursor: hand;
+	cursor: pointer;
+	border-radius: 8px;
+	-moz-border-radius: 8px;
+	padding: 0 2px;
+}
+.delcat:hover {
+	background: #8A8A8A;
+	color: #D3DBE1;
+}
+#nocatadded, li#allcatsadded {
+	color: #A1B4C3;
+}
+li#allcatsadded {
+	cursor: default;
+}
+li#allcatsadded:hover {
+	color: #A1B4C3;
+	background: white;
+}
+p, #filterwrapper {
+	margin-top: 1em;
+	margin-bottom: 1em;
+}
 </style>
 <!--[if IE]>
 <script type="text/javascript" src="http://stringencoders.googlecode.com/svn-history/r230/trunk/javascript/base64.js"></script>
@@ -205,11 +278,11 @@ if (typeof(JSON) === "undefined") {
 
 <h1>Browser Ponies</h1>
 <p id="controls">
-<a href="javascript:BrowserPonies.start();void(0)" title="Start">&#x25B6;</a>
-<a href="javascript:BrowserPonies.stop();void(0)" title="Stop">&#x25A0;</a>
-<a href="javascript:BrowserPonies.pause();void(0)" title="Pause">&#x25AE;&#x25AE;</a>
-<a href="javascript:BrowserPonies.resume();void(0)" title="Resume">&#x25AE;&#x25B6;</a>
-<a href="javascript:BrowserPonies.unspawnAll();BrowserPonies.stop();void(0)" title="Remove all Ponies">&times;</a>
+<a class="button" href="javascript:BrowserPonies.start();void(0)" title="Start">&#x25B6;</a>
+<a class="button" href="javascript:BrowserPonies.stop();void(0)" title="Stop">&#x25A0;</a>
+<a class="button" href="javascript:BrowserPonies.pause();void(0)" title="Pause">&#x25AE;&#x25AE;</a>
+<a class="button" href="javascript:BrowserPonies.resume();void(0)" title="Resume">&#x25AE;&#x25B6;</a>
+<a class="button" href="javascript:BrowserPonies.unspawnAll();BrowserPonies.stop();void(0)" title="Remove all Ponies">&times;</a>
 </p>
 
 <h2>What is this?</h2>
@@ -252,7 +325,7 @@ Is Magic</cite> is &copy; by <a href="http://www.hubworld.com/my-little-pony/sho
 <h2>Make a Bookmarklet</h2>
 <p>Drag this link into your Bookmark Toolbar:</p>
 <p id="bookmarkletwrapper">
-<a href="javascript:void(0)" id="bookmarklet">Ponies!</a>
+<a class="button" href="javascript:void(0)" id="bookmarklet">Ponies!</a>
 </p>
 <p>Click it whenever you feel a website needs more ponies.</p>
 <p>You can also bookmark the control links above in order to have control over ponies on any website.</p>
@@ -326,9 +399,20 @@ Is Magic</cite> is &copy; by <a href="http://www.hubworld.com/my-little-pony/sho
 </tbody>
 </table>
 
-<p id="zero"><button onclick="setAllZero();">Set all Ponies to 0</button></p>
+<div id="filterwrapper">
+<label for="addcat">Filter Categories:</label>
+<button id="addcat" onclick="showCategorySelect();">Add</button>
+<ul id="catselect" style="display:none;">
+<li id="allcatsadded">All Added</li>
+</ul>
+<ul id="catlist"></ul>
+<span id="nocatadded" style="display:none;">No Category Selected</span>
+<button onclick="removeAllCategories();" title="Remove All">&#x232B;</button>
+</div>
 
 <ul id="ponylist"></ul>
+
+<p id="zero"><button onclick="setAllZero();">Set all Ponies to 0</button></p>
 
 <h2>Advanced User Stuff</h2>
 
