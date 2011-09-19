@@ -888,8 +888,8 @@ var BrowserPonies = (function () {
 					opacity:         '0.9',
 					display:        'none'
 				}, onclick: function () {
-					if (progressbar && progressbar.container.parentNode) {
-						progressbar.container.parentNode.removeChild(progressbar.container);
+					if (progressbar) {
+						progressbar.container.style.display = 'none';
 					}
 				}}, progressbar.barcontainer, progressbar.label);
 			}
