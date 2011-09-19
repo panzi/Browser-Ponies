@@ -281,7 +281,7 @@ function updateConfig () {
 	var code = '('+starter.toString()+')('+
 		JSON.stringify(PonyScripts)+','+
 		JSON.stringify(config)+');';
-	code = code.replace(/^\s*\/\/.*\n/gm,'').replace(/^\s*\n/gm,'');
+	code = code.replace(/^\s*\/\/.*\n/gm,' ').replace(/^\s*\n/gm,' ').replace(/\s\s+/g,' ');
 	$('bookmarklet').href = 'javascript:'+code+'void(0)';
 	$('embedcode').value = '\u003cscript type="text/javascript"\u003e\n//\u003c!--\n'+
 		code+'\n//--\u003e\n\u003c/script\u003e';
