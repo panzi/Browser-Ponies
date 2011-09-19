@@ -3,275 +3,7 @@
 <head>
 <meta http-equiv="content-type" content="text/html; charset=utf8"/>
 <title>Browser Ponies</title>
-<style type="text/css">
-body {
-	margin: 0;
-	padding: 10px;
-	font-family: Sans-Serif;
-	font-size: 14px;
-	line-height: 1.5;
-
-background: #2d96c6;
-background: -moz-linear-gradient(top, #2d96c6 0%, #c9e6f4 100%);
-background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#2d96c6), color-stop(100%,#c9e6f4));
-background: -webkit-linear-gradient(top, #2d96c6 0%,#c9e6f4 100%);
-background: -o-linear-gradient(top, #2d96c6 0%,#c9e6f4 100%);
-background: -ms-linear-gradient(top, #2d96c6 0%,#c9e6f4 100%);
-filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#c9e6f4', endColorstr='#c9e6f4',GradientType=0 );
-background: linear-gradient(top, #2d96c6 0%,#c9e6f4 100%);
-}
-body, option {
-	color: #294256;
-}
-h1 {
-	text-align: center;
-	margin: 0;
-}
-h1, h2, h3, h4, h5, h6 {
-	color: #458BC1;
-}
-#baseurl {
-	width: 175px;
-}
-a {
-	text-decoration: none;
-	font-weight: bold;
-	color: #245E8B;
-}
-a:visited {
-	color: #458BC1;
-}
-a:hover {
-	color: #72AEDB;
-}
-.button:hover {
-	color: white;
-}
-.codelabel {
-	font-weight: bold;
-}
-.button, button, select {
-	display: inline-block; /* well just screw browsers that don't support this */
-	font-weight: bold;
-	padding: 5px 15px;
-	margin: 2px;
-	color: white;
-
-	border: 1px solid #70A5CB;
-	text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.3);
-
-	border-radius: 20px;
-	-moz-border-radius: 20px;
-	
-	-moz-box-shadow: 2px 2px 5px #ccc;
-	-webkit-box-shadow: 2px 2px 5px #ccc;
-	box-shadow: 2px 2px 6px #ccc;
-
-	cursor: hand;
-	cursor: pointer;
-
-background: #b1dbed;
-background: -moz-linear-gradient(top, #b1dbed 0%, #4c92c4 100%);
-background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#b1dbed), color-stop(100%,#4c92c4));
-background: -webkit-linear-gradient(top, #b1dbed 0%,#4c92c4 100%);
-background: -o-linear-gradient(top, #b1dbed 0%,#4c92c4 100%);
-background: -ms-linear-gradient(top, #b1dbed 0%,#4c92c4 100%);
-filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#b1dbed', endColorstr='#4c92c4',GradientType=0 );
-background: linear-gradient(top, #b1dbed 0%,#4c92c4 100%);
-}
-.button:hover, button:hover, select:hover {
-	border-color: #68B1E3;
-
-background: #c0e7f7;
-background: -moz-linear-gradient(top, #c0e7f7 0%, #61a4d3 100%);
-background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#c0e7f7), color-stop(100%,#61a4d3));
-background: -webkit-linear-gradient(top, #c0e7f7 0%,#61a4d3 100%);
-background: -o-linear-gradient(top, #c0e7f7 0%,#61a4d3 100%);
-background: -ms-linear-gradient(top, #c0e7f7 0%,#61a4d3 100%);
-filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#c0e7f7', endColorstr='#61a4d3',GradientType=0 );
-background: linear-gradient(top, #c0e7f7 0%,#61a4d3 100%);
-
-}
-#bookmarklet {
-	padding: 10px 30px;
-	font-size: 1.2em;
-}
-#bookmarkletwrapper {
-	text-align: center;
-}
-input, #ponylist button, table button {
-	padding: 3px 9px;
-	border-radius: 5px;
-	-moz-border-radius: 5px;
-}
-#controls, #zero {
-	text-align: center;
-}
-textarea.code {
-	width: 628px;
-}
-textarea {
-	margin: 0;
-	padding: 5px;
-	border-radius: 10px;
-	-moz-border-radius: 10px;
-}
-textarea, input {
-	border: 1px solid #8A8A8A;
-}
-pre.code {
-	margin-left: 20px;
-	margin-right: 20px;
-	padding: 15px;
-	border-radius: 20px;
-	-moz-border-radius: 20px;
-	color: white;
-	background: #333333;
-	background: rgba(0,0,0,0.8);
-}
-.keyword {
-	font-weight: bold;
-	color: #B8A36E;
-}
-.const {
-	color: #F69B9B;
-}
-.comment {
-	color: #7C7C7C;
-}
-table, #embedcodewrap {
-	margin: auto;
-}
-#embedcodewrap {
-	width: 200px;
-}
-#embedcode {
-	width: 100%;
-	overflow: hidden;
-}
-#main {
-	position: relative;
-	width: 640px;
-	margin: auto;
-	padding: 20px;
-	border-radius: 20px;
-	-moz-border-radius: 20px;
-	border: 5px solid #A3CCDE;
-	border: 5px solid rgba(163,204,222,0.8);
-}
-#main, textarea, input {
-	background: white;
-	background: rgba(255,255,255,0.8);
-}
-#footer {
-	text-align: center;
-	font-size: 0.8em;
-	color: #A1B4C3;
-}
-#ponylist {
-	margin: auto;
-	width: 410px;
-	height: 400px;
-	overflow: auto;
-	list-style: none;
-	padding: 30px;
-
-	-webkit-box-shadow: inset 0 0 10px rgba(0,0,0,0.6);
-	-moz-box-shadow: inset 0 0 10px rgba(0,0,0,0.6);
-	box-shadow: inset 0 0 10px rgba(0,0,0,0.6);
-
-	-webkit-border-radius: 20px;
-	-moz-border-radius: 20px;
-	border-radius: 20px;
-}
-
-#ponylist li {
-	margin-bottom: 40px;
-}
-
-input.number {
-	text-align: right;
-}
-
-.ponyname {
-	font-weight: bold;
-}
-
-.ponyimg {
-	min-width: 200px;
-	text-align: center;
-	display: inline-block;
-}
-#catselect {
-	position: absolute;
-	background: white;
-	cursor: hand;
-	cursor: pointer;
-}
-#catlist {
-	display: inline;
-}
-#catlist, #catselect {
-	list-style: none;
-	margin: 0;
-	padding: 0;
-}
-#catselect {
-	border-radius:      10px;
-	-moz-border-radius: 10px;
-
-	box-shadow:      2px 2px 12px rgba(0,0,0,0.4);
-	-moz-box-shadow: 2px 2px 12px rgba(0,0,0,0.4);
-
-	padding: 3px;
-}
-#catselect li {
-	padding: 3px 5px;
-	border-radius: 10px;
-	-moz-border-radius: 10px;
-}
-#catselect li:hover {
-	background: #458BC1;
-	color: white;
-}
-#catlist li {
-	padding: 2px 5px;
-	margin: 2px;
-	display: inline-block;
-	border-radius: 10px;
-	-moz-border-radius: 10px;
-	background: #D3DBE1;
-	border: 1px solid #8A8A8A;
-}
-#catlist li, #nocatadded {
-	font-size: 0.85em;
-}
-.delcat {
-	cursor: hand;
-	cursor: pointer;
-	border-radius: 8px;
-	-moz-border-radius: 8px;
-	padding: 0 2px;
-}
-.delcat:hover {
-	background: #8A8A8A;
-	color: #D3DBE1;
-}
-#nocatadded, li#allcatsadded {
-	color: #A1B4C3;
-}
-li#allcatsadded {
-	cursor: default;
-}
-li#allcatsadded:hover {
-	color: #A1B4C3;
-	background: white;
-}
-p, #filterwrapper {
-	margin-top: 1em;
-	margin-bottom: 1em;
-}
-</style>
+<link rel="stylesheet" type="text/css" href="gui.css"/>
 <!--[if IE]>
 <script type="text/javascript" src="http://stringencoders.googlecode.com/svn-history/r230/trunk/javascript/base64.js"></script>
 <script type="text/javascript">
@@ -297,9 +29,9 @@ if (typeof(JSON) === "undefined") {
 <a class="button" href="javascript:BrowserPonies.stop();void(0)" title="Stop">&#x25A0;</a>
 <a class="button" href="javascript:BrowserPonies.pause();void(0)" title="Pause">&#x25AE;&#x25AE;</a>
 <a class="button" href="javascript:BrowserPonies.resume();void(0)" title="Resume">&#x25AE;&#x25B6;</a>
-<a class="button" href="javascript:BrowserPonies.unspawnAll();BrowserPonies.stop();void(0)" title="Remove all Ponies">&times;</a>
 <a class="button" href="javascript:BrowserPonies.togglePoniesToBackground();void(0)"
 	title="Toggle ponies in background">&#x2195;</a>
+<a class="button" href="javascript:BrowserPonies.unspawnAll();BrowserPonies.stop();void(0)" title="Remove all Ponies">&times;</a>
 </p>
 
 <h2>What is this?</h2>
@@ -311,20 +43,12 @@ on websites (see the ponies here). You can create a bookmarklet which adds your 
 <p>
 This is a reimplementation of <a href="http://desktopponies.co.cc/">Desktop Ponies</a> in JavaScript.
 It doesn't behave exactly like the original but is close enough (no cursor avoidance, no games and
-ponies wander off screen, though then they wander back in again).
+ponies wander off screen, though when they do they wander back in again).
 </p>
 
 <p>
-Browser Ponies work best with <a href="http://www.google.com/chrome">Google Chrome</a>, but also work
-okay in <a href="http://www.mozilla.org/firefox/">Mozilla Firefox</a>. Firefox has a bug concerning the
-animation speed of animated GIFs (I tried to work around this by shortening all effects). Also I found
-no way to control the animation playback of individual images in Firefox, which sometimes causes animation
-errors.
-</p>
-
-<p>
-In Internet Explorer I managed to control GIF animation playback using iframes, but you can't make them
-transparent and border less. In Chrome there is no problem.
+Browser Ponies work best with <a href="http://www.google.com/chrome">Google Chrome</a>, but they also
+work okay in <a href="http://www.mozilla.org/firefox/">Mozilla Firefox</a>.
 </p>
 
 <p>
@@ -340,16 +64,19 @@ Is Magic</cite> is &copy; by <a href="http://www.hubworld.com/my-little-pony/sho
 </p>
 
 <h2>Make a Bookmarklet</h2>
-<p>Drag this link into your Bookmark Toolbar:</p>
+<p>Choose your ponies belown and then drag this link into your Bookmark Toolbar:</p>
 <p id="bookmarkletwrapper">
 <a class="button" href="javascript:void(0)" id="bookmarklet">Ponies!</a>
 </p>
+
 <p>Click it whenever you feel a website needs more ponies.</p>
+
 <p>
 You can also bookmark the control links above in order to have control over ponies on any website.
-However, the <cite>Toggle ponies in background</cite> function needs special support by the website
-in order to work.
+However, the <cite><a href="#toggleinbg">Toggle ponies in background</a></cite> function needs special
+support by the website in order to work.
 </p>
+
 <p><label for="embedcode">Or paste this into your webpage:</label>
 <div id="embedcodewrap"><textarea id="embedcode" onclick="this.select();"></textarea></div>
 </p>
@@ -437,14 +164,28 @@ in order to work.
 
 <h2>Advanced User Stuff</h2>
 
-<h3>Toggle ponies in background</h3>
+<h3>Browser Support</h3>
 
 <p>
-In order to support the <cite>Toggle ponies in background</cite> function websites need special
+Firefox has a bug concerning the animation speed of animated GIFs (I tried to work around this by
+shortening all effect durations when using Firefox). Also I found no way to control the animation
+playback of individual images in Firefox, which sometimes causes animation errors (when a effect
+is shown twice both effect animations are synchronized).
+</p>
+
+<p>
+In Internet Explorer I managed to control GIF animation playback using iframes, but you can't make
+them transparent and border less. In Chrome iframes do not suffer from this limitation.
+</p>
+
+<h3 id="toggleinbg">Toggle ponies in background</h3>
+
+<p>
+In order to support the <cite>Toggle ponies in background</cite> function websites need
 to define a special function called <tt>toggleBrowserPoniesToBackground</tt>. This function
-basically has to change the z-index of everything that should appear in front of the ponies.
-The ponies have a z-index of <tt>9000000 + distance from top window border to bottom of the pony</tt>.
-The speak bubbles are all located at <tt>9009000</tt> (I assumed noone has a screen higher than
+changes the z-index of everything that should appear in front of the ponies. The ponies have
+a z-index of <tt>9000000 + distance from top window border to bottom of the pony</tt>. The
+speak bubbles have a z-index of <tt>9009000</tt> (I assumed noone has a screen higher than
 9000 pixels).
 </p>
 
@@ -480,12 +221,12 @@ In addition to that it defines these style rules:
 
 <p>
 If you want to use your own ponies you can use this to convert the INI files into JSON files that can be
-used with Browser Ponies. I'll write later more how to use this. I'll probably add some user interface
-that helps you creating embed codes/bookmarklets that use your own ponies.
+used with Browser Ponies. I'll write more on this later. I'll probably add some user interface that helps
+you create embed codes/bookmarklets that use your own ponies.
 </p>
 
 <p>
-For now in case you understand JavaScript just look at <a href="basecfg.js">basecfg.js</a> and the
+But for now, in case you understand JavaScript, just look at <a href="basecfg.js">basecfg.js</a> and the
 <a href="#embedcode">embed code</a>. You need to replace basecfg.js and set the baseurl to where your
 ponies are located. The image URLs are then constructed like this:
 </p>
