@@ -464,13 +464,14 @@ var BrowserPonies = (function () {
 		None:               0,
 		HorizontalOnly:     1,
 		VerticalOnly:       2,
-        HorizontalVertical: 3,
-        DiagonalOnly:       4,
-        DiagonalHorizontal: 5,
-        DiagonalVertical:   6,
-        All:                7,
-        MouseOver:          8,
-        Sleep:              9
+		HorizontalVertical: 3,
+		DiagonalOnly:       4,
+		DiagonalHorizontal: 5,
+		DiagonalVertical:   6,
+		All:                7,
+		MouseOver:          8,
+		Sleep:              9,
+		Dragged:           10
 	};
 
 	var Locations = {
@@ -575,7 +576,7 @@ var BrowserPonies = (function () {
 		}
 
 		if (this.movement === null) {
-			throw new Error("illegal movement: "+behavior.movement);
+			throw new Error(baseurl+": illegal movement "+behavior.movement+" for behavior "+behavior.name);
 		}
 
 		this.rightsize = {width: 0, height: 0};
@@ -752,13 +753,13 @@ var BrowserPonies = (function () {
 				loader.loaded = true;
 				++ resource_loaded_count;
 				if (success) {
-					console.log(format('%3.0f%% loaded %d of %d: %s',
+					console.log(format('%3.0f%% %d of %d loaded: %s',
 						resource_loaded_count * 100 / resource_count,
 						resource_loaded_count, resource_count,
 						url));
 				}
 				else {
-					console.error(format('%3.0f%% error loading %d of %d: %s',
+					console.error(format('%3.0f%% %d of %d load error: %s',
 						resource_loaded_count * 100 / resource_count,
 						resource_loaded_count, resource_count,
 						url));
@@ -925,11 +926,13 @@ var BrowserPonies = (function () {
 		if (!pony.name) {
 			throw new Error('pony with following base URL has no name: '+this.baseurl);
 		}
-		this.name      = pony.name;
-		this.behaviors = [];
+		this.name = pony.name;
+		this.all_behaviors       = [];
+		this.random_behaviors    = [];
 		this.mouseover_behaviors = [];
+		this.dragged_behaviors   = [];
 		this.behaviors_by_name   = {};
-		this.speeches  = [];
+		this.speeches = [];
 		this.random_speeches  = [];
 		this.speeches_by_name = {};
 		this.interactions = [];
@@ -942,7 +945,14 @@ var BrowserPonies = (function () {
 					speech.file = this.baseurl + speech.file;
 				}
 				if (speech.name) {
-					this.speeches_by_name[speech.name.toLowerCase()] = speech;
+					var lowername = speech.name.toLowerCase();
+					if (has(this.speeches_by_name,lowername)) {
+						console.warn(format("%s: Speech name %s of pony %s is not uniqe.",
+							this.baseurl, speech.name, pony.name));
+					}
+					else {
+						this.speeches_by_name[lowername] = speech;
+					}
 				}
 				if (!speech.skip) {
 					this.random_speeches.push(speech);
@@ -955,7 +965,16 @@ var BrowserPonies = (function () {
 		if ('behaviors' in pony) {
 			for (var i = 0, n = pony.behaviors.length; i < n; ++ i) {
 				var behavior = new Behavior(this.baseurl, pony.behaviors[i]);
-				this.behaviors_by_name[behavior.name.toLowerCase()] = behavior;
+				var lowername = behavior.name.toLowerCase();
+				if (has(this.behaviors_by_name,lowername)) {
+					console.warn(format("%s: Behavior name %s of pony %s is not unique.",
+						this.baseurl, behavior.name, pony.name));
+				}
+				else {
+					// semantics like Dektop Ponies where the
+					// first match is used for linked behaviors
+					this.behaviors_by_name[lowername] = behavior;
+				}
 				for (var j = 0; j < speakevents.length; ++ j) {
 					var speakevent = speakevents[j];
 					var speechname = behavior[speakevent];
@@ -965,29 +984,37 @@ var BrowserPonies = (function () {
 							behavior[speakevent] = this.speeches_by_name[speechname];
 						}
 						else {
-							console.warn(this.baseurl+': Behavior '+behavior.name+' of pony '+pony.name+
-								' references non-existing speech '+behavior[speakevent]);
+							console.warn(format("%s: Behavior %s of pony %s references non-existing speech %s.",
+								this.baseurl, behavior.name, pony.name, behavior[speakevent]));
 							delete behavior[speakevent];
 						}
 					}
 				}
-				this.behaviors.push(behavior);
+				this.all_behaviors.push(behavior);
+				if (!behavior.skip) this.random_behaviors.push(behavior);
 
-				if (behavior.movement === AllowedMoves.MouseOver) {
-					this.mouseover_behaviors.push(behavior);
+				switch (behavior.movement) {
+					case AllowedMoves.MouseOver:
+						this.mouseover_behaviors.push(behavior);
+						break;
+
+					case AllowedMoves.Dragged:
+						this.dragged_behaviors.push(behavior);
+						break;
 				}
 			}
-
-			for (var i = 0, n = this.behaviors.length; i < n; ++ i) {
-				var behavior = this.behaviors[i];
+			
+			// dereference linked behaviors:
+			for (var name in this.behaviors_by_name) {
+				var behavior = this.behaviors_by_name[name];
 				if (behavior.linked) {
 					var linked = behavior.linked.toLowerCase();
 					if (has(this.behaviors_by_name, linked)) {
 						behavior.linked = this.behaviors_by_name[linked];
 					}
 					else {
-						console.warn(this.baseurl+': Behavior '+behavior.name+' of pony '+this.name+
-							' references non-existing behavior '+behavior.linked);
+						console.warn(format("%s: Behavior %s of pony %s references non-existing behavior %s.",
+							this.baseurl, behavior.name, this.name, behavior.linked));
 						delete behavior.linked;
 					}
 				}
@@ -997,8 +1024,8 @@ var BrowserPonies = (function () {
 
 	Pony.prototype = {
 		preload: function () {
-			for (var i = 0, n = this.behaviors.length; i < n; ++ i) {
-				this.behaviors[i].preload();
+			for (var name in this.behaviors_by_name) {
+				this.behaviors_by_name[name].preload();
 			}
 			
 			if (HasAudio && audioEnabled) {
@@ -1163,21 +1190,23 @@ var BrowserPonies = (function () {
 					this);
 			}.bind(this),
 			onmousedown: function () {
-				// timer === null means paused/not runnung
-				if (this.pony.mouseover_behaviors.length > 0 && timer !== null) {
-					this.behave(this.randomBehavior(true));
-				}
 				dragged = this;
+				this.mouseover = true;
+				// timer === null means paused/not running
+				if (timer !== null) {
+					this.nextBehavior(true);
+				}
 				document.body.style.userSelect    = 'none';
 				document.body.style.MozUserSelect = 'none';
 			}.bind(this),
 			onmousemove: function () {
 				if (!this.mouseover) {
 					this.mouseover = true;
-					if ((!this.current_behavior || this.current_behavior.movement !== AllowedMoves.MouseOver) &&
-							// timer === null means paused/not runnung
-							this.pony.mouseover_behaviors.length > 0 && timer !== null) {
-						this.behave(this.randomBehavior(true));
+					if (!this.isMouseOverOrDragging() &&
+						this.canMouseOverOrDrag() &&
+						// timer === null means paused/not runnung
+						timer !== null) {
+						this.nextBehavior(true);
 					}
 				}
 			}.bind(this),
@@ -1197,6 +1226,15 @@ var BrowserPonies = (function () {
 	};
 
 	PonyInstance.prototype = extend(new Instance(), {
+		isMouseOverOrDragging: function () {
+			return this.current_behavior &&
+				(this.current_behavior.movement === AllowedMoves.MouseOver ||
+				 this.current_behavior.movement === AllowedMoves.Dragged);
+		},
+		canMouseOverOrDrag: function () {
+			return this.pony.mouseover_behaviors.length > 0 ||
+				this.pony.dragged_behaviors.length > 0;
+		},
 		name: function () {
 			return this.pony.name;
 		},
@@ -1222,6 +1260,7 @@ var BrowserPonies = (function () {
 			if (this.img.parentNode) {
 				this.img.parentNode.removeChild(this.img);
 			}
+			this.mouseover           = false;
 			this.start_time          = null;
 			this.end_time            = null;
 			this.current_interaction = null;
@@ -1243,11 +1282,13 @@ var BrowserPonies = (function () {
 				for (var i = 0, n = targets.length; i < n; ++ i) {
 					var pony = targets[i];
 					pony.behave(pony.pony.behaviors_by_name[behavior]);
+					pony.current_interaction = interaction;
 				}
 			}
 			else {
 				var pony = randomSelect(targets);
 				pony.behave(pony.pony.behaviors_by_name[behavior]);
+				pony.current_interaction = interaction;
 			}
 			this.current_interaction = interaction;
 			this.interaction_targets = targets;
@@ -1427,31 +1468,28 @@ var BrowserPonies = (function () {
 			}
 
 			// move back into screen:
-			// TODO: implement bounce
+			// TODO: implement proper bounce
 			var wh = curr.width  * 0.5;
 			var hh = curr.height * 0.5;
-			var fullOffscreen = (
-				curr.x + wh < 0 || 
-				curr.y + hh < 0 ||
-				curr.x - wh > winsize.width < 0 ||
-				curr.y - hh > winsize.height);
-			
-			if ((fullOffscreen && isOffscreen(extend({
-					width: curr.width,
+
+			/* dest offscreen:
+				isOffscreen(extend({
+					width:  curr.width,
 					height: curr.height,
 					x: this.dest_position.x,
 					y: this.dest_position.y
-				}))) ||
-					currentTime >= this.end_time ||
-					(this.end_at_dest && // !this.following && 
-					this.dest_position.x === pos.x &&
-					this.dest_position.y === pos.y)) {
-				if (fullOffscreen) {
-					this.behave(this.randomBehavior(false, true), true);
-				}
-				else {
-					this.nextBehavior();
-				}
+				}))
+			*/
+			if (currentTime >= this.end_time || (
+				// full offscreen?
+				curr.x + wh < 0 || 
+				curr.y + hh < 0 ||
+				curr.x - wh > winsize.width < 0 ||
+				curr.y - hh > winsize.height) ||
+				(this.end_at_dest && // !this.following && 
+				 this.dest_position.x === pos.x &&
+				 this.dest_position.y === pos.y)) {
+				this.nextBehavior();
 			}
 		},
 		getNearestInstance: function (name) {
@@ -1489,23 +1527,28 @@ var BrowserPonies = (function () {
 			nearObjects.sort();
 			return nearObjects[0][1];
 		},
-		nextBehavior: function () {
-			if (this.current_behavior && this.current_behavior.linked) {
+		nextBehavior: function (breaklink) {
+			if (!breaklink && this.current_behavior && this.current_behavior.linked) {
 				this.behave(this.current_behavior.linked, this.isOffscreen());
 			}
 			else {				
 				if (this.current_interaction) {
 					var currentTime = Date.now();
 					this.interaction_wait = currentTime + this.current_interaction.delay * 1000;
-					for (var i = 0, n = this.interaction_targets.length; i < n; ++ i) {
-						this.interaction_targets[i].interaction_wait = this.interaction_wait;
+					if (this.interaction_targets) {
+						// XXX: should I even do this or should I just let the targets do it?
+						//      they do it anyway, because current_interaction is also set for them
+						//      if it wouldn't be set, they could break out of interactions
+						for (var i = 0, n = this.interaction_targets.length; i < n; ++ i) {
+							this.interaction_targets[i].interaction_wait = this.interaction_wait;
+						}
+						this.interaction_targets = null;
 					}
-					this.interaction_targets = null;
 					this.current_interaction = null;
 				}
 
-				this.behave(this.randomBehavior(this.pony.mouseover_behaviors.length > 0 && this.mouseover),
-					this.isOffscreen());
+				var offscreen = this.isOffscreen();
+				this.behave(this.randomBehavior(offscreen), offscreen);
 			}
 		},
 		setFacingRight: function (value) {
@@ -1768,27 +1811,39 @@ var BrowserPonies = (function () {
 				y: Math.random() * (winsize.height - size.height)
 			});
 		},
-		randomBehavior: function (mouseover, forceMovement) {
-			var behaviors = mouseover ?
-				this.pony.mouseover_behaviors :
-				this.pony.behaviors;
+		randomBehavior: function (forceMovement) {
+			var behaviors;
+			
+			if (forceMovement) {
+				behaviors = this.pony.random_behaviors;
+			}
+			else if (this === dragged && this.pony.dragged_behaviors.length > 0) {
+				behaviors = this.pony.dragged_behaviors;
+			}
+			else if (this.mouseover && this.pony.mouseover_behaviors.length > 0) {
+				behaviors = this.pony.mouseover_behaviors;
+			}
+			else {
+				behaviors = this.pony.random_behaviors;
+			}
+
 			var sumprob = 0;
 			for (var i = 0, n = behaviors.length; i < n; ++ i) {
 				var behavior = behaviors[i];
-				if (behavior.skip || (forceMovement && !behavior.isMoving())) continue;
+				if (forceMovement && !behavior.isMoving()) continue;
 				sumprob += behavior.probability;
 			}
 			var dice = Math.random() * sumprob;
 			var diceiter = 0;
 			for (var i = 0, n = behaviors.length; i < n; ++ i) {
 				var behavior = behaviors[i];
-				if (behavior.skip || (forceMovement && !behavior.isMoving())) continue;
+				if (forceMovement && !behavior.isMoving()) continue;
 				diceiter += behavior.probability;
 				if (dice <= diceiter) {
 					return behavior;
 				}
 			}
-			return null;
+			return forceMovement ? this.randomBehavior(false) : null;
 		}
 	});
 
@@ -2045,9 +2100,11 @@ var BrowserPonies = (function () {
 	
 	observe(window, 'mouseup', function (event) {
 		if (dragged) {
+			var inst = dragged;
 			dragged = null;
 			document.body.style.userSelect    = '';
 			document.body.style.MozUserSelect = '';
+			inst.nextBehavior();
 		}
 	});
 
@@ -2055,9 +2112,10 @@ var BrowserPonies = (function () {
 		convertPony: function (ini, baseurl) {
 			var rows = PonyINI.parse(ini);
 			var pony = {
-				baseurl:   baseurl || "",
-				behaviors: [],
-				speeches:  []
+				baseurl:    baseurl || "",
+				behaviors:  [],
+				speeches:   [],
+				categories: []
 			};
 			var behaviors_by_name = {};
 			var effects = [];
@@ -2133,6 +2191,10 @@ var BrowserPonies = (function () {
 							if (row[3]) speak.file = encodeURIComponent(row[3]);
 						}
 						pony.speeches.push(speak);
+						break;
+
+					case "categories":
+						pony.categories = pony.categories.concat(row.slice(1));
 						break;
 
 					default:

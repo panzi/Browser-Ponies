@@ -67,7 +67,7 @@ function init () {
 	list.appendChild(render('Random Pony', 'random.png', 0));
 	for (var i = 0, n = names.length; i < n; ++ i) {
 		var pony = ponies[names[i]];
-		list.appendChild(render(pony.name, pony.behaviors[0].rightimage, pony.instances.length));
+		list.appendChild(render(pony.name, pony.all_behaviors[0].rightimage, pony.instances.length));
 	}
 
 	updateConfig();
