@@ -23,6 +23,7 @@ h1 {
 }
 h1, h2, h3, h4, h5, h6 {
 	color: #458BC1;
+	text-shadow: white 0px 1px 0px;
 }
 #baseurl {
 	width: 175px;
