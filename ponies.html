@@ -42,8 +42,7 @@ on websites (see the ponies here). You can create a bookmarklet which adds your 
 
 <p>
 This is a reimplementation of <a href="http://desktopponies.co.cc/">Desktop Ponies</a> in JavaScript.
-It doesn't behave exactly like the original but is close enough (no cursor avoidance, no games and
-ponies wander off screen, though when they do they wander back in again).
+It doesn't behave exactly like the original but is close enough (no games and no cursor avoidance etc.).
 </p>
 
 <p>
@@ -142,6 +141,20 @@ support by the website in order to work.
 <td>
 <button onclick="increaseNumberField.call($('fps'));">+</button>
 <button onclick="decreaseNumberField.call($('fps'));">&ndash;</button>
+</td>
+</tr>
+
+<tr>
+<td><label for="fade">Fade Duration:</label></td>
+<td>
+<input type="text" class="number" id="fade" value="0.5"
+	data-value="0.5" data-min="0" data-fixed="1" data-step="0.1" size="3"
+	onchange="numberFieldChanged.call(this,event);"/>
+</td>
+<td>sec</td>
+<td>
+<button onclick="increaseNumberField.call($('fade'));">+</button>
+<button onclick="decreaseNumberField.call($('fade'));">&ndash;</button>
 </td>
 </tr>
 </tbody>

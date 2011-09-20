@@ -212,14 +212,15 @@ var BrowserPonies = (function () {
 					if (typeof(value) === "object") {
 						for (var name in value) {
 							var cssValue = value[name];
-							element.style[name] = cssValue;
 							if (name === 'float') {
 								element.style.cssFloat   = cssValue;
 								element.style.styleFloat = cssValue;
 							}
-							else if (IE && name === 'opacity') {
-								element.style.filter = element.style.filter.replace(/\balpha\([^\)]*\)/gi,'') +
-									'alpha(opacity='+(parseFloat(cssValue)*100)+')';
+							else if (name === 'opacity') {
+								setOpacity(element, parseFloat(cssValue));
+							}
+							else {
+								element.style[name] = cssValue;
 							}
 						}
 					}
@@ -242,6 +243,15 @@ var BrowserPonies = (function () {
 			}
 		}
 	};
+
+	var setOpacity = IE ?
+		function (element, opacity) {
+			element.style.filter = element.style.filter.replace(/\balpha\([^\)]*\)/gi,'') +
+				'alpha(opacity='+(parseFloat(cssValue)*100)+')';
+		} :
+		function (element, opacity) {
+			element.style.opacity = opacity;
+		};
 
 	var tag = function (name) {
 		var element = document.createElement(name);
@@ -1435,10 +1445,14 @@ var BrowserPonies = (function () {
 					++ i;
 				}
 				else {
-					if (effect.img.parentNode) {
-						effect.img.parentNode.removeChild(effect.img);
-					}
+//					if (effect.img.parentNode) {
+//						effect.img.parentNode.removeChild(effect.img);
+//					}
 					this.effects.splice(i, 1);
+					this.removing.push({
+						element: effect.img,
+						at: currentTime
+					});
 				}
 			}
 			
@@ -1457,13 +1471,16 @@ var BrowserPonies = (function () {
 			// check if something needs to be removed:
 			for (var i = 0; i < this.removing.length;) {
 				var what = this.removing[i];
-				if (what.at <= currentTime) {
+				if (what.at + fadeDuration <= currentTime) {
 					if (what.element.parentNode) {
 						what.element.parentNode.removeChild(what.element);
 					}
 					this.removing.splice(i, 1);
 				}
 				else {
+					if (what.at <= currentTime) {
+						setOpacity(what.element, 1 - (currentTime - what.at) / fadeDuration);
+					}
 					++ i;
 				}
 			}
@@ -1632,8 +1649,11 @@ var BrowserPonies = (function () {
 				if (inst.effect.duration) {
 					neweffects.push(inst);
 				}
-				else if (inst.img.parentNode) {
-					inst.img.parentNode.removeChild(inst.img);
+				else {
+					this.removing.push({
+						element: inst.img,
+						at: this.start_time
+					});
 				}
 			}
 			
@@ -1654,7 +1674,7 @@ var BrowserPonies = (function () {
 				this.speak(this.start_time, randomSelect(this.pony.random_speeches));
 			}
 			
-			var pos = this.position();
+			var pos  = this.position();
 			var size = this.size();
 			var winsize = windowSize();
 			this.end_at_dest = false;
@@ -2109,6 +2129,7 @@ var BrowserPonies = (function () {
 		lastTime = time;
 	};
 
+	var fadeDuration = 500;
 	var preloadAll = false;
 	var showLoadProgress = true;
 	var audioEnabled = false;
@@ -2581,6 +2602,12 @@ var BrowserPonies = (function () {
 		isShowLoadProgress: function () {
 			return showLoadProgress;
 		},
+		getFadeDuration: function () {
+			return fadeDuration;
+		},
+		setFadeDuration: function (ms) {
+			fadeDuration = ms;
+		},
 		running: function () {
 			return timer !== null;
 		},
@@ -2614,6 +2641,9 @@ var BrowserPonies = (function () {
 			}
 			if ('showLoadProgress' in config) {
 				this.setShowLoadProgress(config.showLoadProgress);
+			}
+			if ('fadeDuration' in config) {
+				this.setFadeDuration(config.fadeDuration);
 			}
 			if (config.ponies) {
 				this.addPonies(config.ponies);
@@ -2655,6 +2685,7 @@ var BrowserPonies = (function () {
 			config.audioEnabled = this.isAudioEnabled();
 			config.preloadAll = this.isPreloadAll();
 			config.showLoadProgress = this.isShowLoadProgress();
+			config.fadeDuration = this.getFadeDuration();
 			// TODO: optionally dump ponies and interactions
 			config.spawn = {};
 			for (var name in ponies) {
@@ -2677,28 +2708,31 @@ var BrowserPonies = (function () {
 		},
 
 		// expose a few utils:
-		extend:        extend,
-		tag:           extend(tag,{add:add}),
-		has:           has,
-		format:        format,
-		partial:       partial,
-		observe:       observe,
-		stopObserving: stopObserving,
-		IE:            IE,
-		Opera:         Opera,
-		Gecko:         Gecko,
-		HasAudio:      HasAudio,
-		BaseZIndex:    BaseZIndex,
-		onload:        onload,
-		onprogress:    onprogress,
-		$:             $,
-		randomSelect:  randomSelect,
-		dataUrl:       dataUrl,
-		escapeXml:     escapeXml,
-		absUrl:        absUrl,
-		Base64:        Base64,
-		PonyINI:       PonyINI,
-		getOverlay:    getOverlay
+		Util: {
+			setOpacity:    setOpacity,
+			extend:        extend,
+			tag:           extend(tag,{add:add}),
+			has:           has,
+			format:        format,
+			partial:       partial,
+			observe:       observe,
+			stopObserving: stopObserving,
+			IE:            IE,
+			Opera:         Opera,
+			Gecko:         Gecko,
+			HasAudio:      HasAudio,
+			BaseZIndex:    BaseZIndex,
+			onload:        onload,
+			onprogress:    onprogress,
+			$:             $,
+			randomSelect:  randomSelect,
+			dataUrl:       dataUrl,
+			escapeXml:     escapeXml,
+			absUrl:        absUrl,
+			Base64:        Base64,
+			PonyINI:       PonyINI,
+			getOverlay:    getOverlay
+		}
 	};
 })();
 

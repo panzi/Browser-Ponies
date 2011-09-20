@@ -1,9 +1,11 @@
-var observe = BrowserPonies.observe;
-var tag     = BrowserPonies.tag;
-var $       = BrowserPonies.$;
-var absUrl  = BrowserPonies.absUrl;
-var has     = BrowserPonies.has;
-var partial = BrowserPonies.partial;
+"use strict";
+
+var observe = BrowserPonies.Util.observe;
+var tag     = BrowserPonies.Util.tag;
+var $       = BrowserPonies.Util.$;
+var absUrl  = BrowserPonies.Util.absUrl;
+var has     = BrowserPonies.Util.has;
+var partial = BrowserPonies.Util.partial;
 
 if (typeof($x) === "undefined") {
 	window.$x = function (xpath, context) {
@@ -54,6 +56,7 @@ function wrapPonies () {
 function init () {
 	$('noaudio').style.display  = BrowserPonies.HasAudio ? "none" : "";
 	$('hasaudio').style.display = BrowserPonies.HasAudio ? "" : "none";
+	setNumberFieldValue($('fade'), BrowserPonies.getFadeDuration() / 1000);
 	setNumberFieldValue($('fps'), BrowserPonies.getFps());
 	setNumberFieldValue($('speak'), Math.round(BrowserPonies.getSpeakProbability() * 100));
 	setNumberFieldValue($('speed'), BrowserPonies.getSpeed());
@@ -253,6 +256,8 @@ var PonyScripts = {
 
 function dumpConfig () {
 	var config = {baseurl: absUrl('')};
+
+	config.fadeDuration = getNumberFieldValue($('fade')) * 1000;
 	config.fps = getNumberFieldValue($('fps'));
 	config.speed = getNumberFieldValue($('speed'));
 	config.audioEnabled = $('enableaudio').checked;
@@ -286,6 +291,7 @@ function updateConfig () {
 	$('embedcode').value = '\u003cscript type="text/javascript"\u003e\n//\u003c!--\n'+
 		code+'\n//--\u003e\n\u003c/script\u003e';
 	
+	BrowserPonies.setFadeDuration(config.fadeDuration);
 	BrowserPonies.setFps(config.fps);
 	BrowserPonies.setSpeed(config.speed);
 	BrowserPonies.setAudioEnabled(config.audioEnabled);
