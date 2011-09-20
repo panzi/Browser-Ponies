@@ -887,7 +887,9 @@ var BrowserPonies = (function () {
 					fontWeight:     'bold',
 					fontSize:       '16px',
 					opacity:         '0.9',
-					display:        'none'
+					display:        'none',
+					boxShadow:    "2px 2px 12px rgba(0,0,0,0.4)",
+					MozBoxShadow: "2px 2px 12px rgba(0,0,0,0.4)"
 				}, onclick: function () {
 					if (progressbar) {
 						progressbar.container.style.display = 'none';
@@ -1339,7 +1341,6 @@ var BrowserPonies = (function () {
 		},
 		speak: function (currentTime,speech) {
 			if (speech.text) {
-//				console.log(this.pony.name+' says: '+speech.text);
 				var duration = Math.max(speech.text.length * 150, 1000);
 				var text = tag('div',{
 					style: {
