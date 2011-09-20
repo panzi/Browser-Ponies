@@ -3,6 +3,11 @@
 <head>
 <meta http-equiv="content-type" content="text/html; charset=utf8"/>
 <title>Browser Ponies</title>
+<script type="text/javascript">
+if (typeof(JSON) === "undefined") {
+	document.write('\u003cscript type="text/javscript" src="https://raw.github.com/douglascrockford/JSON-js/master/json2.js"\u003e\u003c/script\u003e');
+}
+</script>
 <link rel="stylesheet" type="text/css" href="gui.css"/>
 <!--[if IE]>
 <script type="text/javascript" src="http://stringencoders.googlecode.com/svn-history/r230/trunk/javascript/base64.js"></script>
@@ -11,11 +16,6 @@ if (!window.btoa) window.btoa = base64.encode;
 if (!window.atob) window.atob = base64.decodeo;
 </script>
 <![endif]-->
-<script type="text/javascript">
-if (typeof(JSON) === "undefined") {
-	document.write('\u003cscript type="text/javscript" src="https://raw.github.com/douglascrockford/JSON-js/master/json2.js"\u003e\u003c/script\u003e');
-}
-</script>
 <script type="text/javascript" src="ponycfg.js"></script>
 <script type="text/javascript" src="browserponies.js"></script>
 <script type="text/javascript" src="gui.js"></script>

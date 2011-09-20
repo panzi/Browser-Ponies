@@ -608,19 +608,15 @@ var BrowserPonies = (function () {
 
 			if (this.rightimage) {
 				preloadImage(this.rightimage, function (image) {
-					this.rightsize = {
-						width:  image.width,
-						height: image.height
-					};
+					this.rightsize.width  = image.width;
+					this.rightsize.height = image.height;
 				}.bind(this));
 			}
 			
 			if (this.leftimage) {
 				preloadImage(this.leftimage, function (image) {
-					this.leftsize = {
-						width:  image.width,
-						height: image.height
-					};
+					this.leftsize.width  = image.width;
+					this.leftsize.height = image.height;
 				}.bind(this));
 			}
 		},
@@ -674,25 +670,20 @@ var BrowserPonies = (function () {
 		preload: function () {
 			if (this.rightimage) {
 				preloadImage(this.rightimage, function (image) {
-					this.rightsize = {
-						width:  image.width,
-						height: image.height
-					};
+					this.rightsize.width  = image.width;
+					this.rightsize.height = image.height;
 				}.bind(this));
 			}
 			
 			if (this.leftimage) {
 				preloadImage(this.leftimage, function (image) {
-					this.leftsize = {
-						width:  image.width,
-						height: image.height
-					};
+					this.leftsize.width  = image.width;
+					this.leftsize.height = image.height;
 				}.bind(this));
 			}
 		}
 	};
 
-	// TODO: extend for other media and don't do it for all but only for spawned media
 	var resources = {};
 	var resource_count = 0;
 	var resource_loaded_count = 0;
@@ -1031,8 +1022,8 @@ var BrowserPonies = (function () {
 
 	Pony.prototype = {
 		preload: function () {
-			for (var name in this.behaviors_by_name) {
-				this.behaviors_by_name[name].preload();
+			for (var i = 0, n = this.all_behaviors.length; i < n; ++ i) {
+				this.all_behaviors[i].preload();
 			}
 			
 			if (HasAudio && audioEnabled) {
@@ -1090,12 +1081,17 @@ var BrowserPonies = (function () {
 	};
 	
 	var isOffscreen = function (rect) {
-		var winsize = windowSize();
+		return isOutsideOf(rect, windowSize());
+	};
+
+	// rect has origin at center
+	// area is only a size
+	var isOutsideOf = function (rect, area) {
 		var wh = rect.width  * 0.5;
 		var hh = rect.height * 0.5;
 		return rect.x < wh || rect.y < hh ||
-			rect.x + wh > winsize.width || 
-			rect.y + hh > winsize.height;
+			rect.x + wh > area.width || 
+			rect.y + hh > area.height;
 	};
 
 	var clipToScreen = function (rect) {
@@ -1167,14 +1163,20 @@ var BrowserPonies = (function () {
 			return this.current_size;
 		},
 		rect: function () {
-			var pos  = this.position();
-			var size = this.size();
-			return {
-				x: pos.x,
-				y: pos.y,
-				width:  size.width,
-				height: size.height
-			};
+			// lets abuse for speed (avoid object creation)
+			var pos = this.current_position;
+			pos.width  = this.current_size.width;
+			pos.height = this.current_size.height;
+			return pos;
+
+//			var pos  = this.position();
+//			var size = this.size();
+//			return {
+//				x: pos.x,
+//				y: pos.y,
+//				width:  size.width,
+//				height: size.height
+//			};
 		},
 		topLeftRect: function () {
 			var pos  = this.topLeftPosition();
@@ -1225,11 +1227,10 @@ var BrowserPonies = (function () {
 					if (timer !== null) {
 						this.nextBehavior(true);
 					}
-					document.body.style.userSelect    = 'none';
-					document.body.style.MozUserSelect = 'none';
+					event.preventDefault();
 				}
 			}.bind(this),
-			onmousemove: function () {
+			onmouseover: function () {
 				if (!this.mouseover) {
 					this.mouseover = true;
 					if (!this.isMouseOverOrDragging() &&
@@ -1298,6 +1299,7 @@ var BrowserPonies = (function () {
 			this.current_imgurl      = null;
 			this.interaction_wait    = 0;
 			this.current_position    = {x: 0, y: 0};
+			this.dest_position       = {x: 0, y: 0};
 			this.current_size        = {width: 0, height: 0};
 			this.zIndex              = BaseZIndex;
 			this.current_behavior    = null;
@@ -1326,8 +1328,6 @@ var BrowserPonies = (function () {
 			this.interaction_targets = targets;
 		},
 		speak: function (currentTime,speech) {
-			// this might be triggered often when I try to reroute a pony back into the screen
-			if (this.isOffscreen()) return;
 			if (speech.text) {
 //				console.log(this.pony.name+' says: '+speech.text);
 				var duration = Math.max(speech.text.length * 150, 1000);
@@ -1373,12 +1373,13 @@ var BrowserPonies = (function () {
 			var dist;
 			if (this.following) {
 				if (this.following.img.parentNode) {
-					dest = this.following.position();
+					dest   = this.dest_position;
+					dest.x = this.following.current_position.x;
+					dest.y = this.following.current_position.y;
 					dest.x += this.following.facing_right ?
 						this.current_behavior.x : -this.current_behavior.x;
 					dest.y += this.current_behavior.y;
 					dist = distance(curr, dest);
-					this.dest_position = dest;
 					if (!this.current_behavior.x && !this.current_behavior.y &&
 						dist <= curr.width * 0.5) {
 						dest = null;
@@ -1405,8 +1406,8 @@ var BrowserPonies = (function () {
 				else {
 					var scale = tdist / dist;
 					pos = {
-						x: curr.x + scale * dx,
-						y: curr.y + scale * dy
+						x: Math.round(curr.x + scale * dx),
+						y: Math.round(curr.y + scale * dy)
 					};
 				}
 
@@ -1424,7 +1425,6 @@ var BrowserPonies = (function () {
 */
 			}
 			else {
-//				this.clipToScreen();
 				pos = curr;
 			}
 
@@ -1505,29 +1505,40 @@ var BrowserPonies = (function () {
 				this.interaction_wait += interactionInterval;
 			}
 
-			// move back into screen:
-			// TODO: implement proper bounce
-			var wh = curr.width  * 0.5;
-			var hh = curr.height * 0.5;
-
-			/* dest offscreen:
-				isOffscreen(extend({
-					width:  curr.width,
-					height: curr.height,
-					x: this.dest_position.x,
-					y: this.dest_position.y
-				}))
-			*/
-			if (currentTime >= this.end_time || (
-				// full offscreen?
-				pos.x + wh < 0 || 
-				pos.y + hh < 0 ||
-				pos.x - wh > winsize.width < 0 ||
-				pos.y - hh > winsize.height) ||
-				(this.end_at_dest && // !this.following && 
+			if (currentTime >= this.end_time ||
+				(this.end_at_dest &&
 				 this.dest_position.x === pos.x &&
 				 this.dest_position.y === pos.y)) {
 				this.nextBehavior();
+				return;
+			}
+
+			if (this.following) return;
+
+			var wh = this.current_size.width  * 0.5;
+			var hh = this.current_size.height * 0.5;
+			
+			// bounce of screen edges
+			if (pos.x <= wh) {
+				if (this.dest_position.x < pos.x) {
+					this.dest_position.x = Math.round(Math.max(pos.x + pos.x - this.dest_position.x, wh));
+				}
+			}
+			else if (pos.x + wh >= winsize.width) {
+				if (this.dest_position.x > pos.x) {
+					this.dest_position.x = Math.round(Math.min(pos.x + pos.x - this.dest_position.x, winsize.width - wh));
+				}
+			}
+			
+			if (pos.y <= hh) {
+				if (this.dest_position.y < pos.y) {
+					this.dest_position.y = Math.round(Math.max(pos.y + pos.y - this.dest_position.y, hh));
+				}
+			}
+			else if (pos.y + hh >= winsize.height) {
+				if (this.dest_position.y > pos.y) {
+					this.dest_position.y = Math.round(Math.min(pos.y + pos.y - this.dest_position.y, winsize.height - hh));
+				}
 			}
 		},
 		getNearestInstance: function (name) {
@@ -1538,7 +1549,6 @@ var BrowserPonies = (function () {
 			
 			if (!pony) {
 				objs = [];
-				// FIXME: slow
 				for (var i = 0, n = instances.length; i < n; ++ i) {
 					var inst = instances[i];
 					for (var j = 0, m = inst.effects.length; j < m; ++ j) {
@@ -1566,8 +1576,9 @@ var BrowserPonies = (function () {
 			return nearObjects[0][1];
 		},
 		nextBehavior: function (breaklink) {
+			var offscreen = this.isOffscreen();
 			if (!breaklink && this.current_behavior && this.current_behavior.linked) {
-				this.behave(this.current_behavior.linked, this.isOffscreen());
+				this.behave(this.current_behavior.linked, offscreen);
 			}
 			else {				
 				if (this.current_interaction) {
@@ -1585,7 +1596,6 @@ var BrowserPonies = (function () {
 					this.current_interaction = null;
 				}
 
-				var offscreen = this.isOffscreen();
 				this.behave(this.randomBehavior(offscreen), offscreen);
 			}
 		},
@@ -1606,8 +1616,8 @@ var BrowserPonies = (function () {
 		},
 		behave: function (behavior, moveIntoScreen) {
 			this.start_time = Date.now();
-			var duration = behavior.minduration +
-				(behavior.maxduration - behavior.minduration) * Math.random();
+			var duration = (behavior.minduration +
+				(behavior.maxduration - behavior.minduration) * Math.random());
 			this.end_time = this.start_time + duration * 1000;
 		
 			if (this.current_behavior && this.current_behavior.speakend) {
@@ -1627,6 +1637,7 @@ var BrowserPonies = (function () {
 				}
 			}
 			
+			// get new image + size
 			this.setFacingRight(this.facing_right);
 			
 			this.following = null;
@@ -1648,7 +1659,8 @@ var BrowserPonies = (function () {
 			var winsize = windowSize();
 			this.end_at_dest = false;
 			if (this.following) {
-				this.dest_position = this.following.position();
+				this.dest_position.x = this.following.current_position.x;
+				this.dest_position.y = this.following.current_position.y;
 			}
 			else if (!behavior.follow && (behavior.x || behavior.y)) {
 				this.end_at_dest = true;
@@ -1658,7 +1670,7 @@ var BrowserPonies = (function () {
 				};
 			}
 			else {
-				// TODO: reduce change of going off-screen
+				// reduce chance of going off-screen
 				var movements = null;
 				switch (behavior.movement) {
 					case AllowedMoves.HorizontalOnly:
@@ -1700,7 +1712,8 @@ var BrowserPonies = (function () {
 				}
 
 				if (movements === null) {
-					this.dest_position = pos;
+					this.dest_position.x = Math.round(pos.x);
+					this.dest_position.y = Math.round(pos.y);
 				}
 				else {
 					var nearTop    = pos.y - size.height * 0.5 < 100;
@@ -2133,6 +2146,7 @@ var BrowserPonies = (function () {
 				x: event.clientX - mousePosition.x,
 				y: event.clientY - mousePosition.y
 			});
+			event.preventDefault();
 		}
 		mousePosition.x = event.clientX;
 		mousePosition.y = event.clientY;
@@ -2142,8 +2156,6 @@ var BrowserPonies = (function () {
 		if (dragged) {
 			var inst = dragged;
 			dragged = null;
-			document.body.style.userSelect    = '';
-			document.body.style.MozUserSelect = '';
 			if (timer !== null) {
 				inst.nextBehavior();
 			}
