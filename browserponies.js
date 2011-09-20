@@ -1445,9 +1445,6 @@ var BrowserPonies = (function () {
 					++ i;
 				}
 				else {
-//					if (effect.img.parentNode) {
-//						effect.img.parentNode.removeChild(effect.img);
-//					}
 					this.effects.splice(i, 1);
 					this.removing.push({
 						element: effect.img,
@@ -1924,6 +1921,7 @@ var BrowserPonies = (function () {
 		var duration = effect.duration * 1000;
 		// XXX: Gecko gif animations speed is buggy!
 		if (Gecko) duration *= 0.6;
+		duration = Math.max(duration - fadeDuration, fadeDuration);
 		this.end_time = start_time + duration;
 		this.effect   = effect;
 		

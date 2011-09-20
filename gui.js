@@ -335,7 +335,7 @@ var starter = function (srcs,cfg) {
 	};
 
 	if (typeof(BrowserPoniesConfig) === "undefined") {
-		BrowserPoniesConfig = {};
+		window.BrowserPoniesConfig = {};
 	}
 
 	if (typeof(BrowserPoniesBaseConfig) === "undefined") {

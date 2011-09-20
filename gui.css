@@ -161,7 +161,9 @@ table, #embedcodewrap {
 #footer {
 	text-align: center;
 	font-size: 0.8em;
-	color: #A1B4C3;
+	color: #8BA4B7;
+	margin-top: 10px;
+	text-shadow: white 0 1px 0;
 }
 #ponylist {
 	margin: auto;
