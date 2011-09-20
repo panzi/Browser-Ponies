@@ -1,11 +1,13 @@
 "use strict";
 
-var observe = BrowserPonies.Util.observe;
-var tag     = BrowserPonies.Util.tag;
-var $       = BrowserPonies.Util.$;
-var absUrl  = BrowserPonies.Util.absUrl;
-var has     = BrowserPonies.Util.has;
-var partial = BrowserPonies.Util.partial;
+var observe   = BrowserPonies.Util.observe;
+var tag       = BrowserPonies.Util.tag;
+var $         = BrowserPonies.Util.$;
+var absUrl    = BrowserPonies.Util.absUrl;
+var has       = BrowserPonies.Util.has;
+var partial   = BrowserPonies.Util.partial;
+var escapeXml = BrowserPonies.Util.escapeXml;
+var dataUrl   = BrowserPonies.Util.dataUrl;
 
 if (typeof($x) === "undefined") {
 	window.$x = function (xpath, context) {
@@ -281,12 +283,16 @@ function dumpConfig () {
 	return config;
 }
 
-function updateConfig () {
-	var config = dumpConfig();
+function ponyCode (config) {
 	var code = '('+starter.toString()+')('+
 		JSON.stringify(PonyScripts)+','+
 		JSON.stringify(config)+');';
-	code = code.replace(/^\s*\/\/.*\n/gm,' ').replace(/^\s*\n/gm,' ').replace(/\s\s+/g,' ');
+	return code.replace(/^\s*\/\/.*\n/gm,' ').replace(/^\s*\n/gm,' ').replace(/\s\s+/g,' ');
+}
+
+function updateConfig () {
+	var config = dumpConfig();
+	var code = ponyCode(config);
 	$('bookmarklet').href = 'javascript:'+code+'void(0)';
 	$('embedcode').value = '\u003cscript type="text/javascript"\u003e\n//\u003c!--\n'+
 		code+'\n//--\u003e\n\u003c/script\u003e';
@@ -467,4 +473,50 @@ function setAllZero () {
 		setNumberFieldValue(inputs[i], 0);
 	}
 	updateConfig();
+}
+
+function bookmarksMenu () {
+	var currentTime = Date.now();
+	var buf = [
+		"<!DOCTYPE NETSCAPE-Bookmark-file-1>\n"+
+		"<!-- This is an automatically generated file.\n"+
+		"     It will be read and overwritten.\n"+
+		"     DO NOT EDIT! -->\n"+
+		'<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">\n'+
+		"<TITLE>Bookmarks</TITLE>\n"+
+		"<H1>Bookmarks</H1>\n"+
+		"<DL><p>\n"+
+		'\t<DT><H3 ADD_DATE="'+currentTime+'" LAST_MODIFIED="'+currentTime+
+		'" PERSONAL_TOOLBAR_FOLDER="true">Bookmarks Bar</H3>\n'+
+		"\t<DL><p>\n"+
+		'\t\t<DT><H3 ADD_DATE="'+currentTime+'" LAST_MODIFIED="'+currentTime+'">Ponies</H3>\n'+
+        '\t\t<DL><p>'+
+		'\t\t\t<DT><A HREF="javascript:BrowserPonies.start();void(0)" ADD_DATE="'+currentTime+'">&#x25B6; Start</A>\n'+
+		'\t\t\t<DT><A HREF="javascript:BrowserPonies.stop();void(0)" ADD_DATE="'+currentTime+'">&#x25A0; Stop</A>\n'+
+		'\t\t\t<DT><A HREF="javascript:BrowserPonies.pause();void(0)" ADD_DATE="'+currentTime+'">&#x25AE;&#x25AE; Pause</A>\n'+
+		'\t\t\t<DT><A HREF="javascript:BrowserPonies.resume();void(0)" ADD_DATE="'+currentTime+'">&#x25AE;&#x25B6; Resume</A>\n'+
+		'\t\t\t<DT><A HREF="javascript:BrowserPonies.togglePoniesToBackground();void(0)" ADD_DATE="'+currentTime+'">&#x2195; Toggle ponies in background</A>\n'+
+		'\t\t\t<DT><A HREF="javascript:BrowserPonies.unspawnAll();BrowserPonies.stop();void(0)" ADD_DATE="'+currentTime+'">&times; Remove all ponies</A>\n'
+	];
+
+	var config = dumpConfig();
+	delete config.spawn;
+	config.spawnRandom = 1;
+	buf.push('\t\t\t<DT><A HREF="javascript:'+ponyCode(config)+'void(0)" ADD_DATE="'+currentTime+'">Random Pony</A>\n');
+	delete config.spawnRandom;
+
+	var ponies = BrowserPonies.ponies();
+	for (var name in ponies) {
+		var pony = ponies[name];
+		config.spawn = {};
+		config.spawn[name] = 1;
+		buf.push('\t\t\t<DT><A HREF="javascript:'+ponyCode(config)+'void(0)" ADD_DATE="'+currentTime+'">'+escapeXml(pony.name.replace(/_/g,' '))+'</A>\n');
+	}
+	
+	buf.push(
+		"\t\t</DL><p>\n"+
+		"\t</DL><p>\n"+
+		"</DL><p>\n");
+
+	return buf.join("");
 }
