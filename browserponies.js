@@ -1127,7 +1127,7 @@ var BrowserPonies = (function () {
 			y = winsize.height - hh;
 		}
 
-		return {x: x, y: y};
+		return {x: Math.round(x), y: Math.round(y)};
 	};
 
 	var Instance = function Instance () {};
@@ -1282,7 +1282,19 @@ var BrowserPonies = (function () {
 			return this.pony.name;
 		},
 		unspawn: function () {
-			this.clear();
+			var currentTime = Date.now();
+			if (this.effects) {
+				for (var i = 0, n = this.effects.length; i < n; ++ i) {
+					removing.push({
+						at: currentTime,
+						element: this.effects[i].img
+					});
+				}
+			}
+			removing.push({
+				at: currentTime,
+				element: this.img
+			});
 			removeAll(this.pony.instances,this);
 			removeAll(instances,this);
 		},
@@ -1290,14 +1302,6 @@ var BrowserPonies = (function () {
 			if (this.effects) {
 				for (var i = 0, n = this.effects.length; i < n; ++ i) {
 					this.effects[i].clear();
-				}
-			}
-			if (this.removing) {
-				for (var i = 0, n = this.removing.length; i < n; ++ i) {
-					var what = this.removing[i];
-					if (what.element.parentNode) {
-						what.element.parentNode.removeChild(what.element);
-					}
 				}
 			}
 			if (this.img.parentNode) {
@@ -1319,7 +1323,6 @@ var BrowserPonies = (function () {
 			this.end_at_dest         = false;
 			this.effects             = [];
 			this.repeating           = [];
-			this.removing            = [];
 		},
 		interact: function (currentTime,interaction,targets) {
 			var behavior = randomSelect(interaction.behaviors);
@@ -1367,7 +1370,7 @@ var BrowserPonies = (function () {
 				text.style.left = x+'px';
 				text.style.top  = y+'px';
 				text.style.visibility = '';
-				this.removing.push({
+				removing.push({
 					element: text,
 					at: currentTime + duration
 				});
@@ -1447,7 +1450,7 @@ var BrowserPonies = (function () {
 				}
 				else {
 					this.effects.splice(i, 1);
-					this.removing.push({
+					removing.push({
 						element: effect.img,
 						at: currentTime
 					});
@@ -1466,23 +1469,6 @@ var BrowserPonies = (function () {
 				}
 			}
 			
-			// check if something needs to be removed:
-			for (var i = 0; i < this.removing.length;) {
-				var what = this.removing[i];
-				if (what.at + fadeDuration <= currentTime) {
-					if (what.element.parentNode) {
-						what.element.parentNode.removeChild(what.element);
-					}
-					this.removing.splice(i, 1);
-				}
-				else {
-					if (what.at <= currentTime) {
-						setOpacity(what.element, 1 - (currentTime - what.at) / fadeDuration);
-					}
-					++ i;
-				}
-			}
-
 			if (this.interaction_wait <= currentTime &&
 					this.pony.interactions.length > 0 &&
 					!this.current_interaction) {
@@ -1648,7 +1634,7 @@ var BrowserPonies = (function () {
 					neweffects.push(inst);
 				}
 				else {
-					this.removing.push({
+					removing.push({
 						element: inst.img,
 						at: this.start_time
 					});
@@ -1827,9 +1813,11 @@ var BrowserPonies = (function () {
 						this.dest_position = clipToScreen(extend(this.dest_position, size));
 						this.end_at_dest   = true;
 					}
-
-					this.dest_position.x = Math.round(this.dest_position.x);
-					this.dest_position.y = Math.round(this.dest_position.y);
+					else {
+						// clipToScreen already rounds
+						this.dest_position.x = Math.round(this.dest_position.x);
+						this.dest_position.y = Math.round(this.dest_position.y);
+					}
 				}
 
 				this.setFacingRight(
@@ -2119,13 +2107,32 @@ var BrowserPonies = (function () {
 
 	var lastTime = Date.now();
 	var tick = function () {
-		var time = Date.now();
-		var span = time - lastTime;
+		var currentTime = Date.now();
+		var timeSpan = currentTime - lastTime;
 		var winsize = windowSize();
+		
 		for (var i = 0, n = instances.length; i < n; ++ i) {
-			instances[i].update(time, span, winsize);
+			instances[i].update(currentTime, timeSpan, winsize);
 		}
-		lastTime = time;
+
+		// check if something needs to be removed:
+		for (var i = 0; i < removing.length;) {
+			var what = removing[i];
+			if (what.at + fadeDuration <= currentTime) {
+				if (what.element.parentNode) {
+					what.element.parentNode.removeChild(what.element);
+				}
+				removing.splice(i, 1);
+			}
+			else {
+				if (what.at <= currentTime) {
+					setOpacity(what.element, 1 - (currentTime - what.at) / fadeDuration);
+				}
+				++ i;
+			}
+		}
+
+		lastTime = currentTime;
 	};
 
 	var fadeDuration = 500;
@@ -2139,6 +2146,7 @@ var BrowserPonies = (function () {
 	var interactionInterval = 500;
 	var ponies = {};
 	var instances = [];
+	var removing = [];
 	var overlay = null;
 	var timer = null;
 	var mousePosition = null;
@@ -2430,9 +2438,13 @@ var BrowserPonies = (function () {
 						var inst = new PonyInstance(pony);
 						instances.push(inst);
 						pony.instances.push(inst);
+						inst.img.style.visibility = 'hidden';
 						getOverlay().appendChild(inst.img);
 						inst.teleport();
 						inst.nextBehavior();
+						// fix position because size was initially 0x0
+						inst.clipToScreen();
+						inst.img.style.visibility = '';
 					});
 				}
 				else {
@@ -2463,12 +2475,8 @@ var BrowserPonies = (function () {
 			return true;
 		},
 		unspawnAll: function () {
-			for (var i = 0, n = instances.length; i < n; ++ i) {
-				instances[i].clear();
-			}
-			instances = [];
 			for (var name in ponies) {
-				ponies[name].instances = [];
+				ponies[name].unspawnAll();
 			}
 		},
 		clear: function () {
@@ -2501,9 +2509,13 @@ var BrowserPonies = (function () {
 				for (var i = 0, n = instances.length; i < n; ++ i) {
 					var inst = instances[i];
 					inst.clear();
+					inst.img.style.visibility = 'hidden';
 					overlay.appendChild(inst.img);
 					inst.teleport();
 					inst.nextBehavior();
+					// fix position because size was initially 0x0
+					inst.clipToScreen();
+					inst.img.style.visibility = '';
 				}
 				if (timer === null) {
 					lastTime = Date.now();
