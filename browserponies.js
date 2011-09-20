@@ -2173,7 +2173,7 @@ var BrowserPonies = (function () {
 		mousePosition.y = event.clientY;
 	});
 	
-	observe(window, 'mouseup', function (event) {
+	observe(window, 'mouseup', function () {
 		if (dragged) {
 			var inst = dragged;
 			dragged = null;
@@ -2182,6 +2182,22 @@ var BrowserPonies = (function () {
 			}
 		}
 	});
+	
+	/*
+	observe(window, 'blur', function () {
+		if (timer !== null && interval < 3000) {
+			clearInterval(timer);
+			timer = setInterval(tick, 3000);
+		}
+	});
+
+	observe(window, 'focus', function () {
+		if (timer !== null) {
+			clearInterval(timer);
+			timer = setInterval(tick, interval);
+		}
+	});
+	*/
 
 	return {
 		convertPony: function (ini, baseurl) {

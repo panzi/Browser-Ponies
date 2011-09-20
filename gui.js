@@ -54,8 +54,8 @@ function wrapPonies () {
 }
 
 function init () {
-	$('noaudio').style.display  = BrowserPonies.HasAudio ? "none" : "";
-	$('hasaudio').style.display = BrowserPonies.HasAudio ? "" : "none";
+	$('noaudio').style.display  = BrowserPonies.Util.HasAudio ? "none" : "";
+	$('hasaudio').style.display = BrowserPonies.Util.HasAudio ? "" : "none";
 	setNumberFieldValue($('fade'), BrowserPonies.getFadeDuration() / 1000);
 	setNumberFieldValue($('fps'), BrowserPonies.getFps());
 	setNumberFieldValue($('speak'), Math.round(BrowserPonies.getSpeakProbability() * 100));
