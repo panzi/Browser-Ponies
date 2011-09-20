@@ -452,7 +452,7 @@ function render (name,image,count,categories) {
 	
 	return tag('li',
 		{'data-categories':categories.join(", ")},
-		tag('div',{'class':'ponyname'},name),
+		tag('div',{'class':'ponyname'},name.replace(/_/g,' ')),
 		tag('div',{'class':'ponyimg'},
 			tag('img',{src:image})),
 		tag('label',{'for':input_id},'Count: '),
