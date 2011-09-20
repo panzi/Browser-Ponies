@@ -1620,11 +1620,7 @@ var BrowserPonies = (function () {
 			var duration = (behavior.minduration +
 				(behavior.maxduration - behavior.minduration) * Math.random());
 			this.end_time = this.start_time + duration * 1000;
-		
-			if (this.current_behavior && this.current_behavior.speakend) {
-				this.speak(this.start_time, this.current_behavior.speakend);
-			}
-
+			var previous_behavior = this.current_behavior;
 			this.current_behavior = behavior;
 
 			var neweffects = [];
@@ -1644,6 +1640,10 @@ var BrowserPonies = (function () {
 			// get new image + size
 			this.setFacingRight(this.facing_right);
 			
+			if (previous_behavior && previous_behavior.speakend) {
+				this.speak(this.start_time, previous_behavior.speakend);
+			}
+
 			this.following = null;
 			if (behavior.follow) {
 				this.following = this.getNearestInstance(behavior.follow);
