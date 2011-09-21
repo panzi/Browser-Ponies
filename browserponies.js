@@ -1653,6 +1653,7 @@ var BrowserPonies = (function () {
 				this.speak(this.start_time, behavior.speakstart);
 			}
 			else if (!behavior.speakend && !this.following &&
+				!this.current_interaction &&
 				this.pony.random_speeches.length > 0 &&
 				Math.random() < speakProbability) {
 				this.speak(this.start_time, randomSelect(this.pony.random_speeches));
