@@ -2745,7 +2745,12 @@ var BrowserPonies = (function () {
 				alert("This website does not support bringing Browser Ponies to the background.");
 			}
 			else {
-				toggleBrowserPoniesToBackground();
+				try {
+					toggleBrowserPoniesToBackground();
+				}
+				catch (e) {
+					alert("Error toggling Browser Ponies to the background:\n\n"+e.name+': '+e.message);
+				}
 			}
 		},
 

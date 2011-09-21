@@ -319,11 +319,10 @@ function dumpConfig () {
 function ponyCode (config) {
 	var code = '('+starter.toString()+')(';
 	if (typeof(JSON) === "undefined") {
-		code += '({},{});'
+		code += '{},{});'
 	}
 	else {
-		code += '('+starter.toString()+')('+
-			JSON.stringify(PonyScripts)+','+
+		code += JSON.stringify(PonyScripts)+','+
 			JSON.stringify(config)+');';
 	}
 	return code.replace(/^\s*\/\/.*\n/gm,' ').replace(/^\s*\n/gm,' ').replace(/\s\s+/g,' ');
