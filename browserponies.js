@@ -1875,10 +1875,7 @@ var BrowserPonies = (function () {
 		randomBehavior: function (forceMovement) {
 			var behaviors;
 			
-			if (forceMovement) {
-				behaviors = this.pony.random_behaviors;
-			}
-			else if (this === dragged && this.pony.dragged_behaviors.length > 0) {
+			if (this === dragged && this.pony.dragged_behaviors.length > 0) {
 				behaviors = this.pony.dragged_behaviors;
 			}
 			else if (this.mouseover && this.pony.mouseover_behaviors.length > 0) {
@@ -2178,6 +2175,7 @@ var BrowserPonies = (function () {
 				x: event.clientX - mousePosition.x,
 				y: event.clientY - mousePosition.y
 			});
+			extend(dragged.dest_position, dragged.current_position);
 			event.preventDefault();
 		}
 		mousePosition.x = event.clientX;
