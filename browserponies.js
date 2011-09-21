@@ -248,6 +248,7 @@ var BrowserPonies = (function () {
 		function (element, opacity) {
 			element.style.filter = element.style.filter.replace(/\balpha\([^\)]*\)/gi,'') +
 				'alpha(opacity='+(parseFloat(opacity)*100)+')';
+			element.style.opacity = opacity;
 		} :
 		function (element, opacity) {
 			element.style.opacity = opacity;
@@ -851,7 +852,7 @@ var BrowserPonies = (function () {
 						height:         '100%',
 						background:  '#9BD6F4',
 						MozBorderRadius: '5px',
-						borderRadius:    '5px',
+						borderRadius:    '5px'
 					}}),
 					label: tag('div', {style:{
 						position: 'absolute',
