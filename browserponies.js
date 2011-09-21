@@ -247,7 +247,7 @@ var BrowserPonies = (function () {
 	var setOpacity = IE ?
 		function (element, opacity) {
 			element.style.filter = element.style.filter.replace(/\balpha\([^\)]*\)/gi,'') +
-				'alpha(opacity='+(parseFloat(cssValue)*100)+')';
+				'alpha(opacity='+(parseFloat(opacity)*100)+')';
 		} :
 		function (element, opacity) {
 			element.style.opacity = opacity;
