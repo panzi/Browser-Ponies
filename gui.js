@@ -3,6 +3,7 @@
 // just so that the bookmarklet also works here:
 var BrowserPoniesBaseConfig = {};
 
+var oldConfig = {};
 var observe   = BrowserPonies.Util.observe;
 var tag       = BrowserPonies.Util.tag;
 var $         = BrowserPonies.Util.$;
@@ -17,7 +18,30 @@ var PonyScripts = {
 	'browser-ponies-config': absUrl('basecfg.js')
 };
 
-if (typeof($x) === "undefined") {
+function loadingJson(script) {
+	if (!script.readyState || script.readyState === "complete") {
+		if (!document.body) {
+			observe(window, 'load', function () {
+				oldConfig = {};
+				updateConfig();
+			});
+		}
+		else {
+			oldConfig = {};
+			updateConfig();
+		}
+	}
+}
+
+if (typeof(JSON) === "undefined") {
+	document.write('<script type="text/javascript" '+ 
+		'src="http://raw.github.com/douglascrockford/JSON-js/master/json2.js" '+
+		'onload="loadingJson(this)" '+
+		'onreadystatechange="loadingJson(this)" '+
+		'></script>');
+}
+
+if (typeof($x) === "undefined" && document.evaluate) {
 	window.$x = function (xpath, context) {
 		var nodes = [];
 		try {
@@ -40,7 +64,9 @@ function convertPonies () {
 		var converted = what === 'Pony' ?
 			BrowserPonies.convertPony(src, $('baseurl').value) :
 			BrowserPonies.convertInteractions(src);
-		$('output').value = JSON.stringify(converted);
+		$('output').value = typeof(JSON) === "undefined" ?
+			"Your browser misses JSON support." :
+			JSON.stringify(converted);
 	}
 	catch (e) {
 		console.error(e);
@@ -52,10 +78,12 @@ function wrapPonies () {
 	try {
 		var what = $('what').value;
 		var src = $('input').value.replace(/^\s*'.*\n/gm,'').replace(/^\s*\n/gm,'');
-		$('output').value = JSON.stringify(
-			what === 'Pony' ?
-				{ini: src, baseurl: $('baseurl').value} :
-				src);
+		$('output').value = typeof(JSON) === "undefined" ?
+			"Your browser misses JSON support." :
+			JSON.stringify(
+				what === 'Pony' ?
+					{ini: src, baseurl: $('baseurl').value} :
+					src);
 	}
 	catch (e) {
 		console.error(e);
@@ -270,7 +298,9 @@ function dumpConfig () {
 	config.speakProbability = getNumberFieldValue($('speak')) / 100;
 	config.spawn = {};
 
-	var inputs = $x('//input[@name="count"]',$('ponylist'));
+	var inputs = window.$x ?
+		window.$x('//input[@name="count"]',$('ponylist')) :
+		$('ponylist').querySelectorAll('input[name="count"]');
 	for (var i = 0, n = inputs.length; i < n; ++ i) {
 		var input = inputs[i];
 		var value = getNumberFieldValue(input);
@@ -287,13 +317,18 @@ function dumpConfig () {
 }
 
 function ponyCode (config) {
-	var code = '('+starter.toString()+')('+
-		JSON.stringify(PonyScripts)+','+
-		JSON.stringify(config)+');';
+	var code = '('+starter.toString()+')(';
+	if (typeof(JSON) === "undefined") {
+		code += '({},{});'
+	}
+	else {
+		code += '('+starter.toString()+')('+
+			JSON.stringify(PonyScripts)+','+
+			JSON.stringify(config)+');';
+	}
 	return code.replace(/^\s*\/\/.*\n/gm,' ').replace(/^\s*\n/gm,' ').replace(/\s\s+/g,' ');
 }
 
-var oldConfig = {};
 function updateConfig () {
 	var config = dumpConfig();
 	var code = ponyCode(config);

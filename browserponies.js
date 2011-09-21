@@ -92,7 +92,14 @@ var BrowserPonies = (function () {
 			element.removeEventListener(event, handler, false);
 		} :
 		function (element, event, handler) {
-			element.detachEvent('on'+event, handler._eventHandlingWrapper);
+			try {
+				element.detachEvent('on'+event, handler._eventHandlingWrapper);
+			}
+			catch (e) {
+				console.error(e.toString()+' '+
+					typeof(handler._eventHandlingWrapper)+' '+
+					String(handler._eventHandlingWrapper));
+			}
 		};
 
 	var windowSize = 'innerWidth' in window ?
@@ -220,7 +227,12 @@ var BrowserPonies = (function () {
 								setOpacity(element, parseFloat(cssValue));
 							}
 							else {
-								element.style[name] = cssValue;
+								try {
+									element.style[name] = cssValue;
+								}
+								catch (e) {
+									console.error(name+'='+cssValue+' '+e.toString());
+								}
 							}
 						}
 					}
