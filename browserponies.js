@@ -1640,8 +1640,10 @@ var BrowserPonies = (function () {
 			// get new image + size
 			this.setFacingRight(this.facing_right);
 			
+			var spoke = false;
 			if (previous_behavior && previous_behavior.speakend) {
 				this.speak(this.start_time, previous_behavior.speakend);
+				spoke = true;
 			}
 
 			this.following = null;
@@ -1652,7 +1654,8 @@ var BrowserPonies = (function () {
 			if (behavior.speakstart) {
 				this.speak(this.start_time, behavior.speakstart);
 			}
-			else if (!behavior.speakend && !this.following &&
+			else if (!spoke &&
+				!this.following &&
 				!this.current_interaction &&
 				this.pony.random_speeches.length > 0 &&
 				Math.random() < speakProbability) {
