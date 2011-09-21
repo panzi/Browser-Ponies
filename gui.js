@@ -510,7 +510,7 @@ function bookmarksMenu (config) {
 		'" PERSONAL_TOOLBAR_FOLDER="true">Bookmarks Bar</H3>\n'+
 		"\t<DL><p>\n"+
 		'\t\t<DT><H3 ADD_DATE="'+currentTime+'" LAST_MODIFIED="'+currentTime+'">Ponies</H3>\n'+
-        '\t\t<DL><p>'+
+        '\t\t<DL><p>\n'+
 		'\t\t\t<DT><A HREF="javascript:BrowserPonies.start();void(0)" ADD_DATE="'+currentTime+'">\u25B6 Start</A>\n'+
 		'\t\t\t<DT><A HREF="javascript:BrowserPonies.stop();void(0)" ADD_DATE="'+currentTime+'">\u25A0 Stop</A>\n'+
 		'\t\t\t<DT><A HREF="javascript:BrowserPonies.pause();void(0)" ADD_DATE="'+currentTime+'">\u25AE\u25AE Pause</A>\n'+
