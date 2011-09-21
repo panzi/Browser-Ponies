@@ -525,7 +525,15 @@ function bookmarksMenu (config) {
 	delete config.spawnRandom;
 
 	var ponies = BrowserPonies.ponies();
+	var names = [];
+
 	for (var name in ponies) {
+		names.push(name);
+	}
+	names.sort();
+
+	for (var i = 0; i < names.length; ++ i) {
+		var name = names[i];
 		var pony = ponies[name];
 		config.spawn = {};
 		config.spawn[name] = 1;
