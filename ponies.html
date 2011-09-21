@@ -16,8 +16,8 @@ if (!window.btoa) window.btoa = base64.encode;
 if (!window.atob) window.atob = base64.decodeo;
 </script>
 <![endif]-->
-<script type="text/javascript" src="ponycfg.js"></script>
-<script type="text/javascript" src="browserponies.js"></script>
+<script type="text/javascript" src="ponycfg.js" id="browser-ponies-config"></script>
+<script type="text/javascript" src="browserponies.js" id="browser-ponies-script"></script>
 <script type="text/javascript" src="gui.js"></script>
 </head>
 <body onload="init();">
@@ -174,6 +174,18 @@ support by the website in order to work.
 <ul id="ponylist"></ul>
 
 <p id="zero"><button onclick="setAllZero();">Set all Ponies to 0</button></p>
+
+<h3>Bookmarks Menu</h3>
+
+<p>
+If you'd like you can download a bookmarks file with links to add a certain pony
+and the controls from the top of this page. Just right click-save this link and
+import the resulting file in your browser (only tested in Chrome and Firefox):
+</p>
+
+<p id="bookmarkswrapper">
+<a class="button" href="javascript:void(0)" id="bookmarks">Bookmarks Menu</a>
+</p>
 
 <h3>Feedback</h3>
 

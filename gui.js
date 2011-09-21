@@ -1,5 +1,8 @@
 "use strict";
 
+// just so that the bookmarklet also works here:
+var BrowserPoniesBaseConfig = {};
+
 var observe   = BrowserPonies.Util.observe;
 var tag       = BrowserPonies.Util.tag;
 var $         = BrowserPonies.Util.$;
@@ -8,6 +11,11 @@ var has       = BrowserPonies.Util.has;
 var partial   = BrowserPonies.Util.partial;
 var escapeXml = BrowserPonies.Util.escapeXml;
 var dataUrl   = BrowserPonies.Util.dataUrl;
+
+var PonyScripts = {
+	'browser-ponies-script': absUrl('browserponies.js'),
+	'browser-ponies-config': absUrl('basecfg.js')
+};
 
 if (typeof($x) === "undefined") {
 	window.$x = function (xpath, context) {
@@ -251,11 +259,6 @@ function titelize (s) {
 	return buf.join('');
 }
 
-var PonyScripts = {
-	'browser-ponies-script': absUrl('browserponies.js'),
-	'browser-ponies-config': absUrl('basecfg.js')
-};
-
 function dumpConfig () {
 	var config = {baseurl: absUrl('')};
 
@@ -290,6 +293,7 @@ function ponyCode (config) {
 	return code.replace(/^\s*\/\/.*\n/gm,' ').replace(/^\s*\n/gm,' ').replace(/\s\s+/g,' ');
 }
 
+var oldConfig = {};
 function updateConfig () {
 	var config = dumpConfig();
 	var code = ponyCode(config);
@@ -323,6 +327,22 @@ function updateConfig () {
 		}
 	}
 	BrowserPonies.spawnRandom(random);
+
+	delete config.spawn;
+	delete config.spawnRandom;
+
+	var changed = false;
+	for (var name in config) {
+		if (oldConfig[name] !== config[name]) {
+			changed = true;
+			break;
+		}
+	}
+
+	if (changed) {
+		$('bookmarks').href = dataUrl('text/html',bookmarksMenu(config));
+		oldConfig = config;
+	}
 }
 
 var starter = function (srcs,cfg) {
@@ -475,7 +495,7 @@ function setAllZero () {
 	updateConfig();
 }
 
-function bookmarksMenu () {
+function bookmarksMenu (config) {
 	var currentTime = Date.now();
 	var buf = [
 		"<!DOCTYPE NETSCAPE-Bookmark-file-1>\n"+
@@ -499,10 +519,9 @@ function bookmarksMenu () {
 		'\t\t\t<DT><A HREF="javascript:BrowserPonies.unspawnAll();BrowserPonies.stop();void(0)" ADD_DATE="'+currentTime+'">\u00d7 Remove all ponies</A>\n'
 	];
 
-	var config = dumpConfig();
 	delete config.spawn;
 	config.spawnRandom = 1;
-	buf.push('\t\t\t<DT><A HREF="javascript:'+escapeXml(ponyCode(config))+'void(0)" ADD_DATE="'+currentTime+'">Random Pony</A>\n');
+	buf.push('\t\t\t<DT><A HREF="javascript:'+encodeURIComponent(ponyCode(config))+'void(0)" ADD_DATE="'+currentTime+'">Random Pony</A>\n');
 	delete config.spawnRandom;
 
 	var ponies = BrowserPonies.ponies();
@@ -510,7 +529,8 @@ function bookmarksMenu () {
 		var pony = ponies[name];
 		config.spawn = {};
 		config.spawn[name] = 1;
-		buf.push('\t\t\t<DT><A HREF="javascript:'+escapeXml(ponyCode(config))+'void(0)" ADD_DATE="'+currentTime+'">'+escapeXml(pony.name.replace(/_/g,' '))+'</A>\n');
+		buf.push('\t\t\t<DT><A HREF="javascript:'+encodeURIComponent(ponyCode(config))+'void(0)" ADD_DATE="'+currentTime+'">'+
+			escapeXml(pony.name.replace(/_/g,' '))+'</A>\n');
 	}
 	
 	buf.push(

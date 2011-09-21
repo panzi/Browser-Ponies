@@ -91,7 +91,8 @@ background: linear-gradient(top, #c0e7f7 0%,#61a4d3 100%);
 	padding: 10px 30px;
 	font-size: 1.2em;
 }
-#bookmarkletwrapper {
+#bookmarkletwrapper,
+#bookmarkswrapper {
 	text-align: center;
 }
 input, #ponylist button, table button {
