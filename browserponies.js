@@ -1494,6 +1494,7 @@ var BrowserPonies = (function () {
 					var diceiter = 0;
 					for (var i = 0, n = interactions.length; i < n; ++ i) {
 						interaction = interactions[i];
+						diceiter += interaction.probability;
 						if (dice <= diceiter) {
 							break;
 						}
