@@ -361,6 +361,7 @@ function updateConfig () {
 	$('embedcode').value = '<script type="text/javascript">\n//<!--\n'+
 		code+'\n//-->\n</script>';
 
+	var baseurl = config.baseurl;
 	delete config.baseurl;
 	$('iframe').value = '<iframe src="'+absUrl("ponies-iframe.html#"+
 		configToQueryString(config))+'" style="overflow:hidden;border-style:none;margin:0;'+
@@ -407,6 +408,7 @@ function updateConfig () {
 	}
 
 	if (changed) {
+		config.baseurl = baseurl;
 		$('bookmarks').href = dataUrl('text/html',bookmarksMenu(config));
 		oldConfig = config;
 	}
