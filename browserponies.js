@@ -172,7 +172,7 @@ var BrowserPonies = (function () {
 			}
 		}
 		return s;
-	}
+	};
 	
 	var partial = function (fn) {
 		var args = Array.prototype.slice.call(arguments,1);
@@ -435,7 +435,7 @@ var BrowserPonies = (function () {
 	};
 
 	var parseBoolean = function (value) {
-		var s = value.toLowerCase().trim();
+		var s = value.trim().toLowerCase();
 		if (s === "true") return true;
 		else if (s === "false") return false;
 		else throw new Error("illegal boolean value: "+value);
@@ -2442,7 +2442,17 @@ var BrowserPonies = (function () {
 				return false;
 			}
 			var pony = ponies[lowername];
-			if (count === undefined) count = 1;
+			if (count === undefined) {
+				count = 1;
+			}
+			else {
+				count = parseInt(count);
+				if (isNaN(count)) {
+					console.error("unexpected NaN value");
+					return false;
+				}
+			}
+
 			if (count > 0 && timer !== null) {
 				pony.preload();
 			}
@@ -2478,7 +2488,17 @@ var BrowserPonies = (function () {
 				return false;
 			}
 			var pony = ponies[lowername];
-			if (count === undefined || count >= pony.instances.length) {
+			if (count === undefined) {
+				count = pony.instances.length;
+			}
+			else {
+				count = parseInt(count);
+				if (isNaN(count)) {
+					console.error("unexpected NaN value");
+					return false;
+				}
+			}
+			if (count >= pony.instances.length) {
 				pony.unspawnAll();
 			}
 			else {
@@ -2573,7 +2593,11 @@ var BrowserPonies = (function () {
 			});
 		},
 		setInterval: function (ms) {
-			if (interval !== ms) {
+			ms = parseInt(ms);
+			if (isNaN(ms)) {
+				console.error("unexpected NaN value");
+			}
+			else if (interval !== ms) {
 				interval = ms;
 				if (timer !== null) {
 					clearInterval(timer);
@@ -2585,19 +2609,31 @@ var BrowserPonies = (function () {
 			return interval;
 		},
 		setFps: function (fps) {
-			this.setInterval(1000 / fps);
+			this.setInterval(1000 / parseFloat(fps));
 		},
 		getFps: function () {
 			return 1000 / interval;
 		},
 		setInteractionInterval: function (ms) {
-			interactionInterval = ms;
+			ms = parseFloat(ms);
+			if (isNaN(ms)) {
+				console.error("unexpected NaN value");
+			}
+			else {
+				interactionInterval = ms;
+			}
 		},
 		getInteractionInterval: function () {
 			return interactionInterval;
 		},
 		setSpeakProbability: function (probability) {
-			speakProbability = probability;
+			probability = parseFloat(probability);
+			if (isNaN(probability)) {
+				console.error("unexpected NaN value");
+			}
+			else {
+				speakProbability = probability;
+			}
 		},
 		getSpeakProbability: function () {
 			return speakProbability;
@@ -2609,13 +2645,24 @@ var BrowserPonies = (function () {
 			return globalBaseUrl;
 		},
 		setSpeed: function (speed) {
-			globalSpeed = speed;
+			globalSpeed = parseFloat(speed);
 		},
 		getSpeed: function () {
 			return globalSpeed;
 		},
 		setAudioEnabled: function (enabled) {
-			enabled = !!enabled;
+			if (typeof(enabled) === "string") {
+				try {
+					enabled = parseBoolean(enabled);
+				}
+				catch (e) {
+					console.error(e);
+					return;
+				}
+			}
+			else {
+				enabled = !!enabled;
+			}
 			if (audioEnabled !== enabled && enabled) {
 				audioEnabled = enabled;
 				if (preloadAll) {
@@ -2633,13 +2680,35 @@ var BrowserPonies = (function () {
 			return audioEnabled;
 		},
 		setPreloadAll: function (all) {
-			preloadAll = !!all;
+			if (typeof(all) === "string") {
+				try {
+					preloadAll = parseBoolean(all);
+				}
+				catch (e) {
+					console.error(e);
+					return;
+				}
+			}
+			else {
+				preloadAll = !!all;
+			}
 		},
 		isPreloadAll: function () {
 			return preloadAll;
 		},
 		setShowLoadProgress: function (show) {
-			showLoadProgress = show;
+			if (typeof(show) === "string") {
+				try {
+					showLoadProgress = parseBoolean(show);
+				}
+				catch (e) {
+					console.error(e);
+					return;
+				}
+			}
+			else {
+				showLoadProgress = !!show;
+			}
 		},
 		isShowLoadProgress: function () {
 			return showLoadProgress;
@@ -2648,7 +2717,7 @@ var BrowserPonies = (function () {
 			return fadeDuration;
 		},
 		setFadeDuration: function (ms) {
-			fadeDuration = ms;
+			fadeDuration = parseFloat(ms);
 		},
 		running: function () {
 			return timer !== null;

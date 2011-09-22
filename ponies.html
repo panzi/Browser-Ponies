@@ -71,8 +71,50 @@ However, the <cite><a href="#toggleinbg">Toggle ponies in background</a></cite> 
 support by the website in order to work.
 </p>
 
-<p><label for="embedcode">Or paste this into your webpage:</label>
+<p>
+<label for="embedcode">Or paste this into your webpage:</label>
 <div id="embedcodewrap"><textarea id="embedcode" onclick="this.select();"></textarea></div>
+</p>
+
+<p>
+<label for="iframe">Or if you don't want to include my script directly in your webpage
+you can use this embed code to confine the ponies into an iframe:</label>
+</p>
+
+<table>
+<tbody>
+<tr>
+<td><label for="iframe-width">Width:</label></td>
+<td>
+<input type="text" class="number" id="iframe-width" value="640" data-value="640"
+	data-min="10" data-fixed="0" data-step="10" size="3"
+	onchange="numberFieldChanged.call(this,event);"/>
+</td>
+<td>px</td>
+<td>
+<button onclick="increaseNumberField.call($('iframe-width'));">+</button>
+<button onclick="decreaseNumberField.call($('iframe-width'));">&ndash;</button>
+</td>
+</tr>
+
+<tr>
+<td><label for="iframe-height">Height:</label></td>
+<td>
+<input type="text" class="number" id="iframe-height" value="480" data-value="480"
+	data-min="10" data-fixed="0" data-step="10" size="3"
+	onchange="numberFieldChanged.call(this,event);"/>
+</td>
+<td>px</td>
+<td>
+<button onclick="increaseNumberField.call($('iframe-height'));">+</button>
+<button onclick="decreaseNumberField.call($('iframe-height'));">&ndash;</button>
+</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+<div id="iframewrap"><textarea id="iframe" onclick="this.select();"></textarea></div>
 </p>
 
 <h3>Change settings and choose your ponies</h3>

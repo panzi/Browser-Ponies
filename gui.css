@@ -135,13 +135,13 @@ pre.code {
 .comment {
 	color: #7C7C7C;
 }
-table, #embedcodewrap {
+table, #embedcodewrap, #iframewrap {
 	margin: auto;
 }
-#embedcodewrap {
+#embedcodewrap, #iframewrap {
 	width: 200px;
 }
-#embedcode {
+#embedcode, #iframe {
 	width: 100%;
 	overflow: hidden;
 }

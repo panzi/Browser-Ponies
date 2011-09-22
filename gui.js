@@ -48,7 +48,7 @@ if (typeof($x) === "undefined" && document.evaluate) {
 			var doc = (context && context.ownerDocument) || document;
 			var results = doc.evaluate(xpath, context || doc, null, XPathResult.ANY_TYPE, null);
 			var node;
-			while (node = results.iterateNext())
+			while ((node = results.iterateNext()))
 				nodes.push(node);
 		} catch (e) {
 			console.error(e);
@@ -319,7 +319,7 @@ function dumpConfig () {
 function ponyCode (config) {
 	var code = '('+starter.toString()+')(';
 	if (typeof(JSON) === "undefined") {
-		code += '{},{});'
+		code += '{},{});';
 	}
 	else {
 		code += JSON.stringify(PonyScripts)+','+
@@ -328,12 +328,45 @@ function ponyCode (config) {
 	return code.replace(/^\s*\/\/.*\n/gm,' ').replace(/^\s*\n/gm,' ').replace(/\s\s+/g,' ');
 }
 
+function configValueToParam (params, name, value) {
+	if (typeof(value) === "object") {
+		for (var key in value) {
+			configValueToParam(params, name+"."+key, value[key]);
+		}
+	}
+	else {
+		params[name] = String(value);
+	}
+}
+
+function configToQueryString (config) {
+	var params = {};
+	for (var name in config) {
+		configValueToParam(params, name, config[name]);
+	}
+	var buf = [];
+	for (var name in params) {
+		buf.push(encodeURIComponent(name)+"="+encodeURIComponent(params[name]));
+	}
+	return buf.join("&");
+}
+
 function updateConfig () {
 	var config = dumpConfig();
 	var code = ponyCode(config);
+	var iframeWidth  = getNumberFieldValue($('iframe-width'));
+	var iframeHeight = getNumberFieldValue($('iframe-height'));
+
 	$('bookmarklet').href = 'javascript:'+code+'void(0)';
-	$('embedcode').value = '\u003cscript type="text/javascript"\u003e\n//\u003c!--\n'+
-		code+'\n//--\u003e\n\u003c/script\u003e';
+	$('embedcode').value = '<script type="text/javascript">\n//<!--\n'+
+		code+'\n//-->\n</script>';
+
+	delete config.baseurl;
+	$('iframe').value = '<iframe src="'+absUrl("ponies-iframe.html#"+
+		configToQueryString(config))+'" style="overflow:hidden;border-style:none;margin:0;'+
+		'padding:0;background:transparent;width:'+iframeWidth+'px;'+iframeHeight+'px;" '+
+		'width="'+iframeWidth+'" height="'+iframeHeight+'" '+
+		'frameborder="0" scrolling="no" marginheight="0" marginwidth="0"></iframe>';
 	
 	BrowserPonies.setFadeDuration(config.fadeDuration);
 	BrowserPonies.setFps(config.fps);
