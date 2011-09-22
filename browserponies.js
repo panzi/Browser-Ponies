@@ -2168,7 +2168,7 @@ var BrowserPonies = (function () {
 		return overlay;
 	};
 
-	observe(window, 'mousemove', function (event) {
+	observe(document, 'mousemove', function (event) {
 		if (!mousePosition) {
 			mousePosition = {
 				x: event.clientX,
@@ -2187,7 +2187,7 @@ var BrowserPonies = (function () {
 		mousePosition.y = event.clientY;
 	});
 	
-	observe(window, 'mouseup', function () {
+	observe(document, 'mouseup', function () {
 		if (dragged) {
 			var inst = dragged;
 			dragged = null;
