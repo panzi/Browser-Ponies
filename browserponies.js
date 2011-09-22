@@ -1947,10 +1947,10 @@ var BrowserPonies = (function () {
 				zIndex:          String(BaseZIndex)
 			}});
 		if (IE) {
-			this.img.frameborder  = "0";
-			this.img.scrolling    = "no";
-			this.img.marginheight = "0";
-			this.img.marginwidth  = "0";
+			this.img.setAttribute("scrolling",   "no");
+			this.img.setAttribute("frameborder",  "0");
+			this.img.setAttribute("marginheight", "0");
+			this.img.setAttribute("marginwidth",  "0");
 		}
 		this.setImage(imgurl);
 
