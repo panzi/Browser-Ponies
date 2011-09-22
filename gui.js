@@ -298,8 +298,8 @@ function dumpConfig () {
 	config.speakProbability = getNumberFieldValue($('speak')) / 100;
 	config.spawn = {};
 
-	var inputs = window.$x ?
-		window.$x('//input[@name="count"]',$('ponylist')) :
+	var inputs = typeof($x) !== "undefined" ?
+		$x('//input[@name="count"]',$('ponylist')) :
 		$('ponylist').querySelectorAll('input[name="count"]');
 	for (var i = 0, n = inputs.length; i < n; ++ i) {
 		var input = inputs[i];

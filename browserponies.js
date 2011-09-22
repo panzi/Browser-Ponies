@@ -92,13 +92,8 @@ var BrowserPonies = (function () {
 			element.removeEventListener(event, handler, false);
 		} :
 		function (element, event, handler) {
-			try {
+			if ('_eventHandlingWrapper' in handler) {
 				element.detachEvent('on'+event, handler._eventHandlingWrapper);
-			}
-			catch (e) {
-				console.error(e.toString()+' '+
-					typeof(handler._eventHandlingWrapper)+' '+
-					String(handler._eventHandlingWrapper));
 			}
 		};
 
@@ -713,23 +708,21 @@ var BrowserPonies = (function () {
 	var onload_callbacks = [];
 	var onprogress_callbacks = [];
 
-	var loadImage = function (url,observer) {
-		var image = new Image();
+	var loadImage = function (loader,url,observer) {
+		var image = loader.object = new Image();
 		observe(image, 'load',  partial(observer,true));
 		observe(image, 'error', partial(observer,false));
 		observe(image, 'abort', partial(observer,false));
 		image.src = url;
-		return image;
 	};
 	
-	var loadAudio = function (url,observer) {
-		var audio = new Audio();
+	var loadAudio = function (loader,url,observer) {
+		var audio = loader.object = new Audio();
 		observe(audio, 'loadeddata', partial(observer,true));
 		observe(audio, 'error', partial(observer,false));
 		observe(audio, 'abort', partial(observer,false));
 		audio.preload = 'auto';
 		audio.src = url;
-		return audio;
 	};
 	
 	var preloadImage = function (url,callback) {
@@ -759,7 +752,7 @@ var BrowserPonies = (function () {
 				callbacks: callback ? [callback] : []
 			};
 
-			loader.object = load(url, function (success) {
+			load(loader, url, function (success) {
 				if (loader.loaded) {
 					console.error('resource loaded twice: '+url);
 					return;
@@ -785,7 +778,7 @@ var BrowserPonies = (function () {
 					loader.callbacks[i](loader.object, success);
 				}
 				delete loader.callbacks;
-					
+				
 				if (resource_loaded_count === resource_count) {
 					for (var i = 0, n = onload_callbacks.length; i < n; ++ i) {
 						onload_callbacks[i]();
@@ -796,14 +789,13 @@ var BrowserPonies = (function () {
 		}
 	};
 	
-	preload(function (url,observer) {
+	preload(function (loader,url,observer) {
 		if (document.body) {
-			observer();
+			observer(true);
 		}
 		else {
-			observe(window,'load',observer);
+			observe(window,'load',partial(observer,true));
 		}
-		return document;
 	}, document.location.href);
 
 	var onload = function (callback) {
