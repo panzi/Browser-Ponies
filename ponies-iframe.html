@@ -1,0 +1,55 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf8"/>
+<title>Browser Ponies iFrame</title>
+<script type="text/javascript" src="basecfg.js" id="browser-ponies-config"></script>
+<script type="text/javascript" src="browserponies.js" id="browser-ponies-script"></script>
+<script type="text/javascript" src="iframe.js"></script>
+<style type="text/css">
+html, body {
+	background: transparent;
+	margin: 0;
+	padding: 0;
+}
+html, body, #paddock-front, #paddock-back {
+	width: 100%;
+	height: 100%;
+}
+#paddock-front, #paddock-back, #paddock-left {
+	left: 0px;
+}
+#paddock-front, #paddock-back, #paddock-left, #paddock-right {
+	position: fixed;
+	height: 60px;
+}
+#paddock-front {
+	bottom: 0px;
+	background: transparent url("paddock_front.gif") repeat-x 100px bottom;
+	z-index: 9008000;
+}
+#paddock-back {
+	top: 0px;
+	background: transparent url("paddock_front.gif") repeat-x top;
+}
+#paddock-left, #paddock-right {
+	width: 16px;
+	height: 100%;
+	background: transparent url("paddock_side.gif") repeat-y top left;
+}
+#paddock-right {
+	right: 0px;
+}
+</style>
+</head>
+<body onload="loadConfig(window.location.hash.replace(/^#/,'') || window.location.search);">
+<div id="paddock-back">
+<div id="paddock-left">
+<div id="paddock-right">
+<div id="paddock-front">
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>
