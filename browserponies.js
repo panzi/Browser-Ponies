@@ -1431,7 +1431,9 @@ var BrowserPonies = (function () {
 				}
 
 				if (pos.x !== dest.x) {
-					this.setFacingRight(pos.x < dest.x);
+					this.setFacingRight(this.following ?
+						pos.x <= this.following.current_position.x :
+						pos.x <= dest.x);
 				}
 				this.setPosition(pos);
 /*
@@ -1832,7 +1834,7 @@ var BrowserPonies = (function () {
 
 				this.setFacingRight(
 					pos.x !== this.dest_position.x ?
-					pos.x < this.dest_position.x :
+					pos.x <= this.dest_position.x :
 					this.facing_right);
 			}
 
