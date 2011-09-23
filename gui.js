@@ -363,12 +363,14 @@ function updateConfig () {
 
 	var baseurl = config.baseurl;
 	delete config.baseurl;
+	config.paddock = $('paddock').checked;
 	$('iframe').value = '<iframe src="'+absUrl("ponies-iframe.html#"+
 		configToQueryString(config))+'" style="overflow:hidden;border-style:none;margin:0;'+
 		'padding:0;background:transparent;width:'+iframeWidth+'px;'+iframeHeight+'px;" '+
 		'width="'+iframeWidth+'" height="'+iframeHeight+'" '+
 		'frameborder="0" scrolling="no" marginheight="0" marginwidth="0"></iframe>';
-	
+	delete config.paddock;
+
 	BrowserPonies.setFadeDuration(config.fadeDuration);
 	BrowserPonies.setFps(config.fps);
 	BrowserPonies.setSpeed(config.speed);
