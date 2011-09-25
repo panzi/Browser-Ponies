@@ -74,6 +74,9 @@ background: -ms-linear-gradient(top, #b1dbed 0%,#4c92c4 100%);
 filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#b1dbed', endColorstr='#4c92c4',GradientType=0 );
 background: linear-gradient(top, #b1dbed 0%,#4c92c4 100%);
 }
+a.button:visited {
+	color: white;
+}
 .button:hover, button:hover, select:hover {
 	border-color: #68B1E3;
 

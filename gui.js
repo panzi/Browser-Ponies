@@ -10,7 +10,6 @@ var $         = BrowserPonies.Util.$;
 var absUrl    = BrowserPonies.Util.absUrl;
 var has       = BrowserPonies.Util.has;
 var partial   = BrowserPonies.Util.partial;
-var escapeXml = BrowserPonies.Util.escapeXml;
 var dataUrl   = BrowserPonies.Util.dataUrl;
 
 var PonyScripts = {
@@ -609,7 +608,7 @@ function bookmarksMenu (config) {
 		config.spawn = {};
 		config.spawn[name] = 1;
 		buf.push('\t\t\t<DT><A HREF="javascript:'+encodeURIComponent(ponyCode(config))+'void(0)" ADD_DATE="'+currentTime+'">'+
-			escapeXml(pony.name.replace(/_/g,' '))+'</A>\n');
+			pony.name.replace(/_/g,' ').replace(/</g,'\u2039').replace(/>/g,'\u203a').replace(/&/g,'+')+'</A>\n');
 	}
 	
 	buf.push(
