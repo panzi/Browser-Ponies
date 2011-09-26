@@ -939,6 +939,7 @@ var BrowserPonies = (function () {
 		this.random_behaviors    = [];
 		this.mouseover_behaviors = [];
 		this.dragged_behaviors   = [];
+		this.stand_behaviors     = [];
 		this.behaviors_by_name   = {};
 		this.speeches = [];
 		this.random_speeches  = [];
@@ -1011,17 +1012,43 @@ var BrowserPonies = (function () {
 				switch (behavior.movement) {
 					case AllowedMoves.MouseOver:
 						this.mouseover_behaviors.push(behavior);
+						if (!behavior.skip) this.stand_behaviors.push(behavior);
 						break;
 
 					case AllowedMoves.Dragged:
 						this.dragged_behaviors.push(behavior);
+						if (!behavior.skip) this.stand_behaviors.push(behavior);
+						break;
+
+					case AllowedMoves.None:
+						if (!behavior.skip) this.stand_behaviors.push(behavior);
 						break;
 				}
 			}
+
+			if (this.dragged_behaviors.length === 0 && this.mouseover_behaviors.length > 0) {
+				this.dragged_behaviors = this.mouseover_behaviors.slice();
+			}
+
+			if (this.stand_behaviors.length === 0) {
+				for (var i = 0, n = this.all_behaviors.length; i < n; ++ i) {
+					var behavior = this.all_behaviors[i];
+					if (behavior.movement === AllowedMoves.Sleep && !behavior.skip) {
+						this.stand_behaviors.push(behavior);
+					}
+				}
+			}
+
+			if (this.stand_behaviors.length === 0) {
+				console.warn(format("%s: Pony %s has no (non-skip) non-moving behavior.", this.baseurl, this.name));
+			}
+			else if (this.mouseover_behaviors.length === 0) {
+				this.mouseover_behaviors = this.stand_behaviors.slice();
+			}
 			
 			// dereference linked behaviors:
-			for (var name in this.behaviors_by_name) {
-				var behavior = this.behaviors_by_name[name];
+			for (var i = 0, n = this.all_behaviors.length; i < n; ++ i) {
+				var behavior = this.all_behaviors[i];
 				if (behavior.linked) {
 					var linked = behavior.linked.toLowerCase();
 					if (has(this.behaviors_by_name, linked)) {
@@ -1431,9 +1458,11 @@ var BrowserPonies = (function () {
 				}
 
 				if (pos.x !== dest.x) {
-					this.setFacingRight(this.following ?
-						pos.x <= this.following.current_position.x :
-						pos.x <= dest.x);
+					this.setFacingRight(pos.x <= dest.x);
+				}
+				else if (this.following) {
+					// TODO: mechanism for selecting behavior for current movement
+					this.setFacingRight(this.following.facing_right);
 				}
 				this.setPosition(pos);
 /*
