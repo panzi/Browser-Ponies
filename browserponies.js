@@ -420,7 +420,7 @@ var BrowserPonies = (function () {
 								line = line.slice(1);
 							}
 							else if (ch !== '}') {
-								console.error("data string:",line);
+								console.error("syntax error:",line);
 							}
 						}
 				}
