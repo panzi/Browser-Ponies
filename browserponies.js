@@ -566,7 +566,7 @@ var BrowserPonies = (function () {
 				for (var j = 0, m = pony.instances.length; j < m; ++ j) {
 					var inst = pony.instances[j];
 					// XXX: is it me or is the proximity much to low for all these interactions?
-					if (distance(pos, inst.position()) < this.proximity * 3) {
+					if (distance(pos, inst.position()) < this.proximity) {
 						targets.push(inst);
 						reachable = true;
 					}
@@ -619,6 +619,23 @@ var BrowserPonies = (function () {
 	};
 
 	Behavior.prototype = {
+		deref: function (property, pony) {
+			var name = this[property];			
+			if (name) {
+				var lower_name = name.toLowerCase();
+				if (has(pony.behaviors_by_name, lower_name)) {
+					this[property] = pony.behaviors_by_name[lower_name];
+				}
+				else {
+					console.warn(format("%s: Behavior %s of pony %s references non-existing behavior %s.",
+						pony.baseurl, this.name, pony.name, name));
+					delete this[property];
+				}
+			}
+			else {
+				delete this[property];
+			}
+		},
 		preload: function () {
 			for (var i = 0, n = this.effects.length; i < n; ++ i) {
 				this.effects[i].preload();
@@ -1049,17 +1066,9 @@ var BrowserPonies = (function () {
 			// dereference linked behaviors:
 			for (var i = 0, n = this.all_behaviors.length; i < n; ++ i) {
 				var behavior = this.all_behaviors[i];
-				if (behavior.linked) {
-					var linked = behavior.linked.toLowerCase();
-					if (has(this.behaviors_by_name, linked)) {
-						behavior.linked = this.behaviors_by_name[linked];
-					}
-					else {
-						console.warn(format("%s: Behavior %s of pony %s references non-existing behavior %s.",
-							this.baseurl, behavior.name, this.name, behavior.linked));
-						delete behavior.linked;
-					}
-				}
+				behavior.deref('linked',this);
+				behavior.deref('stopped',this);
+				behavior.deref('moving',this);
 			}
 		}
 	};
@@ -1255,8 +1264,10 @@ var BrowserPonies = (function () {
 				var pos = this.position();
 				var duration = (this.end_time - this.start_time) / 1000;
 				console.log(
-					format('%s does %s for %.2f seconds, is at %d x %d and %s. See:',
-						this.pony.name, this.current_behavior.name, duration, pos.x, pos.y,
+					format('%s does %s%s for %.2f seconds, is at %d x %d and %s. See:',
+						this.pony.name, this.current_behavior.name,
+						this.current_behavior === this.paint_behavior ? '' :
+						' using '+this.paint_behavior.name, duration, pos.x, pos.y,
 						(this.following ?
 							'follows '+this.following.name() :
 							format('wants to go to %d x %d',
@@ -1351,6 +1362,7 @@ var BrowserPonies = (function () {
 			this.current_size        = {width: 0, height: 0};
 			this.zIndex              = BaseZIndex;
 			this.current_behavior    = null;
+			this.paint_behavior      = null;
 			this.facing_right        = true;
 			this.end_at_dest         = false;
 			this.effects             = [];
@@ -1380,7 +1392,7 @@ var BrowserPonies = (function () {
 				var text = tag('div',{
 					style: {
 						color:        "#294256",
-						background:     "rgba(255,255,255,0.8)",
+						background: IE ? "white" : "rgba(255,255,255,0.8)",
 						position:       "fixed",
 						visibility:    "hidden",
 						margin:             "0",
@@ -1461,7 +1473,19 @@ var BrowserPonies = (function () {
 					this.setFacingRight(pos.x <= dest.x);
 				}
 				else if (this.following) {
-					// TODO: mechanism for selecting behavior for current movement
+					if (this.current_behavior.auto_select_images) {
+						// TODO: mechanism for selecting behavior for current movement
+					}
+					else if (Math.round(tdist) === 0) {
+						if (this.current_behavior.stopped) {
+							this.paint_behavior = this.current_behavior.stopped;
+						}
+					}
+					else {
+						if (this.current_behavior.moving) {
+							this.paint_behavior = this.current_behavior.moving;
+						}
+					}
 					this.setFacingRight(this.following.facing_right);
 				}
 				this.setPosition(pos);
@@ -1641,12 +1665,12 @@ var BrowserPonies = (function () {
 			this.facing_right = value;
 			var newimg;
 			if (value) {
-				newimg = this.current_behavior.rightimage;
-				this.current_size = this.current_behavior.rightsize;
+				newimg = this.paint_behavior.rightimage;
+				this.current_size = this.paint_behavior.rightsize;
 			}
 			else {
-				newimg = this.current_behavior.leftimage;
-				this.current_size = this.current_behavior.leftsize;
+				newimg = this.paint_behavior.leftimage;
+				this.current_size = this.paint_behavior.leftsize;
 			}
 			if (newimg !== this.current_imgurl) {
 				this.img.src = this.current_imgurl = newimg;
@@ -1658,7 +1682,7 @@ var BrowserPonies = (function () {
 				(behavior.maxduration - behavior.minduration) * Math.random());
 			this.end_time = this.start_time + duration * 1000;
 			var previous_behavior = this.current_behavior;
-			this.current_behavior = behavior;
+			this.current_behavior = this.paint_behavior = behavior;
 
 			var neweffects = [];
 			for (var i = 0, n = this.effects.length; i < n; ++ i) {
@@ -2277,7 +2301,8 @@ var BrowserPonies = (function () {
 							leftimage:   encodeURIComponent(row[7]),
 							movement:    row[8],
 							skip:        false,
-							effects:     []
+							effects:     [],
+							auto_select_images: true
 						};
 						if (row.length > 9) {
 							if (row[9]) behavior.linked = row[9];
@@ -2289,6 +2314,12 @@ var BrowserPonies = (function () {
 							behavior.x    = parseFloat(row[13]);
 							behavior.y    = parseFloat(row[14]);
 							if (row[15]) behavior.follow = row[15];
+
+							if (row.length > 16) {
+								behavior.auto_select_images = parseBoolean(row[16]);
+								behavior.stopped = row[17];
+								behavior.moving  = row[18];
+							}
 						}
 						pony.behaviors.push(behavior);
 						behaviors_by_name[behavior.name.toLowerCase()] = behavior;
