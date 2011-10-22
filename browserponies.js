@@ -1,61 +1,60 @@
 "use strict";
 
 // Shims:
-if (!('trim' in String.prototype)) {
-	String.prototype.trim = function () {
-		return this.replace(/^\s\s*/, '').replace(/\s\s*$/, '');
-	};
-}
-
-if (!('trimLeft' in String.prototype)) {
-	String.prototype.trimLeft = function () {
-		return this.replace(/^\s\s*/, '');
-	};
-}
-
-if (!('trimRight' in String.prototype)) {
-	String.prototype.trimRight = function () {
-		return this.replace(/\s\s*$/, '');
-	};
-}
-
-if (!('isArray' in Array)) {
-	Array.isArray = function (object) {
-		return Object.prototype.toString.call(object) === '[object Array]';
-	};
-}
-
-if (!('bind' in Function.prototype)) {
-	Function.prototype.bind = function (self) {
-		var funct   = this;
-		var partial = Array.prototype.slice.call(arguments,1);
-		return function () {
-			return funct.apply(self,partial.concat(Array.prototype.slice.call(arguments)));
-		};
-	};
-}
-
-if (!('now' in Date)) {
-	Date.now = function () {
-		return new Date().getTime();
-	};
-}
-
-// dummy console object to prevent crashes on forgotten debug messages:
 (function () {
-	if (typeof(console) === "undefined") {
-		window.console = {};
-	}
-	if (!('log' in window.console)) {
-		window.console.log = function () {};
-	}
-	var methods = ['info', 'warn', 'error', 'trace', 'dir'];
-	for (var i = 0, n = methods.length; i < n; ++ i) {
-		var name = methods[i];
-		if (!(name in window.console)) {
-			window.console[name] = window.console.log;
+	var shim = function (obj, shims) {
+		for (var name in shims) {
+			if (!(name in obj)) {
+				obj[name] = shims[name];
+			}
 		}
-	}
+	};
+
+	shim(String.prototype, {
+		trim: function () {
+			return this.replace(/^\s\s*/, '').replace(/\s\s*$/, '');
+		},
+		trimLeft: function () {
+			return this.replace(/^\s\s*/, '');
+		},
+		trimRight: function () {
+			return this.replace(/\s\s*$/, '');
+		}
+	});
+
+	shim(Array, {
+		isArray: function (object) {
+			return Object.prototype.toString.call(object) === '[object Array]';
+		}
+	});
+
+	shim(Function.prototype, {
+		bind: function (self) {
+			var funct   = this;
+			var partial = Array.prototype.slice.call(arguments,1);
+			return function () {
+				return funct.apply(self,partial.concat(Array.prototype.slice.call(arguments)));
+			};
+		}
+	});
+
+	shim(Date, {
+		now: function () {
+			return new Date().getTime();
+		}
+	});
+
+	// dummy console object to prevent crashes on forgotten debug messages:
+	if (typeof(console) === "undefined")
+		shim(window, {console: {}});
+	shim(window.console, {log: function () {}});
+	shim(window.console, {
+		info:  window.console.log,
+		warn:  window.console.log,
+		error: window.console.log,
+		trace: window.console.log,
+		dir:   window.console.log
+	});
 })();
 
 var BrowserPonies = (function () {
@@ -436,6 +435,12 @@ var BrowserPonies = (function () {
 		else throw new Error("illegal boolean value: "+value);
 	};
 
+	var parsePoint = function (value) {
+		if (typeof(value) === "string")
+			value = value.split(",");
+		return {x: parseInt(value[0],10), y: parseInt(value[1],10)};
+	};
+
 	var $ = function (element_or_id) {
 		if (typeof(element_or_id) === "string") {
 			return document.getElementById(element_or_id);
@@ -645,6 +650,12 @@ var BrowserPonies = (function () {
 				preloadImage(this.rightimage, function (image) {
 					this.rightsize.width  = image.width;
 					this.rightsize.height = image.height;
+					if (!this.rightcenter) {
+						this.rightcenter = {
+							x: Math.round(image.width  * 0.5),
+							y: Math.round(image.height * 0.5)
+						};
+					}
 				}.bind(this));
 			}
 			
@@ -652,6 +663,12 @@ var BrowserPonies = (function () {
 				preloadImage(this.leftimage, function (image) {
 					this.leftsize.width  = image.width;
 					this.leftsize.height = image.height;
+					if (!this.leftcenter) {
+						this.leftcenter = {
+							x: Math.round(image.width  * 0.5),
+							y: Math.round(image.height * 0.5)
+						};
+					}
 				}.bind(this));
 			}
 		},
@@ -1174,8 +1191,8 @@ var BrowserPonies = (function () {
 	var Instance = function Instance () {};
 	Instance.prototype = {
 		setTopLeftPosition: function (pos) {
-			this.current_position.x = pos.x + this.current_size.width  * 0.5;
-			this.current_position.y = pos.y + this.current_size.height * 0.5;
+			this.current_position.x = pos.x + this.current_center.x;
+			this.current_position.y = pos.y + this.current_center.y;
 			this.img.style.left = Math.round(pos.x)+'px';
 			this.img.style.top  = Math.round(pos.y)+'px';
 			var zIndex = Math.round(BaseZIndex + pos.y + this.current_size.height);
@@ -1186,8 +1203,8 @@ var BrowserPonies = (function () {
 		setPosition: function (pos) {
 			var x = this.current_position.x = pos.x;
 			var y = this.current_position.y = pos.y;
-			var top = Math.round(y - this.current_size.height * 0.5);
-			this.img.style.left = Math.round(x - this.current_size.width * 0.5)+'px';
+			var top = Math.round(y - this.current_center.y);
+			this.img.style.left = Math.round(x - this.current_center.x)+'px';
 			this.img.style.top  = top+'px';
 			var zIndex = Math.round(BaseZIndex + top + this.current_size.height);
 			if (this.zIndex !== zIndex) {
@@ -1205,8 +1222,8 @@ var BrowserPonies = (function () {
 		},
 		topLeftPosition: function () {
 			return {
-				x: this.current_position.x - this.current_size.width  * 0.5,
-				y: this.current_position.y - this.current_size.height * 0.5
+				x: this.current_position.x - this.current_center.x,
+				y: this.current_position.y - this.current_center.y
 			};
 		},
 		position: function () {
@@ -1360,6 +1377,7 @@ var BrowserPonies = (function () {
 			this.current_position    = {x: 0, y: 0};
 			this.dest_position       = {x: 0, y: 0};
 			this.current_size        = {width: 0, height: 0};
+			this.current_center      = {x: 0, y: 0};
 			this.zIndex              = BaseZIndex;
 			this.current_behavior    = null;
 			this.paint_behavior      = null;
@@ -1577,29 +1595,35 @@ var BrowserPonies = (function () {
 
 			if (this.following) return;
 
-			var wh = this.current_size.width  * 0.5;
-			var hh = this.current_size.height * 0.5;
-			
+			var x1 = this.current_center.x;
+			var y1 = this.current_center.y;
+			var x2 = this.current_size.width  - x1;
+			var y2 = this.current_size.height - y1;
+			var left   = pos.x - x1;
+			var right  = pos.x + x2;
+			var top    = pos.y - y1;
+			var bottom = pos.y + y2;
+
 			// bounce of screen edges
-			if (pos.x <= wh) {
+			if (left <= 0) {
 				if (this.dest_position.x < pos.x) {
-					this.dest_position.x = Math.round(Math.max(pos.x + pos.x - this.dest_position.x, wh));
+					this.dest_position.x = Math.round(Math.max(pos.x + pos.x - this.dest_position.x, x1));
 				}
 			}
-			else if (pos.x + wh >= winsize.width) {
+			else if (right >= winsize.width) {
 				if (this.dest_position.x > pos.x) {
-					this.dest_position.x = Math.round(Math.min(pos.x + pos.x - this.dest_position.x, winsize.width - wh));
+					this.dest_position.x = Math.round(Math.min(pos.x + pos.x - this.dest_position.x, winsize.width - x2));
 				}
 			}
 			
-			if (pos.y <= hh) {
+			if (top <= 0) {
 				if (this.dest_position.y < pos.y) {
-					this.dest_position.y = Math.round(Math.max(pos.y + pos.y - this.dest_position.y, hh));
+					this.dest_position.y = Math.round(Math.max(pos.y + pos.y - this.dest_position.y, y1));
 				}
 			}
-			else if (pos.y + hh >= winsize.height) {
+			else if (bottom >= winsize.height) {
 				if (this.dest_position.y > pos.y) {
-					this.dest_position.y = Math.round(Math.min(pos.y + pos.y - this.dest_position.y, winsize.height - hh));
+					this.dest_position.y = Math.round(Math.min(pos.y + pos.y - this.dest_position.y, winsize.height - y2));
 				}
 			}
 		},
@@ -1666,11 +1690,13 @@ var BrowserPonies = (function () {
 			var newimg;
 			if (value) {
 				newimg = this.paint_behavior.rightimage;
-				this.current_size = this.paint_behavior.rightsize;
+				this.current_size   = this.paint_behavior.rightsize;
+				this.current_center = this.paint_behavior.rightcenter;
 			}
 			else {
 				newimg = this.paint_behavior.leftimage;
-				this.current_size = this.paint_behavior.leftsize;
+				this.current_size   = this.paint_behavior.leftsize;
+				this.current_center = this.paint_behavior.leftcenter;
 			}
 			if (newimg !== this.current_imgurl) {
 				this.img.src = this.current_imgurl = newimg;
@@ -2319,6 +2345,11 @@ var BrowserPonies = (function () {
 								behavior.auto_select_images = parseBoolean(row[16]);
 								behavior.stopped = row[17];
 								behavior.moving  = row[18];
+
+								if (row.length > 18) {
+									behavior.rightcenter = parsePoint(row[19]);
+									behavior.leftcenter  = parsePoint(row[20]);
+								}
 							}
 						}
 						pony.behaviors.push(behavior);
@@ -2902,7 +2933,9 @@ var BrowserPonies = (function () {
 			absUrl:        absUrl,
 			Base64:        Base64,
 			PonyINI:       PonyINI,
-			getOverlay:    getOverlay
+			getOverlay:    getOverlay,
+			parseBoolean:  parseBoolean,
+			parsePoint:    parsePoint
 		}
 	};
 })();

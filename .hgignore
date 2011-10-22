@@ -1,4 +1,7 @@
 syntax: glob
 ponies
+ponies-old
+ponies-bak
+browser-ponies-resources.zip
 .*
 *~
