@@ -438,6 +438,9 @@ var BrowserPonies = (function () {
 	var parsePoint = function (value) {
 		if (typeof(value) === "string")
 			value = value.split(",");
+		if (value.length !== 2 || !/^\s*-?\d+\s*$/.test(value[0]) || !/^\s*-?\d+\s*$/.test(value[1])) {
+			throw new Error("illegal point value: "+value.join(","));
+		}
 		return {x: parseInt(value[0],10), y: parseInt(value[1],10)};
 	};
 
@@ -589,7 +592,7 @@ var BrowserPonies = (function () {
 		
 		if (this.follow) this.follow = this.follow.toLowerCase();
 		this.movement = null;
-		var movement  = behavior.movement.replace(/[-_\s]/,'').toLowerCase();
+		var movement  = behavior.movement.replace(/[-_\s]/g,'').toLowerCase();
 
 		for (var name in AllowedMoves) {
 			if (name.toLowerCase() === movement) {
@@ -686,7 +689,7 @@ var BrowserPonies = (function () {
 	};
 
 	var parseLocation = function (value) {
-		var loc = value.replace(/[-_\s]/,'').toLowerCase();
+		var loc = value.replace(/[-_\s]/g,'').toLowerCase();
 		for (var name in Locations) {
 			if (name.toLowerCase() === loc) {
 				return Locations[name];
@@ -1725,7 +1728,14 @@ var BrowserPonies = (function () {
 			}
 			
 			// get new image + size
-			this.setFacingRight(this.facing_right);
+			if (this.facing_right) {
+				this.current_size   = this.paint_behavior.rightsize;
+				this.current_center = this.paint_behavior.rightcenter;
+			}
+			else {
+				this.current_size   = this.paint_behavior.leftsize;
+				this.current_center = this.paint_behavior.leftcenter;
+			}
 			
 			var spoke = false;
 			if (previous_behavior && previous_behavior.speakend) {
@@ -1910,12 +1920,17 @@ var BrowserPonies = (function () {
 						this.dest_position.y = Math.round(this.dest_position.y);
 					}
 				}
-
-				this.setFacingRight(
-					pos.x !== this.dest_position.x ?
-					pos.x <= this.dest_position.x :
-					this.facing_right);
 			}
+
+			// this changes the image to the new behavior:
+			this.setFacingRight(
+				pos.x !== this.dest_position.x ?
+				pos.x <= this.dest_position.x :
+				this.facing_right);
+
+			// this initializes the new images position:
+			// (alternatively maybe this.update(...) could be called?)
+			this.setPosition(this.current_position);
 
 			var overlay = getOverlay();
 			this.repeating = [];
@@ -2346,7 +2361,7 @@ var BrowserPonies = (function () {
 								behavior.stopped = row[17];
 								behavior.moving  = row[18];
 
-								if (row.length > 18) {
+								if (row.length > 19) {
 									behavior.rightcenter = parsePoint(row[19]);
 									behavior.leftcenter  = parsePoint(row[20]);
 								}
