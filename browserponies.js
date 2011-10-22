@@ -726,11 +726,13 @@ var BrowserPonies = (function () {
 		if (effect.rightimage) {
 			this.rightimage = baseurl + effect.rightimage;
 		}
+		this.rightcenter_point = {x: 0, y: 0};
 		
 		this.leftsize = {width: 0, height: 0};
 		if (effect.leftimage) {
 			this.leftimage = baseurl + effect.leftimage;
 		}
+		this.leftcenter_point = {x: 0, y: 0};
 	};
 
 	Effect.prototype = {
@@ -739,6 +741,10 @@ var BrowserPonies = (function () {
 				preloadImage(this.rightimage, function (image) {
 					this.rightsize.width  = image.width;
 					this.rightsize.height = image.height;
+					this.rightcenter_point = {
+						x: Math.round(image.width  * 0.5),
+						y: Math.round(image.height * 0.5)
+					};
 				}.bind(this));
 			}
 			
@@ -746,6 +752,10 @@ var BrowserPonies = (function () {
 				preloadImage(this.leftimage, function (image) {
 					this.leftsize.width  = image.width;
 					this.leftsize.height = image.height;
+					this.leftcenter_point = {
+						x: Math.round(image.width  * 0.5),
+						y: Math.round(image.height * 0.5)
+					};
 				}.bind(this));
 			}
 		}
@@ -2032,11 +2042,13 @@ var BrowserPonies = (function () {
 		var imgurl;
 		if (pony.facing_right) {
 			imgurl = this.effect.rightimage;
-			this.current_size = this.effect.rightsize;
+			this.current_size   = this.effect.rightsize;
+			this.current_center = this.effect.rightcenter_point;
 		}
 		else {
 			imgurl = this.effect.leftimage;
-			this.current_size = this.effect.leftsize;
+			this.current_size   = this.effect.leftsize;
+			this.current_center = this.effect.leftcenter_point;
 		}
 		this.current_position = {x: 0, y: 0};
 		this.zIndex = BaseZIndex;
@@ -2208,11 +2220,13 @@ var BrowserPonies = (function () {
 				var imgurl;
 				if (this.pony.facing_right) {
 					imgurl = this.effect.rightimage;
-					this.current_size = this.effect.rightsize;
+					this.current_size   = this.effect.rightsize;
+					this.current_center = this.effect.rightcenter_point;
 				}
 				else {
 					imgurl = this.effect.leftimage;
-					this.current_size = this.effect.leftsize;
+					this.current_size   = this.effect.leftsize;
+					this.current_center = this.effect.leftcenter_point;
 				}
 				this.setImage(imgurl);
 			}
