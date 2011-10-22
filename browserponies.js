@@ -619,6 +619,14 @@ var BrowserPonies = (function () {
 			this.leftimage = baseurl + behavior.leftimage;
 		}
 
+		if (!this.rightcenter) {
+			this.rightcenter = {x: 0, y: 0, missing: true};
+		}
+		
+		if (!this.leftcenter) {
+			this.leftcenter = {x: 0, y: 0, missing: true};
+		}
+
 		this.effects         = [];
 		this.effects_by_name = {};
 		if ('effects' in behavior) {
@@ -657,7 +665,7 @@ var BrowserPonies = (function () {
 				preloadImage(this.rightimage, function (image) {
 					this.rightsize.width  = image.width;
 					this.rightsize.height = image.height;
-					if (!this.rightcenter) {
+					if (this.rightcenter.missing) {
 						this.rightcenter = {
 							x: Math.round(image.width  * 0.5),
 							y: Math.round(image.height * 0.5)
@@ -670,7 +678,7 @@ var BrowserPonies = (function () {
 				preloadImage(this.leftimage, function (image) {
 					this.leftsize.width  = image.width;
 					this.leftsize.height = image.height;
-					if (!this.leftcenter) {
+					if (this.leftcenter.missing) {
 						this.leftcenter = {
 							x: Math.round(image.width  * 0.5),
 							y: Math.round(image.height * 0.5)
