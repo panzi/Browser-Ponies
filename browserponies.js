@@ -589,6 +589,10 @@ var BrowserPonies = (function () {
 
 	var Behavior = function Behavior (baseurl, behavior) {
 		extend(this, behavior);
+
+		if (!this.name || this.name.toLowerCase() === 'none') {
+			throw new Error(baseurl+': illegal behavior name '+this.name);
+		}
 		
 		if (this.follow) this.follow = this.follow.toLowerCase();
 		this.movement = null;
@@ -628,9 +632,9 @@ var BrowserPonies = (function () {
 
 	Behavior.prototype = {
 		deref: function (property, pony) {
-			var name = this[property];			
-			if (name) {
-				var lower_name = name.toLowerCase();
+			var name = this[property];
+			var lower_name = (name||'').toLowerCase();
+			if (name && lower_name !== 'none') {
 				if (has(pony.behaviors_by_name, lower_name)) {
 					this[property] = pony.behaviors_by_name[lower_name];
 				}
