@@ -619,11 +619,12 @@ var BrowserPonies = (function () {
 			this.leftimage = baseurl + behavior.leftimage;
 		}
 
-		if (!this.rightcenter) {
+		// XXX: bugfix for ini files: interprete (0, 0) as missing
+		if (!this.rightcenter || (this.rightcenter.x === 0 && this.rightcenter.y === 0)) {
 			this.rightcenter = {x: 0, y: 0, missing: true};
 		}
 		
-		if (!this.leftcenter) {
+		if (!this.leftcenter || (this.leftcenter.x === 0 && this.leftcenter.y === 0)) {
 			this.leftcenter = {x: 0, y: 0, missing: true};
 		}
 
@@ -1656,34 +1657,33 @@ var BrowserPonies = (function () {
 			var nearObjects = [];
 			var pos = this.position();
 			var pony = ponies[name];
-			var objs;
 			
 			if (!pony) {
-				objs = [];
 				for (var i = 0, n = instances.length; i < n; ++ i) {
 					var inst = instances[i];
-					for (var j = 0, m = inst.effects.length; j < m; ++ j) {
-						var effect = inst.effects[j];
-						if (effect.effect.name === name) {
-							objs.push(effect);
+					if (!this.loops(inst)) {
+						for (var j = 0, m = inst.effects.length; j < m; ++ j) {
+							var effect = inst.effects[j];
+							if (effect.effect.name === name) {
+								nearObjects.push([distance(pos, effect.position()), effect]);
+							}
 						}
 					}
 				}
 			}
 			else {
-				objs = pony.instances;
-			}
-			
-			for (var i = 0, n = objs.length; i < n; ++ i) {
-				var inst = objs[i];
-				if (this !== inst) {
-					nearObjects.push([distance(pos, inst.position()), inst]);
+				for (var i = 0, n = pony.instances.length; i < n; ++ i) {
+					var inst = pony.instances[i];
+					if (!this.loops(inst)) {
+						nearObjects.push([distance(pos, inst.position()), inst]);
+					}
 				}
 			}
+			
 			if (nearObjects.length === 0) {
 				return null;
 			}
-			nearObjects.sort();
+			nearObjects.sort(function (lhs,rhs) { return lhs[0] - rhs[0]; });
 			return nearObjects[0][1];
 		},
 		nextBehavior: function (breaklink) {
@@ -1976,13 +1976,19 @@ var BrowserPonies = (function () {
 			if (this.following) {
 				msg = "following "+behavior.follow;
 			}
-			else if (this.dest_position.x !== pos.x || this.dest_position.y !== pos.y) {
-				msg = "move from "+pos.x+" x "+pos.y+" to "+
-					Math.round(this.dest_position.x)+" x "+
-					Math.round(this.dest_position.y);
-			}
 			else {
-				msg = "no movement";
+				if (this.dest_position.x !== pos.x || this.dest_position.y !== pos.y) {
+					msg = "move from "+pos.x+" x "+pos.y+" to "+
+						Math.round(this.dest_position.x)+" x "+
+						Math.round(this.dest_position.y);
+				}
+				else {
+					msg = "no movement";
+				}
+				
+				if (behavior.follow) {
+					msg += " (wanted to follow "+behavior.follow+")";
+				}
 			}
 			console.log(this.pony.name+" does "+behavior.name+": "+msg+" in "+duration+
 				" seconds");
@@ -2010,22 +2016,32 @@ var BrowserPonies = (function () {
 			}
 
 			var sumprob = 0;
+			var filtered = [];
 			for (var i = 0, n = behaviors.length; i < n; ++ i) {
 				var behavior = behaviors[i];
+				// don't filter looping behaviors because getNearestInstance filteres
+				// looping instances and then it just degrades to a standard behavior
 				if (forceMovement && !behavior.isMoving()) continue;
 				sumprob += behavior.probability;
+				filtered.push(behavior);
 			}
 			var dice = Math.random() * sumprob;
 			var diceiter = 0;
-			for (var i = 0, n = behaviors.length; i < n; ++ i) {
-				var behavior = behaviors[i];
-				if (forceMovement && !behavior.isMoving()) continue;
+			for (var i = 0, n = filtered.length; i < n; ++ i) {
+				var behavior = filtered[i];
 				diceiter += behavior.probability;
 				if (dice <= diceiter) {
 					return behavior;
 				}
 			}
 			return forceMovement ? this.randomBehavior(false) : null;
+		},
+		loops: function (instance) {
+			while (instance) {
+				if (this === instance) return true;
+				instance = instance.following;
+			}
+			return false;
 		}
 	});
 
