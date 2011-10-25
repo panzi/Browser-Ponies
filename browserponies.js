@@ -168,12 +168,124 @@ var BrowserPonies = (function () {
 		return s;
 	};
 	
+	var extend = function (dest, src) {
+		for (var name in src) {
+			dest[name] = src[name];
+		}
+		return dest;
+	};
+
 	var partial = function (fn) {
 		var args = Array.prototype.slice.call(arguments,1);
 		return function () {
 			return fn.apply(this,args.concat(Array.prototype.slice.call(arguments)));
 		};
 	};
+
+	var URL = function URL (url) {
+		var absurl = URL.abs(url);
+		var match = URL.FILE_REGEX.exec(absurl);
+		if (!match) match = URL.NET_REGEX.exec(absurl);
+		if (!match) {
+			throw new URIError("Illegal URL: "+url);
+		}
+		this.protocol = match[1].toLowerCase();
+		this.username = match[2];
+		this.password = match[3];
+		this.hostname = match[4];
+		this.port     = match[5];
+		this.pathname = match[6] || "/";
+		this.search   = match[7] || "";
+		this.hash     = match[8] || "";
+
+		if (!this.port) {
+			this.port = URL.DEFAULT_PORTS[this.protocol];
+		}
+	
+		if (this.port && URL.DEFAULT_PORTS[this.protocol] !== this.port) {
+			this.host = this.hostname+':'+this.port;
+		}
+		else {
+			this.host = this.hostname;
+		}
+	};
+
+	URL.prototype = {
+		toString: function () {
+			return this.protocol+'//'+
+				(this.username || this.password ?
+					(this.username || 'anonymous')+(this.password ? ':'+this.password : '')+'@' : '')+
+				this.hostname+(this.port && R4.URL.DEFAULT_PORTS[this.protocol] !== this.port ? ':'+this.port : '')+
+				this.pathname+this.search+this.hash;
+		}
+	};
+
+	extend(URL, {
+		FILE_REGEX: /^(file:)\/\/()()()()([^#\?]*)(\?[^#]*)?(#.*)?$/i,
+		NET_REGEX:  /^([a-z][-_a-z0-9]*:)\/\/(?:([^:@\/]*)(?::([^:@\/]*))?@)?([^:@\/]*)(?::(\d+))?(?:(\/[^#\?]*)(\?[^#]*)?(#.*)?)?$/i,
+		DEFAULT_PORTS: {
+			"http:":   "80",
+			"https:": "443",
+			"ftp:":    "21",
+			"ftps:":  "990",
+			"file:":     ""
+		},
+		abs: function (url, baseurl) {
+			if (!baseurl) baseurl = window.location;
+			if (url.slice(0,2) === '//') {
+				return baseurl.protocol+url;
+			}
+			else if (url[0] === '/') {
+				return baseurl.protocol+'//'+baseurl.host+url;
+			}
+			else if (url[0] === '#') {
+				return baseurl.protocol+'//'+baseurl.host+baseurl.pathname+baseurl.search+url;
+			}
+			else if (url[0] === '?') {
+				return baseurl.protocol+'//'+baseurl.host+baseurl.pathname+url;
+			}
+			else if ((/^[a-z][-_a-z0-9]*:/i).test(url)) {
+				return url;
+			}
+			else {
+				var path = baseurl.pathname.split('/');
+				path.pop();
+				if (path.length === 0) {
+					path.push("");
+				}
+				path.push(url);
+				return baseurl.protocol+'//'+baseurl.host+path.join("/");
+			}
+		},
+		join: function (baseurl) {
+			for (var i = 0; i < arguments.length; ++ i) {
+				var url = arguments[i];
+				
+				if ((/^[a-z][-_a-z0-9]*:/i).test(url)) {
+					baseurl = url;
+				}
+				else {
+					baseurl = new URL(baseurl);
+					if (url.slice(0,2) === '//') {
+						baseurl = baseurl.protocol+url;
+					}
+					else if (url[0] === '/') {
+						baseurl = baseurl.protocol+'//'+baseurl.host+url;
+					}
+					else if (url[0] === '#') {
+						baseurl = baseurl.protocol+'//'+baseurl.host+baseurl.pathname+baseurl.search+url;
+					}
+					else if (url[0] === '?') {
+						baseurl = baseurl.protocol+'//'+baseurl.host+baseurl.pathname+url;
+					}
+					else {
+						baseurl = baseurl.protocol+'//'+baseurl.host+baseurl.pathname+url;
+					}
+				}
+			}
+			return baseurl;
+		}
+	});
 
 	var Opera = Object.prototype.toString.call(window.opera) === '[object Opera]';
 	var IE = !!window.attachEvent && !Opera;
@@ -523,13 +635,6 @@ var BrowserPonies = (function () {
 		return "Not a Location";
 	};
 
-	var extend = function (dest, src) {
-		for (var name in src) {
-			dest[name] = src[name];
-		}
-		return dest;
-	};
-
 	var Interaction = function Interaction (interaction) {
 		this.name        = interaction.name;
 		this.probability = interaction.probability;
@@ -611,12 +716,12 @@ var BrowserPonies = (function () {
 
 		this.rightsize = {width: 0, height: 0};
 		if (behavior.rightimage) {
-			this.rightimage = baseurl + behavior.rightimage;
+			this.rightimage = URL.join(baseurl, behavior.rightimage);
 		}
 		
 		this.leftsize = {width: 0, height: 0};
 		if (behavior.leftimage) {
-			this.leftimage = baseurl + behavior.leftimage;
+			this.leftimage = URL.join(baseurl, behavior.leftimage);
 		}
 
 		// XXX: bugfix for ini files: interprete (0, 0) as missing
@@ -725,13 +830,13 @@ var BrowserPonies = (function () {
 
 		this.rightsize = {width: 0, height: 0};
 		if (effect.rightimage) {
-			this.rightimage = baseurl + effect.rightimage;
+			this.rightimage = URL.join(baseurl, effect.rightimage);
 		}
 		this.rightcenter_point = {x: 0, y: 0};
 		
 		this.leftsize = {width: 0, height: 0};
 		if (effect.leftimage) {
-			this.leftimage = baseurl + effect.leftimage;
+			this.leftimage = URL.join(baseurl, effect.leftimage);
 		}
 		this.leftcenter_point = {x: 0, y: 0};
 	};
@@ -990,7 +1095,7 @@ var BrowserPonies = (function () {
 	});
 
 	var Pony = function Pony (pony) {
-		this.baseurl = globalBaseUrl + pony.baseurl;
+		this.baseurl = URL.join(globalBaseUrl, pony.baseurl);
 		if (!pony.name) {
 			throw new Error('pony with following base URL has no name: '+this.baseurl);
 		}
@@ -1018,7 +1123,7 @@ var BrowserPonies = (function () {
 			for (var i = 0, n = pony.speeches.length; i < n; ++ i) {
 				var speech = extend({},pony.speeches[i]);
 				if (speech.file) {
-					speech.file = this.baseurl + speech.file;
+					speech.file = URL.join(this.baseurl, speech.file);
 				}
 				if (speech.name) {
 					var lowername = speech.name.toLowerCase();
@@ -2992,7 +3097,8 @@ var BrowserPonies = (function () {
 			PonyINI:       PonyINI,
 			getOverlay:    getOverlay,
 			parseBoolean:  parseBoolean,
-			parsePoint:    parsePoint
+			parsePoint:    parsePoint,
+			URL:           URL
 		}
 	};
 })();
