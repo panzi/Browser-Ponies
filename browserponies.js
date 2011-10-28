@@ -626,6 +626,23 @@ var BrowserPonies = (function () {
 		AnyNotCenter: 10
 	};
 
+	var AudioMimeTypes = {
+		wav:  'audio/wav',
+		webm: 'audio/webm',
+		mpeg: 'audio/mpeg',
+		mpga: 'audio/mpeg',
+		mpg:  'audio/mpeg',
+		mp1:  'audio/mpeg;codecs="mp1"',
+		mp2:  'audio/mpeg;codecs="mp2"',
+		mp3:  'audio/mpeg;codecs="mp3"',
+		mp4:  'audio/mp4',
+		mp4a: 'audio/mp4',
+		ogg:  'audio/ogg',
+		oga:  'audio/ogg',
+		flac: 'audio/ogg;codecs="flac"',
+		spx:  'audio/ogg;codecs="speex"'
+	};
+
 	var locationName = function (loc) {
 		for (var name in Locations) {
 			if (Locations[name] === loc) {
@@ -880,22 +897,48 @@ var BrowserPonies = (function () {
 		observe(image, 'abort', partial(observer,false));
 		image.src = url;
 	};
+
+	var createAudio = function (urls) {
+		var audio = new Audio();
+		
+		if (typeof(urls) === "string") {
+			audio.src = urls;
+		}
+		else {
+			for (var type in urls) {
+				var source = tag('source', {src: urls[type]});
+
+				if (type !== "audio/x-unknown") source.type = type;
+
+				audio.appendChild(source);
+			}
+		}
 	
-	var loadAudio = function (loader,url,observer) {
-		var audio = loader.object = new Audio();
-		observe(audio, 'loadeddata', partial(observer,true));
-		observe(audio, 'error', partial(observer,false));
-		observe(audio, 'abort', partial(observer,false));
-		audio.preload = 'auto';
-		audio.src = url;
+		return audio;
+	};
+	
+	var loadAudio = function (urls) {
+		return function (loader,id,observer) {
+			var audio = loader.object = createAudio(urls);
+			observe(audio, 'loadeddata', partial(observer,true));
+			observe(audio, 'error', partial(observer,false));
+			observe(audio, 'abort', partial(observer,false));
+			audio.preload = 'auto';
+		};
 	};
 	
 	var preloadImage = function (url,callback) {
 		preload(loadImage,url,callback);
 	};
 	
-	var preloadAudio = function (url,callback) {
-		preload(loadAudio,url,callback);
+	var preloadAudio = function (urls,callback) {
+		var list = [];
+		for (var type in urls) {
+			list.push(urls[type]);
+		}
+		list.sort();
+
+		preload(loadAudio(urls),list.join('|'),callback);
 	};
 
 	var preload = function (load,url,callback) {
@@ -1122,8 +1165,10 @@ var BrowserPonies = (function () {
 		if (pony.speeches) {
 			for (var i = 0, n = pony.speeches.length; i < n; ++ i) {
 				var speech = extend({},pony.speeches[i]);
-				if (speech.file) {
-					speech.file = URL.join(this.baseurl, speech.file);
+				if (speech.files) {
+					for (var type in speech.files) {
+						speech.files[type] = URL.join(this.baseurl, speech.files[type]);
+					}
 				}
 				if (speech.name) {
 					var lowername = speech.name.toLowerCase();
@@ -1230,8 +1275,8 @@ var BrowserPonies = (function () {
 			if (HasAudio && audioEnabled) {
 				for (var i = 0, n = this.speeches.length; i < n; ++ i) {
 					var speech = this.speeches[i];
-					if (speech.file) {
-						preloadAudio(speech.file);
+					if (speech.files) {
+						preloadAudio(speech.files);
 					}
 				}
 			}
@@ -1568,10 +1613,8 @@ var BrowserPonies = (function () {
 					at: currentTime + duration
 				});
 			}
-			if (HasAudio && audioEnabled && speech.file) {
-				var audio = new Audio();
-				audio.src = speech.file;
-				audio.play();
+			if (HasAudio && audioEnabled && speech.files) {
+				createAudio(speech.files).play();
 			}
 		},
 		update: function (currentTime, passedTime, winsize) {
@@ -2549,7 +2592,26 @@ var BrowserPonies = (function () {
 								text: row[2].trim(),
 								skip: row[4] ? parseBoolean(row[4]) : false
 							};
-							if (row[3]) speak.file = encodeURIComponent(row[3]);
+							var files = row[3];
+							if (files) {
+								if (!Array.isArray(files)) files = [files];
+								if (files.length > 0) {
+									speak.files = {};
+									for (var j = 0; j < files.length; ++ j) {
+										var file = files[j];
+										var ext = /(?:\.([^\.]*))?$/.exec(file)[1];
+										var type;
+										if (ext) {
+											ext = ext.toLowerCase();
+											type = AudioMimeTypes[ext] || 'audio/x-'+ext;
+										}
+										else {
+											type = 'audio/x-unknown';
+										}
+										speak.files[type] = encodeURIComponent(file);
+									}
+								}
+							}
 						}
 						pony.speeches.push(speak);
 						break;
