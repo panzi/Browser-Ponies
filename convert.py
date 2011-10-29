@@ -3,7 +3,7 @@
 import re
 import os
 import json
-import chardet
+#import chardet
 import codecs
 import urllib
 
@@ -22,7 +22,8 @@ BOMS = list(set(unicode(getattr(codecs, name),CODEC.match(name).group(1))
 BOMS.sort(key=lambda bom:-len(bom))
 
 def decode(s):
-	s = unicode(s,chardet.detect(s)['encoding'])
+#	s = unicode(s,chardet.detect(s)['encoding'])
+	s = unicode(s,"utf8")
 	for bom in BOMS:
 		if s.startswith(bom):
 			s = s[len(bom):]
