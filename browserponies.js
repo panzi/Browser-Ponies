@@ -884,6 +884,16 @@ var BrowserPonies = (function () {
 		}
 	};
 
+	var equalLength = function (s1, s2) {
+		var n = Math.min(s1.length, s2.length);
+		for (var i = 0; i < n; ++ i) {
+			if (s1.charAt(i) !== s2.charAt(i)) {
+				return i;
+			}
+		}
+		return n;
+	};
+
 	var resources = {};
 	var resource_count = 0;
 	var resource_loaded_count = 0;
@@ -932,13 +942,39 @@ var BrowserPonies = (function () {
 	};
 	
 	var preloadAudio = function (urls,callback) {
-		var list = [];
-		for (var type in urls) {
-			list.push(urls[type]);
+		var fakeurl;
+		if (typeof(urls) === "string") {
+			fakeurl = urls;
 		}
-		list.sort();
+		else {
+			var list = [];
+			for (var type in urls) {
+				list.push(urls[type]);
+			}
+			if (list.length === 0) {
+				throw new Error("no audio url to preload");
+			}
+			else if (list.length === 1) {
+				fakeurl = list[0];
+			}
+			else {
+				var common = list[0];
+				for (var i = 1; i < list.length; ++ i) {
+					var n = equalLength(common, list[i]);
+					if (n !== common.length) {
+						common = common.slice(0,n);
+					}
+				}
+				for (var i = 0; i < list.length; ++ i) {
+					list[i] = list[i].slice(common.length);
+				}
+			
+				list.sort();
+				fakeurl = common+'{'+list.join('|')+'}';
+			}
+		}
 
-		preload(loadAudio(urls),list.join('|'),callback);
+		preload(loadAudio(urls),fakeurl,callback);
 	};
 
 	var preload = function (load,url,callback) {
@@ -1166,8 +1202,13 @@ var BrowserPonies = (function () {
 			for (var i = 0, n = pony.speeches.length; i < n; ++ i) {
 				var speech = extend({},pony.speeches[i]);
 				if (speech.files) {
+					var count = 0;
 					for (var type in speech.files) {
 						speech.files[type] = URL.join(this.baseurl, speech.files[type]);
+						++ count;
+					}
+					if (count === 0) {
+						delete speech.files;
 					}
 				}
 				if (speech.name) {
