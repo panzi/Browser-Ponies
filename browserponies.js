@@ -1626,6 +1626,7 @@ var BrowserPonies = (function () {
 				var duration = Math.max(speech.text.length * 150, 1000);
 				var text = tag('div',{
 					style: {
+						fontSize:        "14px",
 						color:        "#294256",
 						background: IE ? "white" : "rgba(255,255,255,0.8)",
 						position:       "fixed",
