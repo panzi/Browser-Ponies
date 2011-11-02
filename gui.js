@@ -99,6 +99,7 @@ function init () {
 	setNumberFieldValue($('speed'), BrowserPonies.getSpeed());
 	$('progressbar').checked = BrowserPonies.isShowLoadProgress();
 	$('enableaudio').checked = BrowserPonies.isAudioEnabled();
+	$('showfps').checked     = BrowserPonies.isShowFps();
 
 	var list = $('ponylist');
 	var ponies = BrowserPonies.ponies();
@@ -293,6 +294,7 @@ function dumpConfig () {
 	config.fps = getNumberFieldValue($('fps'));
 	config.speed = getNumberFieldValue($('speed'));
 	config.audioEnabled = $('enableaudio').checked;
+	config.showFps = $('showfps').checked;
 	config.showLoadProgress = $('progressbar').checked;
 	config.speakProbability = getNumberFieldValue($('speak')) / 100;
 	config.spawn = {};
@@ -374,6 +376,7 @@ function updateConfig () {
 	BrowserPonies.setFps(config.fps);
 	BrowserPonies.setSpeed(config.speed);
 	BrowserPonies.setAudioEnabled(config.audioEnabled);
+	BrowserPonies.setShowFps(config.showFps);
 	BrowserPonies.setShowLoadProgress(config.showLoadProgress);
 	BrowserPonies.setSpeakProbability(config.speakProbability);
 

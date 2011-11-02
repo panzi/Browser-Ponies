@@ -2442,6 +2442,7 @@ var BrowserPonies = (function () {
 
 	var lastTime = Date.now();
 	var tick = function () {
+		if (timer === null) return;
 		var currentTime = Date.now();
 		var timeSpan = currentTime - lastTime;
 		var winsize = windowSize();
@@ -2467,6 +2468,24 @@ var BrowserPonies = (function () {
 			}
 		}
 
+		if (showFps) {
+			if (!fpsDisplay) {
+				var overlay = getOverlay();
+				fpsDisplay = tag('div', {style: {
+					fontSize:  '18px',
+					position: 'fixed',
+					bottom:       '0',
+					left:         '0',
+					zIndex: String(BaseZIndex + 9001)
+				}});
+				overlay.appendChild(fpsDisplay);
+			}
+
+			fpsDisplay.innerHTML = Math.round(1000 / timeSpan) + ' fps';
+		}
+
+		setTimeout(tick, Math.max(interval - (currentTime - Date.now()), 0));
+
 		lastTime = currentTime;
 	};
 
@@ -2474,6 +2493,7 @@ var BrowserPonies = (function () {
 	var preloadAll = false;
 	var showLoadProgress = true;
 	var audioEnabled = false;
+	var showFps = false;
 	var globalBaseUrl = absUrl('');
 	var globalSpeed = 3; // why is it too slow otherwise?
 	var speakProbability = 0.1;
@@ -2486,6 +2506,7 @@ var BrowserPonies = (function () {
 	var timer = null;
 	var mousePosition = null;
 	var dragged = null;
+	var fpsDisplay = null;
 
 	var getOverlay = function () {
 		if (!overlay) {
@@ -2526,22 +2547,6 @@ var BrowserPonies = (function () {
 		}
 	});
 	
-	/*
-	observe(window, 'blur', function () {
-		if (timer !== null && interval < 3000) {
-			clearInterval(timer);
-			timer = setInterval(tick, 3000);
-		}
-	});
-
-	observe(window, 'focus', function () {
-		if (timer !== null) {
-			clearInterval(timer);
-			timer = setInterval(tick, interval);
-		}
-	});
-	*/
-
 	return {
 		convertPony: function (ini, baseurl) {
 			var rows = PonyINI.parse(ini);
@@ -2906,7 +2911,7 @@ var BrowserPonies = (function () {
 				}
 				if (timer === null) {
 					lastTime = Date.now();
-					timer = setInterval(tick, interval);
+					timer = setTimeout(tick, 0);
 				}
 			});
 		},
@@ -2919,14 +2924,15 @@ var BrowserPonies = (function () {
 				overlay.innerHTML = '';
 				overlay = null;
 			}
+			fpsDisplay = null;
 			if (timer !== null) {
-				clearInterval(timer);
+				clearTimeout(timer);
 				timer = null;
 			}
 		},
 		pause: function () {
 			if (timer !== null) {
-				clearInterval(timer);
+				clearTimeout(timer);
 				timer = null;
 			}
 		},
@@ -2940,7 +2946,7 @@ var BrowserPonies = (function () {
 			onload(function () {
 				if (timer === null) {
 					lastTime = Date.now();
-					timer = setInterval(tick, interval);
+					timer = setTimeout(tick, 0);
 				}
 			});
 		},
@@ -2951,10 +2957,6 @@ var BrowserPonies = (function () {
 			}
 			else if (interval !== ms) {
 				interval = ms;
-				if (timer !== null) {
-					clearInterval(timer);
-					timer = setInterval(tick, interval);
-				}
 			}
 		},
 		getInterval: function () {
@@ -3031,6 +3033,18 @@ var BrowserPonies = (function () {
 		isAudioEnabled: function () {
 			return audioEnabled;
 		},
+		setShowFps: function (value) {
+			showFps = !!value;
+			if (!showFps && fpsDisplay) {
+				if (fpsDisplay.parentNode) {
+					fpsDisplay.parentNode.removeChild(fpsDisplay);
+				}
+				fpsDisplay = null;
+			}
+		},
+		isShowFps: function () {
+			return showFps;
+		},
 		setPreloadAll: function (all) {
 			if (typeof(all) === "string") {
 				try {
@@ -3099,6 +3113,9 @@ var BrowserPonies = (function () {
 			if ('audioEnabled' in config) {
 				this.setAudioEnabled(config.audioEnabled);
 			}
+			if ('showFps' in config) {
+				this.setShowFps(config.showFps);
+			}
 			if ('preloadAll' in config) {
 				this.setPreloadAll(config.preloadAll);
 			}
@@ -3146,6 +3163,7 @@ var BrowserPonies = (function () {
 			config.fps = this.getFps();
 			config.interactionInterval = this.getInteractionInterval();
 			config.audioEnabled = this.isAudioEnabled();
+			config.showFps = this.isShowFps();
 			config.preloadAll = this.isPreloadAll();
 			config.showLoadProgress = this.isShowLoadProgress();
 			config.fadeDuration = this.getFadeDuration();
