@@ -1034,12 +1034,34 @@ var BrowserPonies = (function () {
 	};
 	
 	preload(function (loader,url,observer) {
+		var loaded = false;
+		var fireLoad = function () {
+			if (!loaded) {
+				loaded = true;
+				observer(true);
+			}
+		};
+
 		if (document.body) {
 			observer(true);
 		}
-		else {
-			observe(window,'load',partial(observer,true));
+		else if (document.addEventListener) {
+			// all browsers but IE implement HTML5 DOMContentLoaded
+			observe(document, 'DOMContentLoaded', fireLoad);
 		}
+		else {
+			var checkReadyState = function () {
+				if (document.readyState === 'complete') {
+					stopObserving(document, 'readystatechange', checkReadyState);
+					fireLoad();
+				}
+			};
+
+			observe(document, 'readystatechange', checkReadyState);
+		}
+
+		// fallback
+		observe(window,'load',fireLoad);
 	}, document.location.href);
 
 	var onload = function (callback) {
