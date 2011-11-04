@@ -1628,17 +1628,17 @@ var BrowserPonies = (function () {
 			this.repeating           = [];
 		},
 		interact: function (currentTime,interaction,targets) {
-			var behavior = randomSelect(interaction.behaviors);
+			var pony, behavior = randomSelect(interaction.behaviors);
 			this.behave(this.pony.behaviors_by_name[behavior]);
 			if (interaction.all) {
 				for (var i = 0, n = targets.length; i < n; ++ i) {
-					var pony = targets[i];
+					pony = targets[i];
 					pony.behave(pony.pony.behaviors_by_name[behavior]);
 					pony.current_interaction = interaction;
 				}
 			}
 			else {
-				var pony = randomSelect(targets);
+				pony = randomSelect(targets);
 				pony.behave(pony.pony.behaviors_by_name[behavior]);
 				pony.current_interaction = interaction;
 			}
@@ -2671,15 +2671,15 @@ var BrowserPonies = (function () {
 									for (var j = 0; j < files.length; ++ j) {
 										var file = files[j];
 										var ext = /(?:\.([^\.]*))?$/.exec(file)[1];
-										var type;
+										var filetype;
 										if (ext) {
 											ext = ext.toLowerCase();
-											type = AudioMimeTypes[ext] || 'audio/x-'+ext;
+											filetype = AudioMimeTypes[ext] || 'audio/x-'+ext;
 										}
 										else {
-											type = 'audio/x-unknown';
+											filetype = 'audio/x-unknown';
 										}
-										speak.files[type] = encodeURIComponent(file);
+										speak.files[filetype] = encodeURIComponent(file);
 									}
 								}
 							}
