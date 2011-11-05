@@ -2679,6 +2679,11 @@ var BrowserPonies = (function () {
 										else {
 											filetype = 'audio/x-unknown';
 										}
+										if (filetype in speak.files) {
+											console.warn(baseurl+': file type '+filetype+
+												' of speak line '+speak.name+
+												' is not unique.');
+										}
 										speak.files[filetype] = encodeURIComponent(file);
 									}
 								}
