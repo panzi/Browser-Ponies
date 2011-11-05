@@ -405,30 +405,6 @@ var BrowserPonies = (function () {
 			/"/g, '&quot;').replace(/'/g, '&apos;');
 	};
 	
-	var absUrl = function (url) {
-		if ((/^\/\//).test(url)) {
-			return window.location.protocol+url;
-		}
-		else if ((/^\//).test(url)) {
-			return window.location.protocol+'//'+window.location.host+url;
-		}
-		else if ((/^[#\?]/).test(url)) {
-			return window.location.protocol+'//'+window.location.host+window.location.pathname+url;
-		}
-		else if ((/^[a-z][-_a-z0-9]*:/i).test(url)) {
-			return url;
-		}
-		else {
-			var path = window.location.pathname.split('/');
-			path.pop();
-			if (path.length === 0) {
-				path.push("");
-			}
-			path.push(url);
-			return window.location.protocol+'//'+window.location.host+path.join("/");
-		}
-	};
-
 	// inspired by:
 	// http://farhadi.ir/posts/utf8-in-javascript-with-a-new-trick
 	var Base64 = {
@@ -2429,7 +2405,7 @@ var BrowserPonies = (function () {
 				this.img.src = dataUrl('text/html',
 					'<html><head><title>'+Math.random()+
 					'</title><style text="text/css">html,body{margin:0;padding:0;background:transparent;}</style><body></body><img src="'+
-					escapeXml(absUrl(url))+'"/></html>');
+					escapeXml(URL.abs(url))+'"/></html>');
 				this.img.style.width  = this.current_size.width+"px";
 				this.img.style.height = this.current_size.height+"px";
 				this.current_imgurl = url;
@@ -2518,7 +2494,7 @@ var BrowserPonies = (function () {
 	var showLoadProgress = true;
 	var audioEnabled = false;
 	var showFps = false;
-	var globalBaseUrl = absUrl('');
+	var globalBaseUrl = URL.abs('');
 	var globalSpeed = 3; // why is it too slow otherwise?
 	var speakProbability = 0.1;
 	var interval = 40;
@@ -3243,7 +3219,6 @@ var BrowserPonies = (function () {
 			randomSelect:  randomSelect,
 			dataUrl:       dataUrl,
 			escapeXml:     escapeXml,
-			absUrl:        absUrl,
 			Base64:        Base64,
 			PonyINI:       PonyINI,
 			getOverlay:    getOverlay,
