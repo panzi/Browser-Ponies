@@ -1656,7 +1656,9 @@ var BrowserPonies = (function () {
 				});
 			}
 			if (HasAudio && audioEnabled && speech.files) {
-				createAudio(speech.files).play();
+				var audio = createAudio(speech.files);
+				audio.volume = volume;
+				audio.play();
 			}
 		},
 		update: function (currentTime, passedTime, winsize) {
@@ -2507,6 +2509,7 @@ var BrowserPonies = (function () {
 	var mousePosition = null;
 	var dragged = null;
 	var fpsDisplay = null;
+	var volume = 1.0;
 
 	var getOverlay = function () {
 		if (!overlay) {
@@ -2958,7 +2961,7 @@ var BrowserPonies = (function () {
 		setInterval: function (ms) {
 			ms = parseInt(ms);
 			if (isNaN(ms)) {
-				console.error("unexpected NaN value");
+				console.error("unexpected NaN value for interval");
 			}
 			else if (interval !== ms) {
 				interval = ms;
@@ -2976,7 +2979,7 @@ var BrowserPonies = (function () {
 		setInteractionInterval: function (ms) {
 			ms = parseFloat(ms);
 			if (isNaN(ms)) {
-				console.error("unexpected NaN value");
+				console.error("unexpected NaN value for interaction interval");
 			}
 			else {
 				interactionInterval = ms;
@@ -2988,7 +2991,7 @@ var BrowserPonies = (function () {
 		setSpeakProbability: function (probability) {
 			probability = parseFloat(probability);
 			if (isNaN(probability)) {
-				console.error("unexpected NaN value");
+				console.error("unexpected NaN value for speak probability");
 			}
 			else {
 				speakProbability = probability;
@@ -2996,6 +2999,22 @@ var BrowserPonies = (function () {
 		},
 		getSpeakProbability: function () {
 			return speakProbability;
+		},
+		setVolume: function (value) {
+			value = parseFloat(value);
+			if (isNaN(value)) {
+				console.error("unexpected NaN value for volume");
+			}
+			else if (value < 0 || value > 1) {
+				console.error("volume out of range", value);
+			}
+			else {
+				volume = value;
+			}
+
+		},
+		getVolume: function () {
+			return volume;
 		},
 		setBaseUrl: function (url) {
 			globalBaseUrl = url;
@@ -3015,7 +3034,7 @@ var BrowserPonies = (function () {
 					enabled = parseBoolean(enabled);
 				}
 				catch (e) {
-					console.error(e);
+					console.error("illegal value for audio enabled",enabled,e);
 					return;
 				}
 			}
@@ -3044,7 +3063,7 @@ var BrowserPonies = (function () {
 					showFps = parseBoolean(value);
 				}
 				catch (e) {
-					console.error(e);
+					console.error("illegal value for show fps",value,e);
 					return;
 				}
 			}
@@ -3067,7 +3086,7 @@ var BrowserPonies = (function () {
 					preloadAll = parseBoolean(all);
 				}
 				catch (e) {
-					console.error(e);
+					console.error("illegal value for preload all",all,e);
 					return;
 				}
 			}
@@ -3116,6 +3135,9 @@ var BrowserPonies = (function () {
 			}
 			if ('speakProbability' in config) {
 				this.setSpeakProbability(config.speakProbability);
+			}
+			if ('volume' in config) {
+				this.setVolume(config.volume);
 			}
 			if ('interval' in config) {
 				this.setInterval(config.interval);
@@ -3175,6 +3197,7 @@ var BrowserPonies = (function () {
 			config.baseurl = this.getBaseUrl();
 			config.speed = this.getSpeed();
 			config.speakProbability = this.getSpeakProbability();
+			config.volume = this.getVolume();
 			config.interval = this.getInterval();
 			config.fps = this.getFps();
 			config.interactionInterval = this.getInteractionInterval();

@@ -93,6 +93,7 @@ function wrapPonies () {
 function init () {
 	$('noaudio').style.display  = BrowserPonies.Util.HasAudio ? "none" : "";
 	$('hasaudio').style.display = BrowserPonies.Util.HasAudio ? "" : "none";
+	setNumberFieldValue($('volume'), Math.round(BrowserPonies.getVolume() * 100));
 	setNumberFieldValue($('fade'), BrowserPonies.getFadeDuration() / 1000);
 	setNumberFieldValue($('fps'), BrowserPonies.getFps());
 	setNumberFieldValue($('speak'), Math.round(BrowserPonies.getSpeakProbability() * 100));
@@ -291,6 +292,7 @@ function dumpConfig () {
 	var config = {baseurl: absUrl('')};
 
 	config.fadeDuration = getNumberFieldValue($('fade')) * 1000;
+	config.volume = getNumberFieldValue($('volume')) / 100;
 	config.fps = getNumberFieldValue($('fps'));
 	config.speed = getNumberFieldValue($('speed'));
 	config.audioEnabled = $('enableaudio').checked;
@@ -372,6 +374,7 @@ function updateConfig () {
 		'frameborder="0" scrolling="no" marginheight="0" marginwidth="0"></iframe>';
 	delete config.paddock;
 
+	BrowserPonies.setVolume(config.volume);
 	BrowserPonies.setFadeDuration(config.fadeDuration);
 	BrowserPonies.setFps(config.fps);
 	BrowserPonies.setSpeed(config.speed);
@@ -470,11 +473,11 @@ var starter = function (srcs,cfg) {
 function getNumberFieldValue (field) {
 	var value = field.getAttribute("data-value");
 	if (value === null) {
-		var fixed = field.getAttribute("data-fixed");
+		var decimals = field.getAttribute("data-decimals");
 
 		value = parseFloat(field.value);
-		if (fixed !== null) {
-			value = parseFloat(value.toFixed(parseInt(fixed)));
+		if (decimals !== null) {
+			value = parseFloat(value.toFixed(parseInt(decimals)));
 		}
 	}
 	else {
@@ -488,15 +491,15 @@ function setNumberFieldValue (field, value) {
 		value = parseFloat(value);
 		var min   = field.getAttribute("data-min");
 		var max   = field.getAttribute("data-max");
-		var fixed = field.getAttribute("data-fixed");
+		var decimals = field.getAttribute("data-decimals");
 		if (min !== null) {
 			value = Math.max(parseFloat(min),value);
 		}
 		if (max !== null) {
 			value = Math.min(parseFloat(max),value);
 		}
-		if (fixed !== null) {
-			value = value.toFixed(parseInt(fixed));
+		if (decimals !== null) {
+			value = value.toFixed(parseInt(decimals));
 		}
 		else {
 			value = String(value);
@@ -546,7 +549,7 @@ function render (name,image,count,categories) {
 	var input_id = 'pony_'+name.toLowerCase().replace(/[^a-z0-9]/ig,'_')+'_count';
 	var input = tag('input',
 		{type:'text','class':'number',name:'count',value:count,
-		 'data-value':count,'data-min':0,'data-fixed':0,'data-pony':name,
+		 'data-value':count,'data-min':0,'data-decimals':0,'data-pony':name,
 		 id:input_id,size:3,onchange:numberFieldChanged});
 	
 	return tag('li',
