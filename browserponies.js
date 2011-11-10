@@ -3039,7 +3039,18 @@ var BrowserPonies = (function () {
 			return audioEnabled;
 		},
 		setShowFps: function (value) {
-			showFps = !!value;
+			if (typeof(value) === "string") {
+				try {
+					showFps = parseBoolean(value);
+				}
+				catch (e) {
+					console.error(e);
+					return;
+				}
+			}
+			else {
+				showFps = !!value;
+			}
 			if (!showFps && fpsDisplay) {
 				if (fpsDisplay.parentNode) {
 					fpsDisplay.parentNode.removeChild(fpsDisplay);
