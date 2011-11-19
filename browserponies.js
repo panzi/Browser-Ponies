@@ -28,6 +28,18 @@
 		}
 	});
 
+	shim(Array.prototype, {
+		indexOf: function (searchElement, fromIndex) {
+			if (!fromIndex || fromIndex < 0) fromIndex = 0;
+			for (; fromIndex < this.length; ++ fromIndex) {
+				if (this[fromIndex] === searchElement) {
+					return fromIndex;
+				}
+			}
+			return -1;
+		}
+	});
+
 	shim(Function.prototype, {
 		bind: function (self) {
 			var funct   = this;
@@ -2785,14 +2797,39 @@ var BrowserPonies = (function () {
 			}
 		},
 		spawnRandom: function (count) {
-			var names = [];
-			for (var name in ponies) {
-				names.push(name);
-			}
 			if (count === undefined) count = 1;
+			else count = parseInt(count);
+
+			if (isNaN(count)) {
+				console.error("unexpected NaN value");
+				return [];
+			}
+
 			var spawned = [];
 			while (count > 0) {
+				var mininstcount = Infinity;
+
+				for (var name in ponies) {
+					var instcount = ponies[name].instances.length;
+					if (instcount < mininstcount) {
+						mininstcount = instcount;
+					}
+				}
+
+				if (mininstcount === Infinity) {
+					console.error("can't spawn random ponies because there are no ponies loaded");
+					break;
+				}
+
+				var names = [];
+				for (var name in ponies) {
+					if (ponies[name].instances.length === mininstcount) {
+						names.push(name);
+					}
+				}
+
 				var name = randomSelect(names);
+
 				if (this.spawn(name)) {
 					spawned.push(name);
 				}
@@ -2823,24 +2860,23 @@ var BrowserPonies = (function () {
 			}
 			var n = count;
 			while (n > 0) {
+				var inst = new PonyInstance(pony);
+				pony.instances.push(inst);
 				if (timer !== null) {
 					onload(function () {
-						var inst = new PonyInstance(pony);
-						instances.push(inst);
-						pony.instances.push(inst);
-						inst.img.style.visibility = 'hidden';
-						getOverlay().appendChild(inst.img);
-						inst.teleport();
-						inst.nextBehavior();
+						if (this.pony.instances.indexOf(this) === -1) return;
+						instances.push(this);
+						this.img.style.visibility = 'hidden';
+						getOverlay().appendChild(this.img);
+						this.teleport();
+						this.nextBehavior();
 						// fix position because size was initially 0x0
-						inst.clipToScreen();
-						inst.img.style.visibility = '';
-					});
+						this.clipToScreen();
+						this.img.style.visibility = '';
+					}.bind(inst));
 				}
 				else {
-					var inst = new PonyInstance(pony);
 					instances.push(inst);
-					pony.instances.push(inst);
 				}
 				-- n;
 			}
