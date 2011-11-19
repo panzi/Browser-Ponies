@@ -301,9 +301,7 @@ function dumpConfig () {
 	config.speakProbability = getNumberFieldValue($('speak')) / 100;
 	config.spawn = {};
 
-	var inputs = typeof($x) !== "undefined" ?
-		$x('//input[@name="count"]',$('ponylist')) :
-		$('ponylist').querySelectorAll('input[name="count"]');
+	var inputs = ponyCountFields();
 	for (var i = 0, n = inputs.length; i < n; ++ i) {
 		var input = inputs[i];
 		var value = getNumberFieldValue(input);
@@ -563,8 +561,14 @@ function render (name,image,count,categories) {
 		tag('button',{onclick:decreaseNumberField.bind(input)},'\u2013'));
 }
 
+function ponyCountFields () {
+	return typeof($x) !== "undefined" ?
+		$x('//input[@name="count"]',$('ponylist')) :
+		$('ponylist').querySelectorAll('input[name="count"]');
+}
+
 function setAllZero () {
-	var inputs = $x("//input[@name='count']",$('ponylist'));
+	var inputs = ponyCountFields();
 	for (var i = 0, n = inputs.length; i < n; ++ i) {
 		setNumberFieldValue(inputs[i], 0);
 	}
