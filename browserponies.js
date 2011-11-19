@@ -983,7 +983,7 @@ var BrowserPonies = (function () {
 				loaded: false,
 				callbacks: callback ? [callback] : []
 			};
-
+			
 			load(loader, url, function (success) {
 				if (loader.loaded) {
 					console.error('resource loaded twice: '+url);
@@ -1067,8 +1067,10 @@ var BrowserPonies = (function () {
 		onprogress_callbacks.push(callback);
 	};
 
+	var resource_count_for_progress = 0;
 	var progressbar = null;
 	var insertProgressbar = function () {
+		resource_count_for_progress = resource_loaded_count;
 		document.body.appendChild(progressbar.container);
 		centerProgressbar();
 		setTimeout(function () {
@@ -1157,9 +1159,16 @@ var BrowserPonies = (function () {
 					}
 				}}, progressbar.barcontainer, progressbar.label);
 			}
+
+			if (progressbar.container.style.display === 'none') {
+				resource_count_for_progress = resource_loaded_count;
+			}
 			
 			progressbar.finished = resource_loaded_count === resource_count;
-			var progress = resource_loaded_count / resource_count;
+
+			var loaded = resource_loaded_count - resource_count_for_progress;
+			var count = resource_count - resource_count_for_progress;
+			var progress = count === 0 ? 1.0 : loaded / count;
 			progressbar.bar.style.width = Math.round(progress * 450)+'px';
 			progressbar.label.innerHTML = format('Loading Ponies&hellip; %d%%',progress * 100);
 
