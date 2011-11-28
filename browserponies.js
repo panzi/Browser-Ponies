@@ -93,7 +93,7 @@ var BrowserPonies = (function () {
 					if (!('target' in event)) {
 						event.target = event.srcElement;
 					}
-					return handler(event);
+					return handler.call(this,event);
 				});
 			element.attachEvent('on'+event, wrapper);
 		};
@@ -119,27 +119,6 @@ var BrowserPonies = (function () {
 			return {
 				width:  document.documentElement.clientWidth,
 				height: document.documentElement.clientHeight
-			};
-		};
-
-	var bodySize = function () {
-		return {
-			width:  document.body.offsetWidth,
-			height: document.body.offsetHeight
-		};
-	};
-	
-	var scrollPosition = 'pageXOffset' in window ?
-		function () {
-			return {
-				left: window.pageXOffset,
-				top:  window.pageYOffset
-			};
-		} :
-		function () {
-			return {
-				left: document.documentElement.scrollLeft,
-				top:  document.documentElement.scrollTop
 			};
 		};
 
@@ -1170,7 +1149,7 @@ var BrowserPonies = (function () {
 			var count = resource_count - resource_count_for_progress;
 			var progress = count === 0 ? 1.0 : loaded / count;
 			progressbar.bar.style.width = Math.round(progress * 450)+'px';
-			progressbar.label.innerHTML = format('Loading Ponies&hellip; %d%%',progress * 100);
+			progressbar.label.innerHTML = format('Loading Ponies&hellip; %d%%',Math.floor(progress * 100));
 
 			if (!progressbar.container.parentNode) {
 				if (document.body) {
