@@ -35,7 +35,10 @@ def Bool(self,value):
 	return value.lower() in ('true', 'false')
 
 def File(self,filename):
-	return isinstance(filename,(str,unicode)) and os.path.isfile(os.path.join(self.dirpath,filename))	
+	if isinstance(filename,(str,unicode)):
+		self.files.add(filename)
+		return os.path.isfile(os.path.join(self.dirpath,filename))	
+	return False
 
 def Point(self,value):
 	value = value.split(',')
@@ -198,6 +201,8 @@ class Validator(object):
 		self.categories = None
 		self.effects    = []
 		self.name       = None
+		self.files      = set()
+		self.files.add(os.path.split(filepath)[1])
 
 	def validate(self):
 		ok = True
@@ -232,6 +237,13 @@ class Validator(object):
 		for effect in self.effects:
 			if effect.behavior not in self.behaviors_by_name:
 				self.log_effect(effect,"behavior does not exist:",effect.behavior)
+				ok = False
+
+		filenames = os.listdir(self.dirpath)
+		filenames.sort()
+		for filename in filenames:
+			if filename not in self.files:
+				self.log("not referenced file:",filename)
 				ok = False
 
 		return ok
@@ -293,7 +305,7 @@ class Validator(object):
 		if len(row) > 2:
 			name = row[1].lower()
 			if name in self.speeches:
-				self.log_row(row,"speak line name is now unique:",row[1])
+				self.log_row(row,"speak line name is not unique:",row[1])
 				ok = False
 			else:
 				self.speeches.add(name)
