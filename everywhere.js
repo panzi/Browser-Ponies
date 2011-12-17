@@ -1,8 +1,8 @@
 "use strict";
 
-function queryStringToConfig (configStr) {
+function queryStringToConfig (configStr, delim) {
 	var config = {};
-	configStr = configStr.split("&");
+	configStr = configStr.split(delim);
 	for (var i = 0; i < configStr.length; ++ i) {
 		var varStr = configStr[i];
 		var pos = varStr.search("=");
@@ -69,15 +69,21 @@ function updateConfig () {
 	var config = dumpConfig();
 	delete config.baseuri;
 	setConfig(config);
-	document.cookie = configToQueryString(config);
+	var cookies = {};
+	for (var name in config) {
+		configValueToParam(cookies, name, config[name]);
+	}
+	var expires = new Date();
+	expires.setTime(expires.getTime() + (100*365*24*60*60*1000));
+	var suffix = '; expires='+expires.getGMTString()+'; path='+window.location.pathname;
+	for (var name in cookies) {
+		document.cookies = 'ponies.'+cookies[name]+suffix;
+	}
 }
 
 function loadConfig () {
-	var config = document.cookie.split(/; */g)[0];
-	if (config) {
-		config = queryStringToConfig(config);
-	}
-	else {
+	var config = queryStringToConfig(document.cookie, /; */g).ponies;
+	if (!config) {
 		config = {
 			spawn: {
 				"rainbow dash": 1,
@@ -137,7 +143,7 @@ function loadPage () {
 		url = "http://"+url.replace(/^\/+/,'');
 	}
 
-	if (url !== iframe.src) {
+	if (url && url !== iframe.src) {
 		iframe.src = url;
 	}
 }
