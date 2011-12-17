@@ -77,7 +77,7 @@ function updateConfig () {
 	expires.setTime(expires.getTime() + (100*365*24*60*60*1000));
 	var suffix = '; expires='+expires.toGMTString()+'; path='+window.location.pathname;
 	for (var name in cookies) {
-		document.cookies = 'ponies.'+cookies[name]+suffix;
+		document.cookie = 'ponies.'+cookies[name]+suffix;
 	}
 }
 
