@@ -67,7 +67,7 @@ function setConfig(config) {
 
 function updateConfig () {
 	var config = dumpConfig();
-	delete config.baseuri;
+	delete config.baseurl;
 	setConfig(config);
 	var cookies = {};
 	for (var name in config) {
