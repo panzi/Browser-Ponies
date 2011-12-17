@@ -37,12 +37,17 @@ iframe {
 	position: fixed;
 	right: 20px;
 	bottom: 10px;
-	opacity: 0.5;
-	font-size: 0.8em;
+	opacity: 0.3;
 }
 #buttons:hover {
 	opacity: 1.0;
 	z-index: 100000000;
+}
+#buttons .button, #buttons button {
+	margin: 1px;
+	padding: 2px 6px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;
 }
 form {
 	display: table;
@@ -70,10 +75,10 @@ form {
 <div id="main-inner">
 <form onsubmit="location.hash = $('url').value; return false;">
 <input type="text" id="url" name="url" onclick="this.select();"/>
-<button>Goto</button>
+<button>Go</button>
 </form>
 
-<h3>Change settings and choose your ponies</h3>
+<h2>Change settings and choose your ponies</h2>
 
 <table>
 <tbody>
@@ -186,6 +191,27 @@ form {
 <ul id="ponylist"></ul>
 
 <p id="zero"><button onclick="setAllZero();">Set all Ponies to 0</button></p>
+
+<h2>About</h2>
+
+<p>
+This is a version of <a href="ponies.html">Browser Ponies</a> that lets you put
+ponies on a website by simply putting <tt>"http://tinyurl.com/ponyfy#"</tt> in front
+of the URL of the website. So e.g. <tt>"<a href="http://example.com/">example.com</a>"</tt> becomes
+<tt>"<a href="http://tinyurl.com/ponyfy#example.com">http://tinyurl.com/ponyfy#example.com</a>"</tt>.
+</p>
+
+<p>
+Note that not all websites allow embedding in an iframe (which is used here). E.g.
+<a href="http://tinyurl.com/ponyfy#google.com">Google does not work</a>.
+</p>
+
+<p>
+See <a href="ponies.html">this</a> for more information and a way to embed ponies
+to your website permanently.
+</p>
+
+<div id="footer">&copy; 2011 Mathias Panzenb&ouml;ck</div>
 </div>
 </div>
 </body>
