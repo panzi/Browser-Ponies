@@ -146,6 +146,14 @@ function toggleSettings () {
 	settings.style.display = settings.style.display == 'none' ? '' : 'none';
 }
 
+function showSettings () {
+	 $('main').style.display = '';
+}
+
+function hideSettings () {
+	 $('main').style.display = 'none';
+}
+
 function loadPage () {
 	var iframe = $('iframe');
 	var url = window.location.hash.replace(/^#/,'');
@@ -165,6 +173,9 @@ function loadPage () {
 			input.value = url;
 			input.select();
 		}
+	}
+	else {
+		showSettings();
 	}
 }
 
