@@ -45,7 +45,7 @@ function setSimpleConfig (config) {
 }
 
 function updateConfig () {
-	var config = dumpConfig();
+	var config = dumpConfig(true);
 	delete config.baseurl;
 	
 	setSimpleConfig(config);
@@ -78,9 +78,13 @@ function updateConfig () {
 	var expires = new Date();
 	expires.setTime(expires.getTime() + (100*365*24*60*60*1000));
 	var suffix = '; expires='+expires.toGMTString()+'; path='+window.location.pathname;
+	expires = new Date();
+	expires.setTime(expires.getTime() - (1*24*60*60*1000));
+	var expired = '; expires='+expires.toGMTString()+'; path='+window.location.pathname;
 	for (var name in cookies) {
+		var count = cookies[name];
 		document.cookie = encodeURIComponent('ponies.'+name)+'='+
-			encodeURIComponent(cookies[name])+suffix;
+			encodeURIComponent(String(count))+(count <= 0 ? expired : suffix);
 	}
 }
 

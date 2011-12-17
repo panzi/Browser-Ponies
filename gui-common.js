@@ -321,7 +321,7 @@ function setAllZero () {
 	updateConfig();
 }
 
-function dumpConfig () {
+function dumpConfig (dontSkip) {
 	var config = {baseurl: absUrl('')};
 
 	config.fadeDuration = getNumberFieldValue($('fade')) * 1000;
@@ -338,7 +338,7 @@ function dumpConfig () {
 	for (var i = 0, n = inputs.length; i < n; ++ i) {
 		var input = inputs[i];
 		var value = getNumberFieldValue(input);
-		if (value <= 0) continue;
+		if (!dontSkip && value <= 0) continue;
 		var name = input.getAttribute("data-pony");
 		if (name === "Random Pony") {
 			config.spawnRandom = value;
