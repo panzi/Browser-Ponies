@@ -1,5 +1,8 @@
 "use strict";
 
+// just so that the bookmarklet also works here:
+var BrowserPoniesBaseConfig = {};
+
 var oldConfig = {};
 var PonyScripts = {
 	'browser-ponies-script': absUrl('browserponies.js'),

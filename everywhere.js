@@ -34,20 +34,21 @@ function queryStringToConfig (configStr) {
 }
 
 function setConfig(config) {
-	BrowserPonies.setVolume(config.volume);
-	BrowserPonies.setFadeDuration(config.fadeDuration);
-	BrowserPonies.setFps(config.fps);
-	BrowserPonies.setSpeed(config.speed);
-	BrowserPonies.setAudioEnabled(config.audioEnabled);
-	BrowserPonies.setShowFps(config.showFps);
-	BrowserPonies.setShowLoadProgress(config.showLoadProgress);
-	BrowserPonies.setSpeakProbability(config.speakProbability);
+	if ('volume' in config) BrowserPonies.setVolume(config.volume);
+	if ('fadeDuration' in config) BrowserPonies.setFadeDuration(config.fadeDuration);
+	if ('fps' in config) BrowserPonies.setFps(config.fps);
+	if ('speed' in config) BrowserPonies.setSpeed(config.speed);
+	if ('audioEnabled' in config) BrowserPonies.setAudioEnabled(config.audioEnabled);
+	if ('showFps' in config) BrowserPonies.setShowFps(config.showFps);
+	if ('showLoadProgress' in config) BrowserPonies.setShowLoadProgress(config.showLoadProgress);
+	if ('speakProbability' in config) BrowserPonies.setSpeakProbability(config.speakProbability);
 
 	var random = config.spawnRandom || 0;
 	var ponies = BrowserPonies.ponies();
+	var spawn  = config.spawn || {};
 	for (var name in ponies) {
 		var pony  = ponies[name];
-		var count = config.spawn[name] || 0;
+		var count = spawn[name] || 0;
 		var diff  = count - pony.instances.length;
 		
 		if (diff > 0) {
@@ -74,8 +75,41 @@ function updateConfig () {
 function loadConfig () {
 	var config = document.cookie.split(/; */g)[0];
 	if (config) {
-		setConfig(queryStringToConfig(config));
+		config = queryStringToConfig(config);
 	}
+	else {
+		config = {
+			spawn: {
+				"rainbow dash": 1,
+				"pinkie pie": 1,
+				"applejack": 1,
+				"twilight sparkle": 1,
+				"fluttershy": 1,
+				"rarity": 1
+			}
+		};
+	}
+	setConfig(config);
+	
+	setNumberFieldValue($('volume'), Math.round(BrowserPonies.getVolume() * 100));
+	setNumberFieldValue($('fade'), BrowserPonies.getFadeDuration() / 1000);
+	setNumberFieldValue($('fps'), BrowserPonies.getFps());
+	setNumberFieldValue($('speak'), Math.round(BrowserPonies.getSpeakProbability() * 100));
+	setNumberFieldValue($('speed'), BrowserPonies.getSpeed());
+	$('progressbar').checked = BrowserPonies.isShowLoadProgress();
+	$('enableaudio').checked = BrowserPonies.isAudioEnabled();
+	$('showfps').checked     = BrowserPonies.isShowFps();
+
+	setNumberFieldValue($('pony_random_pony_count'), config.spawnRandom || 0);
+	var ponies = BrowserPonies.ponies();
+	var spawn = config.spawn || {};
+	for (var name in spawn) {
+		var field = $(ponyCountId(name));
+		if (field) {
+			setNumberFieldValue(field, spawn[name] || 0);
+		}
+	}
+	BrowserPonies.start();
 }
 
 function startPonies () {
@@ -110,4 +144,4 @@ function loadPage () {
 
 window.onhashchange = loadPage;
 
-loadConfig();
+BrowserPonies.loadConfig(BrowserPoniesBaseConfig);

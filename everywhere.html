@@ -44,12 +44,12 @@ iframe {
 	opacity: 1.0;
 }
 </style>
-<script type="text/javascript" src="ponycfg.js" id="browser-ponies-config"></script>
+<script type="text/javascript" src="basecfg.js" id="browser-ponies-config"></script>
 <script type="text/javascript" src="browserponies.js" id="browser-ponies-script"></script>
 <script type="text/javascript" src="gui-common.js"></script>
 <script type="text/javascript" src="everywhere.js"></script>
 </head>
-<body onload="loadPage();init();">
+<body onload="loadPage();init();loadConfig();">
 <iframe id="iframe" border="0"></iframe>
 
 <div id="buttons">

@@ -1,8 +1,5 @@
 "use strict";
 
-// just so that the bookmarklet also works here:
-var BrowserPoniesBaseConfig = {};
-
 var observe   = BrowserPonies.Util.observe;
 var tag       = BrowserPonies.Util.tag;
 var $         = BrowserPonies.Util.$;
@@ -92,8 +89,6 @@ function init () {
 				 onclick:partial(changeCategory,name,false)},
 				'\u00d7')));
 	}
-
-	updateConfig();
 }
 
 observe(window,'click',function (event) {
@@ -290,8 +285,12 @@ function decreaseNumberField () {
 	updateConfig();
 }
 
+function ponyCountId (name) {
+	return 'pony_'+name.toLowerCase().replace(/[^a-z0-9]/ig,'_')+'_count';
+}
+
 function render (name,image,count,categories) {
-	var input_id = 'pony_'+name.toLowerCase().replace(/[^a-z0-9]/ig,'_')+'_count';
+	var input_id = ponyCountId(name);
 	var input = tag('input',
 		{type:'text','class':'number',name:'count',value:count,
 		 'data-value':count,'data-min':0,'data-decimals':0,'data-pony':name,
