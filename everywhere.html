@@ -38,10 +38,18 @@ iframe {
 	right: 20px;
 	bottom: 10px;
 	opacity: 0.5;
-	zoom: 0.8;
+	font-size: 0.8em;
 }
 #buttons:hover {
 	opacity: 1.0;
+	z-index: 100000000;
+}
+form {
+	display: table;
+	margin: auto;
+}
+#url {
+	width: 400px;
 }
 </style>
 <script type="text/javascript" src="basecfg.js" id="browser-ponies-config"></script>
@@ -60,6 +68,11 @@ iframe {
 
 <div id="main" style="display:none;">
 <div id="main-inner">
+<form onsubmit="location.hash = $('url').value; return false;">
+<input type="text" id="url" name="url" onclick="this.select();"/>
+<button>Goto</button>
+</form>
+
 <h3>Change settings and choose your ponies</h3>
 
 <table>

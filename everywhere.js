@@ -150,12 +150,21 @@ function loadPage () {
 	var iframe = $('iframe');
 	var url = window.location.hash.replace(/^#/,'');
 	
-	if (!/^[a-z0-9]+:/.test(url)) {
-		url = "http://"+url.replace(/^\/+/,'');
+	if (!url) {
+		url = queryStringToConfig(window.location.search.replace(/^\?/,'')).url;
 	}
 
-	if (url && url !== iframe.src) {
-		iframe.src = url;
+	if (url) {
+		if (!/^[a-z0-9]+:/.test(url)) {
+			url = "http://"+url.replace(/^\/+/,'');
+		}
+
+		if (url !== iframe.src) {
+			iframe.src = url;
+			var input = $('url');
+			input.value = url;
+			input.select();
+		}
 	}
 }
 
