@@ -2,7 +2,7 @@
 
 function queryStringToConfig (configStr, delim) {
 	var config = {};
-	configStr = configStr.split(delim);
+	configStr = configStr.split(delim||"&");
 	for (var i = 0; i < configStr.length; ++ i) {
 		var varStr = configStr[i];
 		var pos = varStr.search("=");
@@ -33,7 +33,7 @@ function queryStringToConfig (configStr, delim) {
 	return config;
 }
 
-function setConfig(config) {
+function setSimpleConfig (config) {
 	if ('volume' in config) BrowserPonies.setVolume(config.volume);
 	if ('fadeDuration' in config) BrowserPonies.setFadeDuration(config.fadeDuration);
 	if ('fps' in config) BrowserPonies.setFps(config.fps);
@@ -42,6 +42,13 @@ function setConfig(config) {
 	if ('showFps' in config) BrowserPonies.setShowFps(config.showFps);
 	if ('showLoadProgress' in config) BrowserPonies.setShowLoadProgress(config.showLoadProgress);
 	if ('speakProbability' in config) BrowserPonies.setSpeakProbability(config.speakProbability);
+}
+
+function updateConfig () {
+	var config = dumpConfig();
+	delete config.baseurl;
+	
+	setSimpleConfig(config);
 
 	var random = config.spawnRandom || 0;
 	var ponies = BrowserPonies.ponies();
@@ -63,12 +70,7 @@ function setConfig(config) {
 		}
 	}
 	BrowserPonies.spawnRandom(random);
-}
 
-function updateConfig () {
-	var config = dumpConfig();
-	delete config.baseurl;
-	setConfig(config);
 	var cookies = {};
 	for (var name in config) {
 		configValueToParam(cookies, name, config[name]);
@@ -96,7 +98,8 @@ function loadConfig () {
 			}
 		};
 	}
-	setConfig(config);
+
+	setSimpleConfig(config);
 	
 	setNumberFieldValue($('volume'), Math.round(BrowserPonies.getVolume() * 100));
 	setNumberFieldValue($('fade'), BrowserPonies.getFadeDuration() / 1000);
@@ -107,15 +110,18 @@ function loadConfig () {
 	$('enableaudio').checked = BrowserPonies.isAudioEnabled();
 	$('showfps').checked     = BrowserPonies.isShowFps();
 
-	setNumberFieldValue($('pony_random_pony_count'), config.spawnRandom || 0);
+	BrowserPonies.unspawnAll();
 	var ponies = BrowserPonies.ponies();
 	var spawn = config.spawn || {};
 	for (var name in spawn) {
 		var field = $(ponyCountId(name));
 		if (field) {
-			setNumberFieldValue(field, spawn[name] || 0);
+			setNumberFieldValue(field, spawn[name]);
 		}
+		BrowserPonies.spawn(name, spawn[name]);
 	}
+	setNumberFieldValue($('pony_random_pony_count'), config.spawnRandom || 0);
+	if (config.spawnRandom) BrowserPonies.spawnRandom(config.spawnRandom);
 	BrowserPonies.start();
 }
 
