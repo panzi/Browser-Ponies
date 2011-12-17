@@ -173,6 +173,7 @@ function loadPage () {
 			input.value = url;
 			input.select();
 		}
+		hideSettings();
 	}
 	else {
 		showSettings();
