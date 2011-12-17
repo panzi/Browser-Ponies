@@ -2,6 +2,7 @@
 
 function queryStringToConfig (configStr) {
 	var config = {};
+	configStr = configStr.split("&");
 	for (var i = 0; i < configStr.length; ++ i) {
 		var varStr = configStr[i];
 		var pos = varStr.search("=");
@@ -65,8 +66,16 @@ function setConfig(config) {
 
 function updateConfig () {
 	var config = dumpConfig();
+	delete config.baseuri;
 	setConfig(config);
 	document.cookie = configToQueryString(config);
+}
+
+function loadConfig () {
+	var config = document.cookie.split(/; */g)[0];
+	if (config) {
+		setConfig(queryStringToConfig(config));
+	}
 }
 
 function startPonies () {
@@ -101,6 +110,4 @@ function loadPage () {
 
 window.onhashchange = loadPage;
 
-if (document.cookie) {
-	setConfig(queryStringToConfig(document.cookie));
-}
+loadConfig();
