@@ -3,6 +3,7 @@
 import os
 import sys
 import re
+import argparse
 
 from itertools import izip, imap, repeat
 from functools import partial
@@ -191,10 +192,11 @@ class Effect(object):
 		self.behavior = row[2].lower()
 
 class Validator(object):
-	def __init__(self,filepath):
+	def __init__(self,filepath,remove_not_referenced=False):
 		filepath = os.path.abspath(filepath)
 		self.filepath = filepath
 		self.dirpath  = os.path.dirname(filepath)
+		self.remove_not_referenced = remove_not_referenced
 		self.behaviors_by_name = {}
 		self.behaviors  = []
 		self.speeches   = set()
@@ -243,7 +245,16 @@ class Validator(object):
 		filenames.sort()
 		for filename in filenames:
 			if filename not in self.files:
-				self.log("not referenced file:",filename)
+				if self.remove_not_referenced:
+					filepath = os.path.join(self.dirpath,filename)
+					if os.path.isdir(filepath):
+						os.rmdir(filepath)
+						self.log("removed not referenced directory:",filename)
+					else:
+						os.remove(filepath)
+						self.log("removed not referenced file:",filename)
+				else:
+					self.log("not referenced file:",filename)
 				ok = False
 
 		return ok
@@ -358,8 +369,20 @@ VALIDATORS = {
 }
 
 def main():
-	for filename in sys.argv[1:]:
-		Validator(filename).validate()
+	parser = argparse.ArgumentParser(description="Validate Pony.ini files")
+	parser.add_argument("files",metavar="FILE",nargs="*",help="Pony.ini files to validate")
+	parser.add_argument("-r","--remove-not-referenced",action="store_true",
+		help="Remove files not referenced in the Pony.ini files.")
+	args = parser.parse_args()
+
+	ok = True
+	for filename in args.files:
+		if not Validator(filename,remove_not_referenced=args.remove_not_referenced).validate():
+			ok = False
+	if ok:
+		return 0
+	else:
+		return 1
 
 if __name__ == '__main__':
-	main()
+	sys.exit(main())

@@ -25,8 +25,8 @@ function loadingJson(script) {
 }
 
 if (typeof(JSON) === "undefined") {
-	document.write('<script type="text/javascript" '+ 
-		'src="http://raw.github.com/douglascrockford/JSON-js/master/json2.js" '+
+	document.write('<script type="text/javascript" '+
+		'src="https://raw.github.com/douglascrockford/JSON-js/master/json2.js" '+
 		'onload="loadingJson(this)" '+
 		'onreadystatechange="loadingJson(this)" '+
 		'></script>');
