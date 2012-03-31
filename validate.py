@@ -3,6 +3,7 @@
 import os
 import sys
 import re
+import shutil
 import argparse
 
 from itertools import izip, imap, repeat
@@ -248,7 +249,7 @@ class Validator(object):
 				if self.remove_not_referenced:
 					filepath = os.path.join(self.dirpath,filename)
 					if os.path.isdir(filepath):
-						os.rmdir(filepath)
+						shutil.rmtree(filepath)
 						self.log("removed not referenced directory:",filename)
 					else:
 						os.remove(filepath)

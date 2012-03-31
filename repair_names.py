@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import os
-import sys
+import argparse
 
 from ponylib import Row, parse_file
 
@@ -42,7 +42,13 @@ def repair_names(directory):
 					f.write(s.encode('utf-8'))
 
 def main():
-	dirs = sys.argv[1:]
+	parser = argparse.ArgumentParser(
+		description="Ensure all file names and file name references are lower case.")
+	parser.add_argument("directories",metavar="DIR",nargs="*",
+		help='Directories to recursively search for Pony.ini files. (default: ".")')
+	args = parser.parse_args()
+
+	dirs = args.directories
 	if not dirs:
 		dirs = [u'.']
 	for directory in dirs:
