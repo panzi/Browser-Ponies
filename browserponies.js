@@ -1482,70 +1482,73 @@ var BrowserPonies = (function () {
 
 	var PonyInstance = function PonyInstance (pony) {
 		this.pony = pony;
-		this.img  = tag('img', {
-			draggable: 'false',
-			style: {
-				position:        "fixed",
-				userSelect:      "none",
-				borderStyle:     "none",
-				margin:          "0",
-				padding:         "0",
-				backgroundColor: "transparent",
-				zIndex:          String(BaseZIndex)
-			},
-			ondblclick: function () {
-				// debug output
-				var pos = this.position();
-				var duration = (this.end_time - this.start_time) / 1000;
-				console.log(
-					format('%s does %s%s for %.2f seconds, is at %d x %d and %s. See:',
-						this.pony.name, this.current_behavior.name,
-						this.current_behavior === this.paint_behavior ? '' :
-						' using '+this.paint_behavior.name, duration, pos.x, pos.y,
-						(this.following ?
-							'follows '+this.following.name() :
-							format('wants to go to %d x %d',
-								this.dest_position.x, this.dest_position.y))),
-					this);
-			}.bind(this),
-			onmousedown: function (event) {
-				if (IE ? event.button & 1 : event.button === 0) {
-					dragged = this;
-					this.mouseover = true;
-					// timer === null means paused/not running
-					if (timer !== null) {
-						this.nextBehavior(true);
-					}
-					event.preventDefault();
-				}
-			}.bind(this),
-			onmouseover: function () {
-				if (!this.mouseover) {
-					this.mouseover = true;
-					if (!this.isMouseOverOrDragging() &&
-						this.canMouseOverOrDrag() &&
-						// timer === null means paused/not runnung
-						timer !== null) {
-						this.nextBehavior(true);
-					}
-				}
-			}.bind(this),
-			onmouseout: function (event) {
-				var target = event.target;
-				// XXX: the img has no descendants but if it had it might still be correct in case
-				//      the relatedTarget is an anchester of the img or any node that is not a child
-				//      of img or img itself.
-//				if (this.mouseover && (target === this.img || !descendantOf(target, this.img))) {
-				if (this.mouseover) {
-					this.mouseover = false;
-				}
-			}.bind(this)
-		});
+		this.img  = this.createImage();
 
 		this.clear();
 	};
 
 	PonyInstance.prototype = extend(new Instance(), {
+		createImage: function () {
+			return tag('img', {
+				draggable: 'false',
+				style: {
+					position:        "fixed",
+					userSelect:      "none",
+					borderStyle:     "none",
+					margin:          "0",
+					padding:         "0",
+					backgroundColor: "transparent",
+					zIndex:          String(BaseZIndex)
+				},
+				ondblclick: function () {
+					// debug output
+					var pos = this.position();
+					var duration = (this.end_time - this.start_time) / 1000;
+					console.log(
+						format('%s does %s%s for %.2f seconds, is at %d x %d and %s. See:',
+							this.pony.name, this.current_behavior.name,
+							this.current_behavior === this.paint_behavior ? '' :
+							' using '+this.paint_behavior.name, duration, pos.x, pos.y,
+							(this.following ?
+								'follows '+this.following.name() :
+								format('wants to go to %d x %d',
+									this.dest_position.x, this.dest_position.y))),
+						this);
+				}.bind(this),
+				onmousedown: function (event) {
+					if (IE ? event.button & 1 : event.button === 0) {
+						dragged = this;
+						this.mouseover = true;
+						// timer === null means paused/not running
+						if (timer !== null) {
+							this.nextBehavior(true);
+						}
+						event.preventDefault();
+					}
+				}.bind(this),
+				onmouseover: function () {
+					if (!this.mouseover) {
+						this.mouseover = true;
+						if (!this.isMouseOverOrDragging() &&
+							this.canMouseOverOrDrag() &&
+							// timer === null means paused/not runnung
+							timer !== null) {
+							this.nextBehavior(true);
+						}
+					}
+				}.bind(this),
+				onmouseout: function (event) {
+					var target = event.target;
+					// XXX: the img has no descendants but if it had it might still be correct in case
+					//      the relatedTarget is an anchester of the img or any node that is not a child
+					//      of img or img itself.
+//					if (this.mouseover && (target === this.img || !descendantOf(target, this.img))) {
+					if (this.mouseover) {
+						this.mouseover = false;
+					}
+				}.bind(this)
+			});
+		},
 		isMouseOverOrDragging: function () {
 			return this.current_behavior &&
 				(this.current_behavior.movement === AllowedMoves.MouseOver ||
@@ -1902,7 +1905,32 @@ var BrowserPonies = (function () {
 				this.behave(this.randomBehavior(offscreen), offscreen);
 			}
 		},
-		setFacingRight: function (value) {
+		setFacingRight: Gecko ?
+		function (value) {
+			this.facing_right = value;
+			var newimg;
+			if (value) {
+				newimg = this.paint_behavior.rightimage;
+				this.current_size   = this.paint_behavior.rightsize;
+				this.current_center = this.paint_behavior.rightcenter;
+			}
+			else {
+				newimg = this.paint_behavior.leftimage;
+				this.current_size   = this.paint_behavior.leftsize;
+				this.current_center = this.paint_behavior.leftcenter;
+			}
+			if (newimg !== this.current_imgurl) {
+				// gif animation bug workaround
+				var img = this.createImage();
+				img.style.left   = this.img.style.left;
+				img.style.top    = this.img.style.top;
+				img.style.zIndex = this.img.style.zIndex;
+				img.src = this.current_imgurl = newimg;
+				this.img.parentNode.replaceChild(img, this.img);
+				this.img = img;
+			}
+		} :
+		function (value) {
 			this.facing_right = value;
 			var newimg;
 			if (value) {
@@ -2262,26 +2290,7 @@ var BrowserPonies = (function () {
 		this.zIndex = BaseZIndex;
 
 		this.current_imgurl = null;
-		this.img = tag(Gecko || Opera ? 'img' : 'iframe', {
-			draggable: 'false',
-			style: {
-				position:        "fixed",
-				overflow:        "hidden",
-				userSelect:      "none",
-				pointerEvents:   "none",
-				borderStyle:     "none",
-				margin:          "0",
-				padding:         "0",
-				backgroundColor: "transparent",
-				zIndex:          String(BaseZIndex)
-			}});
-		if (IE) {
-			this.img.setAttribute("scrolling",   "no");
-			this.img.setAttribute("frameborder",  "0");
-			this.img.setAttribute("marginheight", "0");
-			this.img.setAttribute("marginwidth",  "0");
-		}
-		this.setImage(imgurl);
+		this.img = this.createImage(imgurl);
 
 		var locs = ['rightloc','rightcenter','leftloc','leftcenter'];
 		for (var i = 0, n = locs.length; i < n; ++ i) {
@@ -2307,6 +2316,31 @@ var BrowserPonies = (function () {
 	};
 
 	EffectInstance.prototype = extend(new Instance(), {
+		createImage: function (src) {
+			var img = tag(Gecko || Opera ? 'img' : 'iframe', {
+				src: src,
+				draggable: 'false',
+				style: {
+					position:        "fixed",
+					overflow:        "hidden",
+					userSelect:      "none",
+					pointerEvents:   "none",
+					borderStyle:     "none",
+					margin:          "0",
+						padding:         "0",
+					backgroundColor: "transparent",
+					width:           this.current_size.width+"px",
+					height:          this.current_size.height+"px",
+					zIndex:          String(BaseZIndex)
+				}});
+			if (IE) {
+				img.setAttribute("scrolling",   "no");
+				img.setAttribute("frameborder",  "0");
+				img.setAttribute("marginheight", "0");
+				img.setAttribute("marginwidth",  "0");
+			}
+			return img;
+		},
 		name: function () {
 			return this.effect.name;
 		},
@@ -2414,7 +2448,20 @@ var BrowserPonies = (function () {
 			}
 		},
 		*/
-		setImage: function (url) {
+		setImage: Gecko ?
+		function (url) {
+			if (this.current_imgurl !== url) {
+				// gif animation bug workaround
+				var img = this.createImage(url);
+				img.style.left   = this.img.style.left;
+				img.style.top    = this.img.style.top;
+				img.style.zIndex = this.img.style.zIndex;
+				this.current_imgurl = url;
+				this.img.parentNode.replaceChild(img, this.img);
+				this.img = img;
+			}
+		} :
+		function (url) {
 			if (this.current_imgurl !== url) {
 				this.img.src = this.current_imgurl = url;
 				this.img.style.width  = this.current_size.width+"px";
