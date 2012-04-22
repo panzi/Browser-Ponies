@@ -1549,10 +1549,10 @@ var BrowserPonies = (function () {
 				onmouseover: function () {
 					if (!this.mouseover) {
 						this.mouseover = true;
-						if (!this.isMouseOverOrDragging() &&
-							this.canMouseOverOrDrag() &&
-							// timer === null means paused/not runnung
-							timer !== null) {
+						// timer === null means paused/not runnung
+						if (timer !== null &&
+							!this.isMouseOverOrDragging() &&
+							(this.canMouseOver() || this.canDrag())) {
 							this.nextBehavior(true);
 						}
 					}
@@ -1574,9 +1574,38 @@ var BrowserPonies = (function () {
 				(this.current_behavior.movement === AllowedMoves.MouseOver ||
 				 this.current_behavior.movement === AllowedMoves.Dragged);
 		},
-		canMouseOverOrDrag: function () {
-			return this.pony.mouseover_behaviors.length > 0 ||
-				this.pony.dragged_behaviors.length > 0;
+		canDrag: function () {
+			if (!this.current_behavior) {
+				return this.pony.dragged_behaviors.length > 0;
+			}
+			else {
+				var current_group = this.current_behavior.group;
+				
+				for (var i = 0, n = this.pony.dragged_behaviors.length; i < n; ++ i) {
+					var behavior = this.pony.dragged_behaviors[i];
+					if (behavior.group === 0 || behavior.group === current_group) {
+						return true;
+					}
+				}
+
+				return false;
+			}
+		},
+		canMouseOver: function () {
+			if (!this.current_behavior) {
+				return this.pony.mouseover_behaviors.length > 0;
+			}
+			else {
+				var current_group = this.current_behavior.group;
+				for (var i = 0, n = this.pony.mouseover_behaviors.length; i < n; ++ i) {
+					var behavior = this.pony.mouseover_behaviors[i];
+					if (behavior.group === 0 || behavior.group === current_group) {
+						return true;
+					}
+				}
+
+				return false;
+			}
 		},
 		name: function () {
 			return this.pony.name;
@@ -2258,10 +2287,10 @@ var BrowserPonies = (function () {
 			var behaviors;
 			var current_group = this.current_behavior ? this.current_behavior.group : null;
 			
-			if (this === dragged && this.pony.dragged_behaviors.length > 0) {
+			if (this === dragged && this.canDrag()) {
 				behaviors = this.pony.dragged_behaviors;
 			}
-			else if (this.mouseover && this.pony.mouseover_behaviors.length > 0) {
+			else if (this.mouseover && this.canMouseOver()) {
 				behaviors = this.pony.mouseover_behaviors;
 			}
 			else {
