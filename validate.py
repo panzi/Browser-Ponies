@@ -171,8 +171,8 @@ FloatMax    = partial(Max,float)
 EmptyString = named('EmptyString')(All(String,Empty))
 PositiveFloat = named('PositiveFloat')(FloatMin(0.0))
 NegativeFloat = named('NegativeFloat')(FloatMax(0.0))
-PositiveInt = named('PositiveInt')(IntMin(0.0))
-NegativeInt = named('NegativeInt')(IntMax(0.0))
+PositiveInt = named('PositiveInt')(IntMin(0))
+NegativeInt = named('NegativeInt')(IntMax(0))
 NonEmptyString = named('NonEmptyString')(All(String,Not(Empty)))
 
 class Behavior(object):
@@ -182,6 +182,7 @@ class Behavior(object):
 		self.linked     = row[9].lower()  if row[9]  else None
 		self.speakstart = row[10].lower() if row[10] else None
 		self.speakend   = row[11].lower() if row[11] else None
+		self.group      = int(row[22],10) if len(row) >= 23 and row[22] else 0
 
 		if self.linked == "none":
 			self.linked = None
@@ -204,10 +205,20 @@ class Validator(object):
 		self.categories = None
 		self.effects    = []
 		self.name       = None
+		self.groups     = {0:'All'}
+		self.grouprefs  = set()
 		self.files      = set()
 		self.files.add(os.path.split(filepath)[1])
 
 	def validate(self):
+		if not os.path.exists(self.filepath):
+			self.log("file does not exist")
+			return False
+			
+		if not os.path.isfile(self.filepath):
+			self.log("path is not a file")
+			return False
+
 		ok = True
 		for row in parse_file(self.filepath,False):
 			if not self.validate_row(row):
@@ -241,6 +252,11 @@ class Validator(object):
 			if effect.behavior not in self.behaviors_by_name:
 				self.log_effect(effect,"behavior does not exist:",effect.behavior)
 				ok = False
+
+		illegal_refs = self.grouprefs.difference(self.groups)
+		if illegal_refs:
+			self.log("referenced behavior groups where not declared:",list(illegal_refs))
+			ok = False
 
 		filenames = os.listdir(self.dirpath)
 		filenames.sort()
@@ -297,6 +313,14 @@ class Validator(object):
 		self.name = row[1]
 		return ok
 		
+	def validate_behaviorgroup(self,row):
+		key = int(row[1],10)
+		if key in self.groups:
+			self.log_index(row,1,"behaviorgroup is already defined")
+			return False
+		self.groups[key] = row[2]
+		return True
+
 	def validate_behavior(self,row):
 		behavior = Behavior(row)
 		ok = True
@@ -357,16 +381,28 @@ Location = named('Location')(Enum('Top','Bottom','Left','Right','BottomRight','B
 
 FileOrFileList = named('FileOrFileList')(Any(EmptyString,File,ListOf(File)))
 
+def BehaviorGroupRef(self,value):
+	try:
+		value = int(value,10)
+	except ValueError:
+		return False
+	except TypeError:
+		return False
+	else:
+		self.grouprefs.add(value)
+		return True
+
 VALIDATORS = {
-	"name":       [[NonEmptyString]],
-	"behavior":   [[String,InclusiveRange(float,0.0,1.0),PositiveFloat,PositiveFloat,Float,File,File,Movement,
-	               String,String,String,Bool,Float,Float,String,
-	               Bool,String,String,
-	               Point,Point]],
-	"effect":     [[NonEmptyString,NonEmptyString,File,File,PositiveFloat,PositiveFloat,Location,Location,
-	               Location,Location,Bool]],
-	"speak":      [[NonEmptyString,Bool], [NonEmptyString,NonEmptyString,FileOrFileList,Bool]],
-	"categories": [repeat(NonEmptyString)]
+	"name":          [[NonEmptyString]],
+	"behaviorgroup": [[PositiveInt,NonEmptyString]],
+	"behavior":      [[String,InclusiveRange(float,0.0,1.0),PositiveFloat,PositiveFloat,Float,File,File,Movement,
+	                   String,String,String,Bool,Float,Float,String,
+	                   Bool,String,String,
+	                   Point,Point,Bool,BehaviorGroupRef]],
+	"effect":        [[NonEmptyString,NonEmptyString,File,File,PositiveFloat,PositiveFloat,Location,Location,
+	                   Location,Location,Bool,Bool]],
+	"speak":         [[NonEmptyString,Bool], [NonEmptyString,NonEmptyString,FileOrFileList,Bool,BehaviorGroupRef]],
+	"categories":    [repeat(NonEmptyString)]
 }
 
 def main():

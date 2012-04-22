@@ -1179,6 +1179,7 @@ var BrowserPonies = (function () {
 			throw new Error('pony with following base URL has no name: '+this.baseurl);
 		}
 		this.name = pony.name;
+		this.behaviorgroups      = pony.behaviorgroups || {};
 		this.all_behaviors       = [];
 		this.random_behaviors    = [];
 		this.mouseover_behaviors = [];
@@ -1223,6 +1224,15 @@ var BrowserPonies = (function () {
 				}
 				if (!speech.skip) {
 					this.random_speeches.push(speech);
+				}
+				if ('group' in speech) {
+					if (speech.group !== 0 && !has(this.behaviorgroups,speech.group)) {
+						console.warn(format("%s: Speech %s references unknown behavior group %d.",
+							this.baseurl, speech.name, speech.group));
+					}
+				}
+				else {
+					speech.group = 0;
 				}
 				this.speeches.push(speech);
 			}
@@ -1274,6 +1284,16 @@ var BrowserPonies = (function () {
 					case AllowedMoves.None:
 						if (!behavior.skip) this.stand_behaviors.push(behavior);
 						break;
+				}
+				
+				if ('group' in behavior) {
+					if (behavior.group !== 0 && !has(this.behaviorgroups,behavior.group)) {
+						console.warn(format("%s: Behavior %s references unknown behavior group %d.",
+							this.baseurl, behavior.name, behavior.group));
+					}
+				}
+				else {
+					behavior.group = 0;
 				}
 			}
 
@@ -1995,10 +2015,8 @@ var BrowserPonies = (function () {
 			}
 			else if (!spoke &&
 				!this.following &&
-				!this.current_interaction &&
-				this.pony.random_speeches.length > 0 &&
-				Math.random() < speakProbability) {
-				this.speak(this.start_time, randomSelect(this.pony.random_speeches));
+				!this.current_interaction) {
+				this.speakRandom(this.start_time, speakProbability);
 			}
 			
 			var pos  = this.position();
@@ -2222,8 +2240,23 @@ var BrowserPonies = (function () {
 				y: Math.random() * (winsize.height - size.height)
 			});
 		},
+		speakRandom: function (start_time, speak_probability) {
+			if (Math.random() >= speak_probability) return;
+			var filtered = [];
+			var current_group = this.current_behavior.group;
+			for (var i = 0, n = this.pony.random_speeches.length; i < n; ++ i) {
+				var speech = this.pony.random_speeches[i];
+				if (speech.group === 0 || speech.group === current_group) {
+					filtered.push(speech);
+				}
+			}
+			if (filtered.length > 0) {
+				this.speak(start_time, randomSelect(filtered));
+			}
+		},
 		randomBehavior: function (forceMovement) {
 			var behaviors;
+			var current_group = this.current_behavior ? this.current_behavior.group : null;
 			
 			if (this === dragged && this.pony.dragged_behaviors.length > 0) {
 				behaviors = this.pony.dragged_behaviors;
@@ -2242,6 +2275,7 @@ var BrowserPonies = (function () {
 				// don't filter looping behaviors because getNearestInstance filteres
 				// looping instances and then it just degrades to a standard behavior
 				if (forceMovement && !behavior.isMoving()) continue;
+				if (current_group !== null && behavior.group !== 0 && behavior.group !== current_group) continue;
 				sumprob += behavior.probability;
 				filtered.push(behavior);
 			}
@@ -2602,6 +2636,7 @@ var BrowserPonies = (function () {
 			var rows = PonyINI.parse(ini);
 			var pony = {
 				baseurl:    baseurl || "",
+				behaviorgroups: {},
 				behaviors:  [],
 				speeches:   [],
 				categories: []
@@ -2617,7 +2652,17 @@ var BrowserPonies = (function () {
 					case "name":
 						pony.name = row[1];
 						break;
-						
+					
+					case "behaviorgroup":
+						var group = parseInt(row[1],10);
+						if (isNaN(group)) {
+							console.warn(baseurl+': illegal behavior group id: ',row[1]);
+						}
+						else {
+							pony.behaviorgroups[group] = row[2];
+						}
+						break;
+
 					case "behavior":
 						var behavior = {
 							name: row[1],
@@ -2630,7 +2675,9 @@ var BrowserPonies = (function () {
 							movement:    row[8],
 							skip:        false,
 							effects:     [],
-							auto_select_images: true
+							auto_select_images: true,
+							repeat_animation:   true, // XXX: cannot be supported by JavaScript
+							group:       0
 						};
 						if (row.length > 9) {
 							if (row[9]) behavior.linked = row[9];
@@ -2651,6 +2698,18 @@ var BrowserPonies = (function () {
 								if (row.length > 19) {
 									behavior.rightcenter = parsePoint(row[19]);
 									behavior.leftcenter  = parsePoint(row[20]);
+
+									if (row.length > 21) {
+										behavior.repeat_animation = parseBoolean(row[21]);
+										if (row[22]) {
+											behavior.group = parseInt(row[22],10);
+											if (isNaN(behavior.group)) {
+												behavior.group = 0;
+												console.warn(baseurl+': behavior '+behavior.name+
+													' references illegal behavior group id: ',row[22]);
+											}
+										}
+									}
 								}
 							}
 						}
@@ -2670,7 +2729,8 @@ var BrowserPonies = (function () {
 							rightcenter: row[8].trim(),
 							leftloc:     row[9].trim(),
 							leftcenter:  row[10].trim(),
-							follow:      parseBoolean(row[11])
+							follow:      parseBoolean(row[11]),
+							repeat_animation: row[12] ? parseBoolean(row[12]) : true // XXX: cannot be supported by JavaScript
 						};
 						effects.push(effect);
 						break;
@@ -2679,15 +2739,17 @@ var BrowserPonies = (function () {
 						var speak;
 						if (row.length === 2) {
 							speak = {
-								text: row[1],
-								skip: false
+								text:  row[1],
+								skip:  false,
+								group: 0
 							};
 						}
 						else {
 							speak = {
-								name: row[1],
-								text: row[2].trim(),
-								skip: row[4] ? parseBoolean(row[4]) : false
+								name:  row[1],
+								text:  row[2].trim(),
+								skip:  row[4] ? parseBoolean(row[4]) : false,
+								group: row[5] ? parseInt(row[5],10) : 0
 							};
 							var files = row[3];
 							if (files) {
@@ -2713,6 +2775,11 @@ var BrowserPonies = (function () {
 										speak.files[filetype] = encodeURIComponent(file);
 									}
 								}
+							}
+							if (isNaN(speak.group)) {
+								speak.group = 0;
+								console.warn(baseurl+': speak line '+speak.name+
+									' references illegal behavior group id: ',row[5]);
 							}
 						}
 						pony.speeches.push(speak);
