@@ -1222,6 +1222,9 @@ var BrowserPonies = (function () {
 						this.speeches_by_name[lowername] = speech;
 					}
 				}
+				if (!('skip' in speech)) {
+					speech.skip = false;
+				}
 				if (!speech.skip) {
 					this.random_speeches.push(speech);
 				}
@@ -1268,6 +1271,9 @@ var BrowserPonies = (function () {
 					}
 				}
 				this.all_behaviors.push(behavior);
+				if (!('skip' in behavior)) {
+					behavior.skip = false;
+				}
 				if (!behavior.skip) this.random_behaviors.push(behavior);
 
 				switch (behavior.movement) {
@@ -2702,11 +2708,9 @@ var BrowserPonies = (function () {
 							rightimage:  encodeURIComponent(row[6]),
 							leftimage:   encodeURIComponent(row[7]),
 							movement:    row[8],
-							skip:        false,
 							effects:     [],
-							auto_select_images: true,
-							repeat_animation:   true, // XXX: cannot be supported by JavaScript
-							group:       0
+							auto_select_images:    true,
+							dont_repeat_animation: false // XXX: cannot be supported by JavaScript
 						};
 						if (row.length > 9) {
 							if (row[9]) behavior.linked = row[9];
@@ -2721,19 +2725,24 @@ var BrowserPonies = (function () {
 
 							if (row.length > 16) {
 								behavior.auto_select_images = parseBoolean(row[16]);
-								behavior.stopped = row[17];
-								behavior.moving  = row[18];
+								if (row[17]) behavior.stopped = row[17];
+								if (row[18]) behavior.moving  = row[18];
 
 								if (row.length > 19) {
 									behavior.rightcenter = parsePoint(row[19]);
 									behavior.leftcenter  = parsePoint(row[20]);
 
 									if (row.length > 21) {
-										behavior.repeat_animation = parseBoolean(row[21]);
+										behavior.dont_repeat_animation = parseBoolean(row[21]);
+										if (behavior.dont_repeat_animation) {
+											console.warn(baseurl+': behavior '+behavior.name+
+												' sets dont_repeat_animation to true, which is not supported by Browser Ponies due to limitations in browsers. '+
+												'Please use a GIF that does not loop instead.');
+										}
 										if (row[22]) {
 											behavior.group = parseInt(row[22],10);
 											if (isNaN(behavior.group)) {
-												behavior.group = 0;
+												delete behavior.group;
 												console.warn(baseurl+': behavior '+behavior.name+
 													' references illegal behavior group id: ',row[22]);
 											}
@@ -2759,8 +2768,13 @@ var BrowserPonies = (function () {
 							leftloc:     row[9].trim(),
 							leftcenter:  row[10].trim(),
 							follow:      parseBoolean(row[11]),
-							repeat_animation: row[12] ? parseBoolean(row[12]) : true // XXX: cannot be supported by JavaScript
+							dont_repeat_animation: row[12] ? parseBoolean(row[12]) : false // XXX: cannot be supported by JavaScript
 						};
+						if (effect.dont_repeat_animation) {
+							console.warn(baseurl+': effect '+effect.name+
+								' sets dont_repeat_animation to true, which is not supported by Browser Ponies due to limitations in browsers. '+
+								'Please use a GIF that does not loop instead.');
+						}
 						effects.push(effect);
 						break;
 						
@@ -2768,18 +2782,16 @@ var BrowserPonies = (function () {
 						var speak;
 						if (row.length === 2) {
 							speak = {
-								text:  row[1],
-								skip:  false,
-								group: 0
+								text: row[1]
 							};
 						}
 						else {
 							speak = {
-								name:  row[1],
-								text:  row[2].trim(),
-								skip:  row[4] ? parseBoolean(row[4]) : false,
-								group: row[5] ? parseInt(row[5],10) : 0
+								name: row[1],
+								text: row[2].trim()
 							};
+							if (row[4]) speak.skip  = parseBoolean(row[4]);
+							if (row[5]) speak.group = parseInt(row[5],10);
 							var files = row[3];
 							if (files) {
 								if (!Array.isArray(files)) files = [files];
@@ -2805,8 +2817,8 @@ var BrowserPonies = (function () {
 									}
 								}
 							}
-							if (isNaN(speak.group)) {
-								speak.group = 0;
+							if ('group' in speak && isNaN(speak.group)) {
+								delete speak.group;
 								console.warn(baseurl+': speak line '+speak.name+
 									' references illegal behavior group id: ',row[5]);
 							}
@@ -2837,6 +2849,13 @@ var BrowserPonies = (function () {
 				else {
 					behaviors_by_name[behavior].effects.push(effect);
 					delete effect.behavior;
+				}
+			}
+
+			for (var name in behaviors_by_name) {
+				var behavior = behaviors_by_name[name];
+				if (behavior.effects.length === 0) {
+					delete behavior.effects;
 				}
 			}
 
