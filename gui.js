@@ -706,7 +706,7 @@ function ownPoniesScript () {
 	var items = $("own-interactions").querySelectorAll("li.interaction");
 	for (var i = 0; i < items.length; ++ i) {
 		var li = items[i];
-		config.interactions.push(JSON.parse(li.getAttribute("data-interaction")));
+		config.interactions = config.interactions.concat(JSON.parse(li.getAttribute("data-interaction")));
 	}
 
 	if (config.ponies.length === 0) {
