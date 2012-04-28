@@ -16,7 +16,7 @@ if (!window.atob) window.atob = base64.decodeo;
 <script type="text/javascript" src="gui-common.js"></script>
 <script type="text/javascript" src="gui.js"></script>
 </head>
-<body onload="init();updateConfig();">
+<body onload="init();updateConfig();initScriptUrl();">
 <div id="main">
 
 <h1>Browser Ponies</h1>
@@ -311,12 +311,12 @@ For instance, this webpage defines the <tt>toggleBrowserPoniesToBackground</tt> 
 
 <pre class="code">
 <span class="keyword">function</span> toggleBrowserPoniesToBackground () {
-	<span class="keyword">var</span> main = document.getElementById(<span class="const">'main'</span>);
-	<span class="keyword">if</span> (main.style.zIndex === <span class="const">''</span>) {
-		main.style.zIndex = <span class="const">'100000000'</span>;
+	<span class="keyword">var</span> main = document.getElementById(<span class="literal">'main'</span>);
+	<span class="keyword">if</span> (main.style.zIndex === <span class="literal">''</span>) {
+		main.style.zIndex = <span class="literal">'100000000'</span>;
 	}
 	<span class="keyword">else</span> {
-		main.style.zIndex = <span class="const">''</span>;
+		main.style.zIndex = <span class="literal">''</span>;
 	}
 }
 </pre>
@@ -328,8 +328,8 @@ In addition to that it defines these style rules:
 <pre class="code">
 <span class="keyword">#main</span> {
 	position: <span class="keyword">relative</span>;
-	background: <span class="keyword">rgba</span>(<span class="const">255</span>, <span class="const">255</span>, <span class="const">255</span>, <span class="const">0.8</span>)</span>;
-	border: <span class="const">5px</span> <span class="keyword">solid</span> <span class="keyword">rgba</span>(<span class="const">163</span>, <span class="const">204</span>, <span class="const">222</span>, <span class="const">0.8</span>);
+	background: <span class="keyword">rgba</span>(<span class="literal">255</span>, <span class="literal">255</span>, <span class="literal">255</span>, <span class="literal">0.8</span>)</span>;
+	border: <span class="literal">5px</span> <span class="keyword">solid</span> <span class="keyword">rgba</span>(<span class="literal">163</span>, <span class="literal">204</span>, <span class="literal">222</span>, <span class="literal">0.8</span>);
 }
 </pre>
 
@@ -348,6 +348,8 @@ ponies are located. The image URLs are then constructed like this:
 </p>
 <pre class="code">BrowserPoniesConfig.baseurl + pony.baseurl + behavior.rightimage</pre>
 <p>
+
+<!--
 <label for="input" class="codelabel">Pony.ini / Interactions.ini:</label>
 <select id="what" onchange="$('baseurlcont').style.visibility = this.value === 'Pony' ? '' : 'hidden';">
 <option selected="selected">Pony</option>
@@ -366,6 +368,75 @@ ponies are located. The image URLs are then constructed like this:
 <label for="output" class="codelabel">Browser Ponies JSON:</label><br/>
 <textarea class="code" id="output" rows="8"></textarea>
 </p>
+-->
+
+<h4>Your Ponies:</h4>
+<p>
+<label for="own-ponies-ini">Load Pony.ini file:</label>
+<input type="file" id="own-ponies-ini" onchange="loadPonyFiles(this.files);"/>
+</p>
+
+<p>
+<div class="dropzone"
+	ondrop="dropPony(event);"
+	ondragover="dragoverPony(event);"
+	ondragenter="dragoverPony(event);"
+	ondragleave="dragleavePony(event);">
+Drop Pony.ini files here.
+</div>
+</p>
+
+<p>
+Then you can adapt the file URLs so they work in the web. You can also directly embed
+the files if you want. Keep in mind that the resulting JavaScript file might become
+very big if you choose to embed the files (even bigger than the sum of the INIs and
+image files as they are on your hard disk).
+</p>
+
+<ul id="own-ponies"></ul>
+
+<h4>Your Interacions:</h4>
+<p>
+<label for="own-interactions-ini">Load Interactions.ini file:</label>
+<input type="file" id="own-interactions-ini" onchange="loadInteractionFiles(this.files);"/>
+</p>
+
+<p>
+<div class="dropzone"
+	ondrop="dropInteractions(event);"
+	ondragover="dragoverInteractions(event);"
+	ondragenter="dragoverInteractions(event);"
+	ondragleave="dragleaveInteractions(event);">
+Drop Interactions.ini files here.
+</div>
+</p>
+
+<ul id="own-interactions"></ul>
+
+<p>
+<label for="own-baseurl">Base URL:</label>
+<input type="text" id="own-baseurl"/>
+</p>
+
+<p>
+<button onclick="inisToJS();">Generate JavaScript Code</button>
+</p>
+
+<p>
+<label for="javascript-output">your-ponies.js:</label>
+<textarea class="code" id="javascript-output" rows="8"></textarea>
+</p>
+
+<p>
+Embed your ponies like this in your webpage:
+</p>
+
+<pre class="code">
+&lt;<span class="keyword">script</span> type=<span class="literal">"text/javascript"</span>
+        src=<span class="literal">"<span id="javascript-url">browser-ponies.js</span>"</span>&gt;&lt;/<span class="keyword">script</span>&gt;
+&lt;<span class="keyword">script</span> type=<span class="literal">"text/javascript"</span>
+        src=<span class="literal">"http://example.org/your-ponies.js"</span>&gt;&lt;/<span class="keyword">script</span>&gt;
+</pre>
 
 <h2>Download</h2>
 <p>

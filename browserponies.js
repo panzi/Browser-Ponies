@@ -1174,7 +1174,7 @@ var BrowserPonies = (function () {
 	});
 
 	var Pony = function Pony (pony) {
-		this.baseurl = URL.join(globalBaseUrl, pony.baseurl);
+		this.baseurl = URL.join(globalBaseUrl, pony.baseurl||"");
 		if (!pony.name) {
 			throw new Error('pony with following base URL has no name: '+this.baseurl);
 		}

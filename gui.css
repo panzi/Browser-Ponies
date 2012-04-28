@@ -148,7 +148,7 @@ pre.code {
 	font-weight: bold;
 	color: #B8A36E;
 }
-.const {
+.literal {
 	color: #F69B9B;
 }
 .comment {
@@ -287,4 +287,23 @@ li#allcatsadded:hover {
 p, #filterwrapper {
 	margin-top: 1em;
 	margin-bottom: 1em;
+}
+.dropzone {
+	background-color: white;
+	padding: 20px;
+	text-align: center;
+	border-radius: 10px;
+	-moz-border-radius: 10px;
+	border: 1px solid #8A8A8A;
+}
+.dragover {
+	background-color: #458BC1;
+	color: white;
+}
+#own-ponies .name {
+	font-weight: bold;
+	font-size: 1.2em;
+}
+#own-ponies li.pony {
+	list-style: none;
 }

@@ -30,7 +30,7 @@ def decode(s):
 			break
 	return s
 
-def convert(files,out):
+def wrap(files,out):
 	ponies = []
 	for filepath in files:
 		dirname, filename = os.path.split(filepath)
@@ -42,4 +42,4 @@ def convert(files,out):
 
 if __name__ == '__main__':
 	import sys
-	convert(sys.argv[1:],sys.stdout)
+	wrap(sys.argv[1:],sys.stdout)
