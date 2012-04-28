@@ -143,6 +143,7 @@ pre.code {
 	color: white;
 	background: #333333;
 	background: rgba(0,0,0,0.8);
+	overflow: auto;
 }
 .keyword {
 	font-weight: bold;
