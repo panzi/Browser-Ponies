@@ -336,39 +336,10 @@ In addition to that it defines these style rules:
 <h3>Using your own ponies</h3>
 
 <p>
-If you want to use your own ponies you can use this to convert the INI files into JSON files that can be
-used with Browser Ponies. I'll write more on this later. I'll probably add some user interface that helps
-you create embed codes/bookmarklets that use your own ponies.
+If you want to use your own ponies you can convert the INI files to JavaScript using the tools below.
+Just load the INI files, fix the filenames/URLs if needed and generate the JavaScript. The resulting
+pony script will use the settings from above except for which pony is loaded.
 </p>
-
-<p>
-But for now, in case you understand JavaScript, just look at <a href="basecfg.js">basecfg.js</a> and the
-<a href="#embedcode">embed code</a>. You need to replace basecfg.js and set the baseurl to where your
-ponies are located. The image URLs are then constructed like this:
-</p>
-<pre class="code">BrowserPoniesConfig.baseurl + pony.baseurl + behavior.rightimage</pre>
-<p>
-
-<!--
-<label for="input" class="codelabel">Pony.ini / Interactions.ini:</label>
-<select id="what" onchange="$('baseurlcont').style.visibility = this.value === 'Pony' ? '' : 'hidden';">
-<option selected="selected">Pony</option>
-<option>Interactions</option>
-</select>
-<span id="baseurlcont"><label for="baseurl">Base URL:</label>
-<input type="text" id="baseurl"/></span>
-<br/>
-<textarea class="code" id="input" rows="8"></textarea>
-</p>
-<p>
-<button onclick="wrapPonies();" title="Just wrap the INI into JSON. (smaller)">Wrap</button>
-<button onclick="convertPonies();" title="Convert the INI to the native Browser Pony JSON format. (larger)">Convert</button>
-</p>
-<p>
-<label for="output" class="codelabel">Browser Ponies JSON:</label><br/>
-<textarea class="code" id="output" rows="8"></textarea>
-</p>
--->
 
 <h4>Your Ponies:</h4>
 <p>
@@ -387,10 +358,26 @@ Drop Pony.ini files here.
 </p>
 
 <p>
-Then you can adapt the file URLs so they work in the web. You can also directly embed
-the files if you want. Keep in mind that the resulting JavaScript file might become
-very big if you choose to embed the files (even bigger than the sum of the INIs and
-image files as they are on your hard disk).
+As a next step you may need to adapt the URLs of the images and sounds to where they
+really are hosted. If they are hosted on some web server with the files of each pony
+in a seperate distinct directory you just need to change the base URL to the location
+of said directory. Don't forget the / (slash) at the end of the base URL and please
+note that the web is case sensitive. This means the file names as they are on the
+server have to exactly the ones defined here.
+</p>
+
+<p>
+If the files are all at some more or less random location, you need to adapt all the
+URLs individually. In this case just enter an absolute URL in the URL fields of each
+file. If the URL of an file is absolute the base URL will be ignored.
+</p>
+
+<p>
+As a third option you can also embed the files directly in the generated script.
+Note that this encodes the whole files into data URLs, which might cause the generated
+script to be a lot bigger than the sum size of all the files. Also Internet Explorer
+does not support data URLs of the length of 2048 characters, and the pony sprites
+are usually an order of magnitude bigger than that.
 </p>
 
 <ul id="own-ponies"></ul>
@@ -414,8 +401,8 @@ Drop Interactions.ini files here.
 <ul id="own-interactions"></ul>
 
 <p>
-<label for="own-baseurl">Base URL:</label>
-<input type="text" id="own-baseurl"/>
+<label title="Common prefix of image/audio file URLs of all ponies. (Not needed if you embed the files.)">Base URL:
+<input type="text" id="own-baseurl"/></label>
 </p>
 
 <p>
@@ -428,7 +415,10 @@ Drop Interactions.ini files here.
 </p>
 
 <p>
-Embed your ponies like this in your webpage:
+Then put the contents of the text area above into a file called e.g. <tt>"your-ponies.js"</tt>
+and host it somewhere on the web. You can then embed your ponies on your web site by adding
+this code somewhere in the HTML code of your web site (I recommend somewhere between
+<tt>&lt;head&gt;</tt> and <tt>&lt;/head&gt;</tt>):
 </p>
 
 <pre class="code">
@@ -437,6 +427,11 @@ Embed your ponies like this in your webpage:
 &lt;<span class="keyword">script</span> type=<span class="literal">"text/javascript"</span>
         src=<span class="literal">"http://example.org/your-ponies.js"</span>&gt;&lt;/<span class="keyword">script</span>&gt;
 </pre>
+
+<p>
+Of course you need to replace <tt>http://example.org/your-ponies.js</tt> with the URL where
+you really host the file.
+</p>
 
 <h2>Download</h2>
 <p>
