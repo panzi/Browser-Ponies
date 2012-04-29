@@ -342,20 +342,15 @@ pony script will use the settings from above except for which pony is loaded.
 </p>
 
 <h4>Your Ponies:</h4>
-<p>
-<label for="own-ponies-ini">Load Pony.ini file:</label>
-<input type="file" id="own-ponies-ini" onchange="loadPonyFiles(this.files);"/>
-</p>
-
-<p>
 <div class="dropzone"
-	ondrop="dropPony(event);"
-	ondragover="dragoverPony(event);"
-	ondragenter="dragoverPony(event);"
-	ondragleave="dragleavePony(event);">
-Drop Pony.ini files here.
+	ondrop="dropPony.call(this,event);"
+	ondragover="dragoverPony.call(this,event);"
+	ondragenter="dragoverPony.call(this,event);"
+	ondragleave="dragleaveDropzone.call(this,event);"
+	onmousemove="mousemoveDropzone.call(this,event);">
+Click or drop Pony.ini files here.
+<input type="file" onchange="loadPonyFiles(this.files);"/>
 </div>
-</p>
 
 <p>
 As a next step you may need to adapt the URLs of the images and sounds to where they
@@ -383,20 +378,15 @@ are usually an order of magnitude bigger than that.
 <ul id="own-ponies"></ul>
 
 <h4>Your Interacions:</h4>
-<p>
-<label for="own-interactions-ini">Load Interactions.ini file:</label>
-<input type="file" id="own-interactions-ini" onchange="loadInteractionFiles(this.files);"/>
-</p>
-
-<p>
 <div class="dropzone"
-	ondrop="dropInteractions(event);"
-	ondragover="dragoverInteractions(event);"
-	ondragenter="dragoverInteractions(event);"
-	ondragleave="dragleaveInteractions(event);">
-Drop Interactions.ini files here.
+	ondrop="dropInteractions.call(this,event);"
+	ondragover="dragoverInteractions.call(this,event);"
+	ondragenter="dragoverInteractions.call(this,event);"
+	ondragleave="dragleaveDropzone.call(this,event);"
+	onmousemove="mousemoveDropzone.call(this,event);">
+Click or drop Interactions.ini files here.
+<input type="file" onchange="loadInteractionFiles(this.files);"/>
 </div>
-</p>
 
 <ul id="own-interactions"></ul>
 
@@ -431,6 +421,11 @@ this code somewhere in the HTML code of your web site (I recommend somewhere bet
 <p>
 Of course you need to replace <tt>http://example.org/your-ponies.js</tt> with the URL where
 you really host the file.
+</p>
+
+<p>
+If you want to you can also copy the <tt>browserponies.js</tt> file and serve it yourself.
+This server here does not have the best uptime so you might want to do that. 
 </p>
 
 <h2>Download</h2>

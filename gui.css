@@ -301,6 +301,21 @@ p, #filterwrapper {
 	border-radius: 10px;
 	-moz-border-radius: 10px;
 	border: 1px solid #8A8A8A;
+
+	position: relative;
+	overflow: hidden;
+	cursor: hand;
+	cursor: pointer;
+}
+.dropzone input[type="file"] {
+	position: absolute;
+	margin: 0;
+	padding: 0;
+	border-style: none;
+	filter: alpha(opacity=0);
+	opacity: 0;
+	cursor: hand;
+	cursor: pointer;
 }
 .dragover {
 	background-color: #458BC1;

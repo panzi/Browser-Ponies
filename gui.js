@@ -260,8 +260,8 @@ function dragoverHandler (supportedTypes) {
 			accept = true;
 		}
 
+		var dropzone = upOrSelfClass(event.target,'dropzone');
 		if (accept) {
-			var dropzone = upOrSelfClass(event.target,'dropzone');
 			addClass(dropzone, "dragover");
 			event.dropEffect = 'copy';
 			event.stopPropagation();
@@ -270,6 +270,8 @@ function dragoverHandler (supportedTypes) {
 		else {
 			event.dropEffect = 'none';
 		}
+
+		dropzone.querySelector("input[type='file']").style.display = "none";
 	};
 }
 
@@ -326,19 +328,25 @@ function hasClass (e, className) {
 	return false;
 }
 
-function dragleave (event) {
+function mousemoveDropzone (event) {
+	var input = this.querySelector("input[type='file']");
+	var rect = this.getBoundingClientRect();
+	var x = event.clientX - rect.left;
+	var y = event.clientY - rect.top;
+
+	input.style.left = Math.round(x - input.offsetWidth + 5)+'px';
+	input.style.top  = Math.round(y - input.offsetHeight * 0.5)+'px';
+}
+
+function dragleaveDropzone (event) {
 	var dropzone = upOrSelfClass(event.target,'dropzone');
-	if (event.target === dropzone) {
-		removeClass(dropzone, "dragover");
-	}
+	removeClass(dropzone, "dragover");
+	dropzone.querySelector("input[type='file']").style.display = "";
 }
 
 var dragoverPony = dragoverHandler(['text/plain','Text','Files']);
 var dragoverFile = dragoverHandler(['text/plain','Text',/^image\//,/^audio\//,'text/uri-list','Files']);
-var dragleavePony = dragleave;
-var dragleaveFile = dragleave;
 var dragoverInteractions = dragoverPony;
-var dragleaveInteractions = dragleave;
 
 function dropInteractions (event) {
 	var dropzone = upOrSelfClass(event.target,'dropzone');
@@ -356,6 +364,7 @@ function dropInteractions (event) {
 		var text = transfer.getData("text/plain") || transfer.getData("Text");
 		loadInteraction(text,'(dropped text)');
 	}
+	dropzone.querySelector("input[type='file']").style.display = "";
 }
 
 function dropPony (event) {
@@ -374,6 +383,7 @@ function dropPony (event) {
 		var text = transfer.getData("text/plain") || transfer.getData("Text");
 		loadPony(text,"(dropped text)");
 	}
+	dropzone.querySelector("input[type='file']").style.display = "";
 }
 
 function dropFile (event) {
@@ -399,6 +409,7 @@ function dropFile (event) {
 		}
 		changeFileUrls(filtered,pony);
 	}
+	dropzone.querySelector("input[type='file']").style.display = "";
 }
 
 function fileReaderError (event) {
@@ -526,7 +537,7 @@ function loadPony (text,name) {
 	var remove = tag('button',{'class':'remove',title:'Remove Pony'},'\u00d7');
 	var tbody = tag('tbody');
 	var input = tag('input',{type:'file'});
-	var dropzone = tag('div',{'class':'dropzone'},'Drop image and sound files/URLs here.');
+	var dropzone = tag('div',{'class':'dropzone'},'Click or drop image and sound files/URLs here.',input);
 	var li = tag('li',{'class':'pony','data-pony':JSON.stringify(pony)},
 		tag('span',{'class':'name'},pony.name),' ',remove,
 		tag('div',
@@ -538,8 +549,6 @@ function loadPony (text,name) {
 			tag('label',{title:'Common prefix of image/audio file URLs of this pony. (Not needed if you embed the files.)'},
 				'Base URL: ',
 				tag('input',{'class':'baseurl',type:'text',value:pony.baseurl||''})),
-			tag('br'),
-			tag('label', 'Open file: ', input),
 			dropzone,
 			tag('label','Action: ',
 				tag('select',{'class':'file-action'},
@@ -560,8 +569,9 @@ function loadPony (text,name) {
 	observe(input, 'change', fileChanged);
 	observe(dropzone, 'dragover', dragoverFile);
 	observe(dropzone, 'dragenter', dragoverFile);
-	observe(dropzone, 'dragleave', dragleaveFile);
+	observe(dropzone, 'dragleave', dragleaveDropzone);
 	observe(dropzone, 'drop', dropFile);
+	observe(dropzone, 'mousemove', mousemoveDropzone);
 
 	var files = {};
 
