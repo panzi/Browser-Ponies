@@ -303,8 +303,8 @@ function render (name,image,count,categories) {
 			tag('img',{src:image})),
 		tag('label',{'for':input_id},'Count: '),
 		input,
-		tag('button',{onclick:increaseNumberField.bind(input)},'+'),
-		tag('button',{onclick:decreaseNumberField.bind(input)},'\u2013'));
+		tag('button',{'class':'increase',onclick:increaseNumberField.bind(input)},'+'),
+		tag('button',{'class':'decrease',onclick:decreaseNumberField.bind(input)},'\u2013'));
 }
 
 function ponyCountFields () {

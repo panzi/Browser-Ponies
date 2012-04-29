@@ -531,8 +531,8 @@ function loadPony (text,name) {
 		tag('span',{'class':'name'},pony.name),' ',remove,
 		tag('div',
 			tag('label','Count: ',count),
-			tag('button',{onclick:increaseNumberField.bind(count)},'+'),
-			tag('button',{onclick:decreaseNumberField.bind(count)},'\u2013'),
+			tag('button',{'class':'increase',onclick:increaseNumberField.bind(count)},'+'),
+			tag('button',{'class':'decrease',onclick:decreaseNumberField.bind(count)},'\u2013'),
 			' ',
 			
 			tag('label',{title:'Common prefix of image/audio file URLs of this pony. (Not needed if you embed the files.)'},

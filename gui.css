@@ -114,7 +114,12 @@ background: linear-gradient(top, #c0e7f7 0%,#61a4d3 100%);
 #bookmarkswrapper {
 	text-align: center;
 }
-input, #ponylist button, table button {
+input,
+#ponylist button,
+table button,
+button.remove,
+button.increase,
+button.decrease {
 	padding: 3px 9px;
 	border-radius: 5px;
 	-moz-border-radius: 5px;
