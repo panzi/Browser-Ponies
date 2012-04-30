@@ -670,7 +670,7 @@ function loadPony (text,name) {
 		var url = encodeURIComponent(filename);
 		var urlInput = tag('input',{'class':'url dropzone',type:'text',value:url});
 		var dropzone = tag('div',
-			{'class':'dropzone',title:'Open or drop a single image or sound file/URL here.'},
+			{'class':'dropzone',title:'Click or drop a single image or sound file/URL here.'},
 			'Change...',dropInput);
 		var tr = tag('tr',{'class':'file','data-filename':filename,'data-original-url':url},
 			tag('td',{'class':'filename'},filename),
