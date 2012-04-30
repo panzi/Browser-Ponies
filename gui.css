@@ -325,8 +325,13 @@ p, #filterwrapper {
 	padding: 0px 5px;
 	border-radius: 5px;
 }
+input[type="text"] {
+	padding: 3px 9px;
+}
 input[type="text"].dropzone {
 	cursor: auto;
+	text-align: left;
+	padding: 3px 9px;
 }
 #own-ponies .name {
 	font-weight: bold;
