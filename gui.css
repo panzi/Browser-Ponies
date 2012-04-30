@@ -321,6 +321,13 @@ p, #filterwrapper {
 	background-color: #458BC1;
 	color: white;
 }
+.file .dropzone {
+	padding: 0px 5px;
+	border-radius: 5px;
+}
+input[type="text"].dropzone {
+	cursor: auto;
+}
 #own-ponies .name {
 	font-weight: bold;
 	font-size: 1.2em;

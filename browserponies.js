@@ -2859,6 +2859,16 @@ var BrowserPonies = (function () {
 				}
 			}
 
+			var has_behaviorgroups = false;
+			for (var behaviorgroup in pony.behaviorgroups) {
+				has_behaviorgroups = true;
+				break;
+			}
+
+			if (!has_behaviorgroups) {
+				delete pony.behaviorgroups;
+			}
+
 			return pony;
 		},
 		convertInteractions: function (ini) {

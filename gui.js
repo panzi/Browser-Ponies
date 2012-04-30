@@ -341,11 +341,14 @@ function mousemoveDropzone (event) {
 function dragleaveDropzone (event) {
 	var dropzone = upOrSelfClass(event.target,'dropzone');
 	removeClass(dropzone, "dragover");
-	dropzone.querySelector("input[type='file']").style.display = "";
+	var input = dropzone.querySelector("input[type='file']");
+	if (input) input.style.display = "";
 }
 
 var dragoverPony = dragoverHandler(['text/plain','Text','Files']);
 var dragoverFile = dragoverHandler(['text/plain','Text',/^image\//,/^audio\//,'text/uri-list','Files']);
+var dragoverImage = dragoverHandler(['text/plain','Text',/^image\//,'text/uri-list','Files']);
+var dragoverAudio = dragoverHandler(['text/plain','Text',/^audio\//,'text/uri-list','Files']);
 var dragoverInteractions = dragoverPony;
 
 function dropInteractions (event) {
@@ -400,16 +403,45 @@ function dropFile (event) {
 		loadFiles(files,pony);
 	}
 	else {
-		var urls = (transfer.getData("Text") || transfer.getData("text/plain") || transfer.getData("text/uri-list") || '');
-		urls = urls.trim().split("\n");
-		var filtered = [];
-		for (var i = 0; i < urls.length; ++ i) {
-			var url = urls[i].trim();
-			if (url) filtered.push(url);
-		}
-		changeFileUrls(filtered,pony);
+		changeFileUrls(getUrls(transfer),pony);
 	}
 	dropzone.querySelector("input[type='file']").style.display = "";
+}
+
+function dropSingleFile (event) {
+	var dropzone = upOrSelfClass(event.target,'dropzone');
+	removeClass(dropzone, "dragover");
+	event.stopPropagation();
+	event.preventDefault();
+
+	var transfer = event.dataTransfer;
+	var files = transfer.files;
+
+	var action = upOrSelfClass(dropzone,'pony').querySelector('select.file-action').value;
+	var file = upOrSelfClass(dropzone,'file');
+	if (files && files.length > 0) {
+		loadFile(files[0],file,action);
+	}
+	else {
+		var urls = getUrls(transfer);
+		if (urls.length > 0) {
+			tr.querySelector('input.url').value = getUrls(transfer)[0];
+		}
+	}
+	
+	var input = dropzone.querySelector("input[type='file']");
+	if (input) input.style.display = "";
+}
+
+function getUrls (transfer) {
+	var urls = (transfer.getData("Text") || transfer.getData("text/plain") || transfer.getData("text/uri-list") || '');
+	urls = urls.trim().split("\n");
+	var filtered = [];
+	for (var i = 0; i < urls.length; ++ i) {
+		var url = urls[i].trim();
+		if (url) filtered.push(url);
+	}
+	return urls;
 }
 
 function fileReaderError (event) {
@@ -469,6 +501,16 @@ function loadResultInto (input) {
 	};
 }
 
+function resetFilenames (event) {
+	var pony = upOrSelfClass(event.target,'pony');
+	var files = pony.querySelectorAll('.file[data-original-url]');
+	for (var i = 0; i < files.length; ++ i) {
+		var file = files[i];
+		var url = file.getAttribute('data-original-url');
+		file.querySelector('input.url').value = url;
+	}
+}
+
 function loadFiles (files,li) {
 	var action = li.querySelector('select.file-action').value;
 	var nomatch = [];
@@ -477,16 +519,7 @@ function loadFiles (files,li) {
 		var filename = decodeURIComponent(/^(?:.*[\/\\])?([^\/\\]*)$/.exec(file.name)[1]);
 		var tr = li.querySelector('.file[data-filename='+JSON.stringify(filename.toLowerCase())+']');
 		if (tr) {
-			var input = tr.querySelector('input.url');
-			if (action === 'embed') {
-				var reader = new FileReader();
-				reader.onerror = fileReaderError;
-				reader.onload = loadResultInto(input);
-				reader.readAsDataURL(file);
-			}
-			else {
-				input.value = filename;
-			}
+			loadFile(file,tr,action);
 		}
 		else {
 			nomatch.push(file.name);
@@ -495,6 +528,19 @@ function loadFiles (files,li) {
 
 	if (nomatch.length > 0) {
 		alert("No match found for folowing files:\n \u2022 "+nomatch.join("\n \u2022 "));
+	}
+}
+
+function loadFile (file,tr,action) {
+	var input = tr.querySelector('input.url');
+	if (action === 'embed') {
+		var reader = new FileReader();
+		reader.onerror = fileReaderError;
+		reader.onload = loadResultInto(input);
+		reader.readAsDataURL(file);
+	}
+	else {
+		input.value = decodeURIComponent(/^(?:.*[\/\\])?([^\/\\]*)$/.exec(file.name)[1]);
 	}
 }
 
@@ -519,6 +565,11 @@ function changeFileUrls (urls,li) {
 
 function fileChanged (event) {
 	loadFiles(event.target.files,upOrSelfClass(event.target,'pony'));
+}
+
+function singleFileChanged (event) {
+	var action = upOrSelfClass(event.target,'pony').querySelector('select.file-action').value;
+	loadFile(event.target.files[0],upOrSelfClass(event.target,'pony'),action);
 }
 
 function loadPony (text,name) {
@@ -557,12 +608,14 @@ function loadPony (text,name) {
 						'Fix Filenames'),
 					tag('option',{value:'embed',
 						title:'Embed files directly in the generated script as data URLs. (Result will not work in Internet Explorer.)'},
-						'Embed Files')))),
+						'Embed Files'))),
+			tag('button',{onclick:resetFilenames},'Reset Filenames')),
 		tag('table', {'class':'files'},
 			tag('thead',
 				tag('tr',
 					tag('th', 'Filename'),
-					tag('th', 'URL'))),
+					tag('th', 'URL'),
+					tag('th', ''))),
 			tbody));
 	
 	observe(remove, 'click', removeItem);
@@ -575,21 +628,21 @@ function loadPony (text,name) {
 
 	var files = {};
 
-	function addFilename (filename) {
-		files[decodeURIComponent(filename||'').toLowerCase()] = true;
+	function addFilename (filename, what) {
+		files[decodeURIComponent(filename||'').toLowerCase()] = what || 'file';
 	}
 
 	if (pony.behaviors) {
 		for (var i = 0; i < pony.behaviors.length; ++ i) {
 			var behavior = pony.behaviors[i];
-			addFilename(behavior.leftimage);
-			addFilename(behavior.rightimage);
+			addFilename(behavior.leftimage,'image');
+			addFilename(behavior.rightimage,'image');
 
 			if (behavior.effects) {
 				for (var j = 0; j < behavior.effects.length; ++ j) {
 					var effect = behavior.effects[j];
-					addFilename(effect.leftimage);
-					addFilename(effect.rightimage);
+					addFilename(effect.leftimage,'image');
+					addFilename(effect.rightimage,'image');
 				}
 			}
 		}
@@ -600,7 +653,7 @@ function loadPony (text,name) {
 			var speech = pony.speeches[i];
 			if (speech.files) {
 				for (var type in speech.files) {
-					addFilename(speech.files[type]);
+					addFilename(speech.files[type],'audio');
 				}
 			}
 		}
@@ -613,9 +666,33 @@ function loadPony (text,name) {
 	filenames.sort();
 	for (var i = 0; i < filenames.length; ++ i) {
 		var filename = filenames[i];
-		var tr = tag('tr',{'class':'file','data-filename':filename},
+		var dropInput = tag('input',{type:'file'});
+		var url = encodeURIComponent(filename);
+		var urlInput = tag('input',{'class':'url dropzone',type:'text',value:url});
+		var dropzone = tag('div',
+			{'class':'dropzone',title:'Open or drop a single image or sound file/URL here.'},
+			'Change...',dropInput);
+		var tr = tag('tr',{'class':'file','data-filename':filename,'data-original-url':url},
 			tag('td',{'class':'filename'},filename),
-			tag('td',tag('input',{'class':'url',type:'text',value:encodeURIComponent(filename)})));
+			tag('td',urlInput),
+			tag('td',dropzone));
+		
+		if (files[filename] === "audio") {
+			observe(dropzone, 'dragover', dragoverAudio);
+			observe(dropzone, 'dragenter', dragoverAudio);
+		}
+		else {
+			observe(dropzone, 'dragover', dragoverImage);
+			observe(dropzone, 'dragenter', dragoverImage);
+		}
+
+		observe(dropInput, 'change', singleFileChanged);
+		observe(dropzone, 'dragleave', dragleaveDropzone);
+		observe(dropzone, 'drop', dropSingleFile);
+		observe(dropzone, 'mousemove', mousemoveDropzone);
+		observe(urlInput, 'dragleave', dragleaveDropzone);
+		observe(urlInput, 'drop', dropSingleFile);
+
 		tbody.appendChild(tr);
 	}
 
