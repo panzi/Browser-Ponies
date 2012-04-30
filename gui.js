@@ -569,7 +569,7 @@ function fileChanged (event) {
 
 function singleFileChanged (event) {
 	var action = upOrSelfClass(event.target,'pony').querySelector('select.file-action').value;
-	loadFile(event.target.files[0],upOrSelfClass(event.target,'pony'),action);
+	loadFile(event.target.files[0],upOrSelfClass(event.target,'file'),action);
 }
 
 function loadPony (text,name) {
