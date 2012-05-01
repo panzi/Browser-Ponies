@@ -587,7 +587,7 @@ function loadPony (text,name) {
 		 size:3,onchange:numberFieldChanged});
 	var remove = tag('button',{'class':'remove',title:'Remove Pony'},'\u00d7');
 	var tbody = tag('tbody');
-	var input = tag('input',{type:'file'});
+	var input = tag('input',{type:'file',multiple:'multiple'});
 	var dropzone = tag('div',{'class':'dropzone'},'Click or drop image and sound files/URLs here.',input);
 	var li = tag('li',{'class':'pony','data-pony':JSON.stringify(pony)},
 		tag('span',{'class':'name'},pony.name),' ',remove,

@@ -350,7 +350,7 @@ pony script will use the settings from above except for which pony is loaded.
 	ondragleave="dragleaveDropzone.call(this,event);"
 	onmousemove="mousemoveDropzone.call(this,event);">
 Click or drop Pony.ini files here.
-<input type="file" onchange="loadPonyFiles(this.files);"/>
+<input type="file" multiple="multiple" onchange="loadPonyFiles(this.files);"/>
 </div>
 
 <p>
@@ -386,7 +386,7 @@ are usually an order of magnitude bigger than that.
 	ondragleave="dragleaveDropzone.call(this,event);"
 	onmousemove="mousemoveDropzone.call(this,event);">
 Click or drop Interactions.ini files here.
-<input type="file" onchange="loadInteractionFiles(this.files);"/>
+<input type="file" multiple="multiple" onchange="loadInteractionFiles(this.files);"/>
 </div>
 
 <ul id="own-interactions"></ul>
