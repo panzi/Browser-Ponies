@@ -425,7 +425,7 @@ function dropSingleFile (event) {
 	else {
 		var urls = getUrls(transfer);
 		if (urls.length > 0) {
-			tr.querySelector('input.url').value = getUrls(transfer)[0];
+			file.querySelector('input.url').value = getUrls(transfer)[0];
 		}
 	}
 	
