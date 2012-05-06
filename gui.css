@@ -66,45 +66,26 @@ a:hover {
 	cursor: hand;
 	cursor: pointer;
 
-background: #b1dbed;
-background: -moz-linear-gradient(top, #b1dbed 0%, #4c92c4 100%);
-background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#b1dbed), color-stop(100%,#4c92c4));
-background: -webkit-linear-gradient(top, #b1dbed 0%,#4c92c4 100%);
-background: -o-linear-gradient(top, #b1dbed 0%,#4c92c4 100%);
-background: -ms-linear-gradient(top, #b1dbed 0%,#4c92c4 100%);
-*zoom: 1;
-filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#b1dbed', endColorstr='#4c92c4',GradientType=0 );
-background: linear-gradient(top, #b1dbed 0%,#4c92c4 100%);
+	background: #89BADD;
+	box-shadow:
+		inset -20px -20px 40px -20px #4c92c4,
+		inset  20px  20px 40px -20px #b1dbed;
 }
-/*
-a.button:active, button:active, select:active {
-background: #b1dbed;
-background: -moz-linear-gradient(top, #4c92c4 0%, #b1dbed 100%);
-background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#4c92c4), color-stop(100%,#b1dbed));
-background: -webkit-linear-gradient(top, #4c92c4 0%,#b1dbed 100%);
-background: -o-linear-gradient(top, #4c92c4 0%,#b1dbed 100%);
-background: -ms-linear-gradient(top, #4c92c4 0%,#b1dbed 100%);
-*zoom: 1;
-filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#b1dbed', endColorstr='#b1dbed',GradientType=0 );
-background: linear-gradient(top, #4c92c4 0%,#b1dbed 100%);
-}
-*/
 a.button:visited {
 	color: white;
 }
+.button:focus, button:focus, select:focus,
 .button:hover, button:hover, select:hover {
-	border-color: #68B1E3;
-
-background: #c0e7f7;
-background: -moz-linear-gradient(top, #c0e7f7 0%, #61a4d3 100%);
-background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#c0e7f7), color-stop(100%,#61a4d3));
-background: -webkit-linear-gradient(top, #c0e7f7 0%,#61a4d3 100%);
-background: -o-linear-gradient(top, #c0e7f7 0%,#61a4d3 100%);
-background: -ms-linear-gradient(top, #c0e7f7 0%,#61a4d3 100%);
-*zoom: 1;
-filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#c0e7f7', endColorstr='#61a4d3',GradientType=0 );
-background: linear-gradient(top, #c0e7f7 0%,#61a4d3 100%);
-
+	background: #94C1DE;
+	box-shadow:
+		inset -20px -20px 40px -20px #61a4d3,
+		inset  20px  20px 40px -20px #c0e7f7;
+}
+.button:active, button:active, select:active {
+	background: #89BADD;
+	box-shadow:
+		inset  20px  20px 40px -20px #4c92c4,
+		inset -20px -20px 40px -20px #b1dbed;
 }
 #bookmarklet {
 	padding: 10px 30px;
