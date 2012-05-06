@@ -108,6 +108,34 @@ var BrowserPonies = (function () {
 			}
 		};
 
+	var documentHidden = (function () {
+		var names = ['hidden', 'webkitHidden', 'mozHidden', 'msHidden', 'oHidden'];
+		for (var i = 0; i < names.length; ++ i) {
+			var name = names[i];
+			if (name in document) {
+				return new Function("return document."+name+";");
+			}
+		}
+		return new Function("return false;");
+	})();
+
+	var visibilitychange = function (event) {
+		if (timer !== null) {
+			if (documentHidden()) {
+				clearTimeout(timer);
+			}
+			else {
+				tick();
+			}
+		}
+	};
+
+	observe(document, 'visibilitychange', visibilitychange);
+	observe(document, 'webkitvisibilitychange', visibilitychange);
+	observe(document, 'mozvisibilitychange', visibilitychange);
+	observe(document, 'msvisibilitychange', visibilitychange);
+	observe(document, 'ovisibilitychange', visibilitychange);
+
 	var windowSize = 'innerWidth' in window ?
 		function () {
 			return {
@@ -1526,6 +1554,9 @@ var BrowserPonies = (function () {
 					backgroundColor: "transparent",
 					zIndex:          String(BaseZIndex)
 				},
+				ondragstart: function (event) {
+					event.preventDefault();
+				},
 				ondblclick: function () {
 					// debug output
 					var pos = this.position();
@@ -1542,7 +1573,10 @@ var BrowserPonies = (function () {
 						this);
 				}.bind(this),
 				onmousedown: function (event) {
-					if (IE ? event.button & 1 : event.button === 0) {
+					// IE 9 supports event.buttons and handles event.button like the w3c says.
+					// IE <9 does not support event.buttons but sets event.button to the value
+					// event.buttons should have (which is not what the w3c says).
+					if ('buttons' in event ? event.buttons & 1 : (IE ? event.button & 1 : event.button === 0)) {
 						dragged = this;
 						this.mouseover = true;
 						// timer === null means paused/not running
@@ -2602,7 +2636,7 @@ var BrowserPonies = (function () {
 			fpsDisplay.innerHTML = Math.round(1000 / timeSpan) + ' fps';
 		}
 
-		setTimeout(tick, Math.max(interval - (currentTime - Date.now()), 0));
+		timer = setTimeout(tick, Math.max(interval - (currentTime - Date.now()), 0));
 
 		lastTime = currentTime;
 	};
