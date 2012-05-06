@@ -1716,7 +1716,11 @@ var BrowserPonies = (function () {
 		speak: function (currentTime,speech) {
 			if (speech.text) {
 				var duration = Math.max(speech.text.length * 150, 1000);
+				var remove = {at: currentTime + duration};
 				var text = tag('div',{
+					ondblclick: function () {
+						remove.at = Date.now();
+					},
 					style: {
 						fontSize:        "14px",
 						color:        "#294256",
@@ -1735,6 +1739,7 @@ var BrowserPonies = (function () {
 						MozBoxShadow: "2px 2px 12px rgba(0,0,0,0.4)",
 						zIndex: String(BaseZIndex + 9000)
 					}}, speech.text);
+				remove.element = text;
 				var rect = this.topLeftRect();
 				getOverlay().appendChild(text);
 				var x = Math.round(rect.x + rect.width * 0.5 - text.offsetWidth * 0.5);
@@ -1742,10 +1747,8 @@ var BrowserPonies = (function () {
 				text.style.left = x+'px';
 				text.style.top  = y+'px';
 				text.style.visibility = '';
-				removing.push({
-					element: text,
-					at: currentTime + duration
-				});
+				removing.push(remove);
+				text = null;
 			}
 			if (HasAudio && audioEnabled && speech.files) {
 				var audio = createAudio(speech.files);
