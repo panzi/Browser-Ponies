@@ -343,6 +343,13 @@ Just load the INI files, fix the filenames/URLs if needed and generate the JavaS
 pony script will use the settings from above except for which pony is loaded.
 </p>
 
+<p>
+<strong>Note:</strong>
+This currently only works with Firefox and Chrome. Opera does currently not support files
+being dropped (so click to use the file open dialog) and Internet Explorer currently cannot
+read files at all in JavaScript (probably in version 10 it will be able to do that).
+</p>
+
 <h4>Your Ponies:</h4>
 <div class="dropzone"
 	ondrop="dropPony.call(this,event);"
