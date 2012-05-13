@@ -307,7 +307,17 @@ var BrowserPonies = (function () {
 	});
 
 	var Opera = Object.prototype.toString.call(window.opera) === '[object Opera]';
-	var IE = !!window.attachEvent && !Opera;
+	var IE, IEVersion;
+	(function () {
+		var m = (/MSIE ([0-9]{1,}[\.0-9]{0,})/).exec(navigator.userAgent);
+		IE = !!m;
+		if (IE) {
+			IEVersion = m[1].split(".");
+			for (var i = 0; i < IEVersion.length; ++ i) {
+				IEVersion[i] = parseInt(IEVersion[i], 10);
+			}
+		}
+	})();
 	var Gecko = navigator.userAgent.indexOf('Gecko') > -1 && navigator.userAgent.indexOf('KHTML') === -1;
 	var HasAudio = typeof(Audio) !== "undefined";
 	var add = function (element, arg) {
@@ -381,10 +391,13 @@ var BrowserPonies = (function () {
 		}
 	};
 
-	var setOpacity = IE ?
+	var setOpacity = IE && IEVersion[0] < 10 ?
 		function (element, opacity) {
-			element.style.filter = element.style.filter.replace(/\balpha\([^\)]*\)/gi,'') +
-				'alpha(opacity='+(parseFloat(opacity)*100)+')';
+			try {
+				element.style.filter = element.style.filter.replace(/\balpha\([^\)]*\)/gi,'') +
+					'alpha(opacity='+(Number(opacity)*100)+')';
+			}
+			catch (e) {}
 			element.style.opacity = opacity;
 		} :
 		function (element, opacity) {
@@ -1190,12 +1203,12 @@ var BrowserPonies = (function () {
 
 			if (progressbar.finished) {
 				setTimeout(function () {
-					if (progressbar && progressbar.container.parentNode) {
+					stopObserving(window,'resize',centerProgressbar);
+					stopObserving(window,'load',insertProgressbar);
+					if (progressbar && progressbar.container && progressbar.container.parentNode) {
 						progressbar.container.parentNode.removeChild(progressbar.container);
 					}
 					progressbar = null;
-					stopObserving(window,'resize',centerProgressbar);
-					stopObserving(window,'load',insertProgressbar);
 				}, 500);
 			}
 		}
