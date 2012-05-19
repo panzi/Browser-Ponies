@@ -127,6 +127,7 @@ var BrowserPonies = (function () {
 				clearTimeout(timer);
 			}
 			else {
+				lastTime = Date.now();
 				tick();
 			}
 		}
