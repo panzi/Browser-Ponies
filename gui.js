@@ -54,6 +54,23 @@ function ponyCode (config) {
 	return code.replace(/^\s*\/\/.*\n/gm,' ').replace(/^\s*\n/gm,' ').replace(/\s\s+/g,' ');
 }
 
+function embedCode (config) {
+	var copy = {};
+	for (var key in config) {
+		copy[key] = config[key];
+	}
+	copy.autostart = true;
+	return (
+		'<script type="text/javascript" src="'+PonyScripts['browser-ponies-config']+'" id="browser-ponies-config"></script>'+
+		'<script type="text/javascript" src="'+PonyScripts['browser-ponies-script']+'" id="browser-ponies-script"></script>'+
+		'<script type="text/javascript">/* <![CDATA[ */ '+
+		'(function (cfg) {'+
+		'BrowserPonies.setBaseUrl(cfg.baseurl);'+
+		'BrowserPonies.loadConfig(BrowserPoniesBaseConfig);'+
+		'BrowserPonies.loadConfig(cfg);'+
+		'})('+JSON.stringify(copy).replace(/\]\]/g,']"+"]')+'); /* ]]> */</script>');
+}
+
 function updateConfig () {
 	var config = dumpConfig();
 	var code = ponyCode(config);
@@ -61,8 +78,7 @@ function updateConfig () {
 	var iframeHeight = getNumberFieldValue($('iframe-height'));
 
 	$('bookmarklet').href = 'javascript:'+code+'void(0)';
-	$('embedcode').value = '<script type="text/javascript">\n//<!--\n'+
-		code+'\n//-->\n</script>';
+	$('embedcode').value = embedCode(config);
 
 	var baseurl = config.baseurl;
 	delete config.baseurl;
