@@ -1,5 +1,7 @@
 "use strict";
 
+if (typeof(BrowserPonies) !== "object") {
+
 // Shims:
 (function () {
 	var shim = function (obj, shims) {
@@ -3523,4 +3525,6 @@ if (typeof(BrowserPoniesConfig) !== "undefined") {
 			}
 		})();
 	}
+}
+
 }
