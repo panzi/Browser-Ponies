@@ -305,7 +305,10 @@ var BrowserPonies = (function () {
 					}
 				}
 			}
-			return baseurl;
+			return URL.fix(baseurl);
+		},
+		fix: function (url) {
+			return url.replace(/^https?:\/\/web\d?\.student\.tuwien\.ac\.at\/~e0427417\/browser-ponies\//,"http://panzi.github.com/Browser-Ponies/");
 		}
 	});
 
@@ -3266,7 +3269,7 @@ var BrowserPonies = (function () {
 			return volume;
 		},
 		setBaseUrl: function (url) {
-			globalBaseUrl = url;
+			globalBaseUrl = URL.fix(url);
 		},
 		getBaseUrl: function () {
 			return globalBaseUrl;
