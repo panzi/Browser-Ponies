@@ -1,0 +1,10 @@
+ponies
+ponies-old
+ponies-bak
+browser-ponies-resources.zip
+sounds
+sounds-bak
+merged
+.*
+*~
+*.pyc
