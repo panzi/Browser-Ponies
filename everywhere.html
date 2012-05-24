@@ -1,0 +1,222 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf8"/>
+<title>Browser Ponies Everywhere</title>
+<link rel="stylesheet" type="text/css" href="gui.css"/>
+<style type="text/css">
+html, body {
+	overflow: hidden;
+	margin: 0;
+	padding: 0;
+	width: 100%;
+	height: 100%;
+}
+iframe {
+	width: 100%;
+	height: 100%;
+	border-style: none;
+}
+#iframe {
+	overflow: auto !important;
+}
+#main {
+	position: fixed;
+	top: 10px;
+	bottom: 10px;
+	left: 10px;
+	right: 10px;
+	z-index: 100000000;
+}
+#main-inner {
+	position: absolute;
+	top: 10px;
+	bottom: 10px;
+	left: 10px;
+	right: 10px;
+	overflow: auto;
+	padding: 10px;
+}
+#buttons {
+	position: fixed;
+	right: 20px;
+	bottom: 10px;
+	opacity: 0.3;
+}
+#buttons:hover {
+	opacity: 1.0;
+	z-index: 100000000;
+}
+#buttons .button, #buttons button {
+	margin: 1px;
+	padding: 2px 6px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;
+}
+form {
+	display: table;
+	margin: auto;
+}
+#url {
+	width: 400px;
+}
+</style>
+<script type="text/javascript" src="basecfg.js" id="browser-ponies-config"></script>
+<script type="text/javascript" src="browserponies.js" id="browser-ponies-script"></script>
+<script type="text/javascript" src="gui-common.js"></script>
+<script type="text/javascript" src="everywhere.js"></script>
+</head>
+<body onload="loadPage();init();loadConfig();">
+<iframe id="iframe" border="0"></iframe>
+
+<div id="buttons">
+<a class="button" href="javascript:startPonies();void(0)" title="Start" id="start" style="display:none;">&#x25B6;</a>
+<a class="button" href="javascript:stopPonies();void(0)" title="Stop" id="stop">&#x25A0;</a>
+<a class="button" href="javascript:toggleSettings();void(0)" title="Settings">&#x2699;</a>
+</div>
+
+<div id="main" style="display:none;">
+<div id="main-inner">
+<form onsubmit="location.hash = $('url').value; hideSettings(); return false;">
+<input type="text" id="url" name="url" onclick="this.select();" placeholder="http://example.com/"/>
+<button>Go</button>
+</form>
+
+<h2>Change settings and choose your ponies</h2>
+
+<table>
+<tbody>
+<tr>
+<td><input type="checkbox" id="enableaudio" onchange="updateConfig();"/></td>
+<td><label for="enableaudio">Enable Audio</label>
+<span id="noaudio">(Your Browser does not support HTML5 Audio. Get a
+<a href="http://www.google.com/chrome" title="Goolge Chrome or&hellip;">better</a>
+<a href="http://www.mozilla.org/firefox/" title="&hellip;Mozilla Firefox">browser</a>.)</span>
+<span id="hasaudio" style="display:none;">(Your browser supports HTML 5 Audio.)</span>
+</td>
+</tr>
+
+<tr>
+<td><input type="checkbox" id="showfps" onchange="updateConfig();"/></td>
+<td><label for="showfps">Show Frames per Second</label></td>
+</tr>
+<tr>
+<td><input type="checkbox" id="progressbar" onchange="updateConfig();" checked/></td>
+<td><label for="progressbar">Show Progress Bar</label></td>
+</tr>
+</tbody>
+</table>
+
+<table>
+<tbody>
+<tr>
+<td><label for="speed">Speed Multiplier:</label></td>
+<td>
+<input type="text" class="number" id="speed" value="3.0" data-value="3.0"
+	data-min="0.1" data-decimals="1" data-step="0.1" size="3"
+	onchange="numberFieldChanged.call(this,event);"/>
+</td>
+<td></td>
+<td>
+<button onclick="increaseNumberField.call($('speed'));">+</button>
+<button onclick="decreaseNumberField.call($('speed'));">&ndash;</button>
+</td>
+</tr>
+
+<tr>
+<td><label for="speak">Speak Probability:</label></td>
+<td>
+<input type="text" class="number" id="speak" value="15"
+	data-value="15" data-min="0" data-max="100" data-decimals="0" size="3"
+	onchange="numberFieldChanged.call(this,event);"/>
+</td>
+<td>%</td>
+<td>
+<button onclick="increaseNumberField.call($('speak'));">+</button>
+<button onclick="decreaseNumberField.call($('speak'));">&ndash;</button>
+</td>
+</tr>
+
+<tr>
+<td><label for="volume">Volume:</label></td>
+<td>
+<input type="text" class="number" id="volume" value="100" data-value="100"
+	data-min="0" data-max="100" data-decimals="0" data-step="10" size="3"
+	onchange="numberFieldChanged.call(this,event);"/>
+</td>
+<td>%</td>
+<td>
+<button onclick="increaseNumberField.call($('volume'));">+</button>
+<button onclick="decreaseNumberField.call($('volume'));">&ndash;</button>
+</td>
+</tr>
+
+<tr>
+<td><label for="fps">Frames per Second:</label></td>
+<td>
+<input type="text" class="number" id="fps" value="25"
+	data-value="25" data-min="1" data-decimals="0" size="3"
+	onchange="numberFieldChanged.call(this,event);"/>
+</td>
+<td></td>
+<td>
+<button onclick="increaseNumberField.call($('fps'));">+</button>
+<button onclick="decreaseNumberField.call($('fps'));">&ndash;</button>
+</td>
+</tr>
+
+<tr>
+<td><label for="fade">Fade Duration:</label></td>
+<td>
+<input type="text" class="number" id="fade" value="0.5"
+	data-value="0.5" data-min="0" data-decimals="1" data-step="0.1" size="3"
+	onchange="numberFieldChanged.call(this,event);"/>
+</td>
+<td>sec</td>
+<td>
+<button onclick="increaseNumberField.call($('fade'));">+</button>
+<button onclick="decreaseNumberField.call($('fade'));">&ndash;</button>
+</td>
+</tr>
+</tbody>
+</table>
+
+<div id="filterwrapper">
+<label for="addcat">Filter Categories:</label>
+<button id="addcat" onclick="showCategorySelect();">+</button>
+<ul id="catselect" style="display:none;">
+<li id="allcatsadded">All Added</li>
+</ul>
+<ul id="catlist"></ul>
+<span id="nocatadded" style="display:none;">No Category Selected</span>
+<button onclick="removeAllCategories();" title="Remove All">&#x232B;</button>
+</div>
+
+<ul id="ponylist"></ul>
+
+<p id="zero"><button onclick="setAllZero();">Set all Ponies to 0</button></p>
+
+<h2>About</h2>
+
+<p>
+This is a version of <a href="ponies.html">Browser Ponies</a> that lets you put
+ponies on a website by simply putting <tt>"http://tinyurl.com/ponyfy#"</tt> in front
+of the URL of the website. So e.g. <tt>"<a href="http://example.com/">example.com</a>"</tt> becomes
+<tt>"<a href="http://tinyurl.com/ponyfy#example.com">http://tinyurl.com/ponyfy#example.com</a>"</tt>.
+</p>
+
+<p>
+Note that not all websites allow embedding in an iframe (which is used here). E.g.
+<a href="http://tinyurl.com/ponyfy#google.com">Google does not work</a>.
+</p>
+
+<p>
+See <a href="ponies.html">this</a> for more information and a way to embed ponies
+to your website permanently.
+</p>
+
+<div id="footer">&copy; 2011 Mathias Panzenb&ouml;ck</div>
+</div>
+</div>
+</body>
+</html>

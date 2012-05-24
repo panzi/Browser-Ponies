@@ -1,0 +1,466 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge;chrome=1"/>
+<title>Browser Ponies</title>
+<link rel="shortcut icon" type="image/x-icon" href="favicon.ico"/>
+<link rel="stylesheet" type="text/css" href="gui.css"/>
+<!--[if IE]>
+<script type="text/javascript" src="http://stringencoders.googlecode.com/svn-history/r230/trunk/javascript/base64.js"></script>
+<script type="text/javascript">
+if (!window.btoa) window.btoa = base64.encode;
+if (!window.atob) window.atob = base64.decodeo;
+</script>
+<![endif]-->
+<script type="text/javascript" src="ponycfg.js" id="browser-ponies-config"></script>
+<script type="text/javascript" src="browserponies.js" id="browser-ponies-script"></script>
+<script type="text/javascript" src="gui-common.js"></script>
+<script type="text/javascript" src="gui.js"></script>
+</head>
+<body onload="init();updateConfig();initScriptUrl();">
+<div id="main">
+
+<h1>Browser Ponies</h1>
+<p id="controls">
+<a class="button" href="javascript:BrowserPonies.start();void(0)" title="Start">&#x25B6;</a>
+<a class="button" href="javascript:BrowserPonies.stop();void(0)" title="Stop">&#x25A0;</a>
+<a class="button" href="javascript:BrowserPonies.pause();void(0)" title="Pause">&#x25AE;&#x25AE;</a>
+<a class="button" href="javascript:BrowserPonies.resume();void(0)" title="Resume">&#x25AE;&#x25B6;</a>
+<a class="button" href="javascript:BrowserPonies.togglePoniesToBackground();void(0)"
+	title="Toggle ponies in background">&#x2195;</a>
+<a class="button" href="javascript:BrowserPonies.unspawnAll();BrowserPonies.stop();void(0)" title="Remove all Ponies">&times;</a>
+</p>
+
+<h2>What is this?</h2>
+<p>
+Browser Ponies lets you place <a href="http://en.wikipedia.org/wiki/My_Little_Pony:_Friendship_Is_Magic">ponies</a>
+on websites (see the ponies here). You can create a bookmarklet which adds your favourite ponies to any website.
+</p>
+
+<p>
+This is a reimplementation of <a href="http://www.desktopponies.com/">Desktop Ponies</a> in JavaScript.
+It doesn't behave exactly like the original but is close enough (no games and no cursor avoidance etc.).
+</p>
+
+<p>
+Browser Ponies work best with <a href="http://www.google.com/chrome">Google Chrome</a>, but they also
+work okay in <a href="http://www.mozilla.org/firefox/">Mozilla Firefox</a>.
+</p>
+
+<p>
+The artwork used is from <a href="http://www.desktopponies.com/">Desktop Ponies</a> with added audio from
+<a href="http://kyrospawn.deviantart.com/art/MLP-FIM-Soundboard-V6-0-244757196">MLP:FIM Soundboard V6.0</a>
+by <a href="http://kyrospawn.deviantart.com/">kyrospawn</a>, <cite>My Little Pony: Friendship Is Magic</cite>
+is &copy; by <a href="http://www.hubworld.com/my-little-pony/shows/friendship-is-magic">Hasbro</a> and
+<a href="http://fyre-flye.deviantart.com/">Lauren Faust</a>.
+</p>
+
+<h2>Short URL</h2>
+
+<p>
+You can put ponies on a website by simply putting <tt>"http://tinyurl.com/ponyfy#"</tt> in front
+of the URL of the website. So e.g. <tt>"<a href="http://example.com/">example.com</a>"</tt> becomes
+<tt>"<a href="http://tinyurl.com/ponyfy#example.com">http://tinyurl.com/ponyfy#example.com</a>"</tt>.
+</p>
+
+<p>
+Note that not all websites allow embedding in an iframe (which is used here). E.g.
+<a href="http://tinyurl.com/ponyfy#google.com">Google does not work</a>.
+</p>
+
+<h2>Make a Bookmarklet</h2>
+<p>Choose your ponies belown and then drag this link into your Bookmark Toolbar:</p>
+<p id="bookmarkletwrapper">
+<a class="button" href="javascript:void(0)" id="bookmarklet">Ponies!</a>
+</p>
+
+<p>Click it whenever you feel a website needs more ponies.</p>
+
+<p>
+You can also bookmark the control links above in order to have control over ponies on any website.
+However, the <cite><a href="#toggleinbg">Toggle ponies in background</a></cite> function needs special
+support by the website in order to work.
+</p>
+
+<p>
+<label for="embedcode">Or paste this into your webpage:</label>
+<div id="embedcodewrap"><textarea id="embedcode" onclick="this.select();"></textarea></div>
+</p>
+
+<p>
+<label for="iframe">Or if you don't want to include my script directly in your webpage
+you can use this embed code to confine the ponies into an iframe:</label>
+</p>
+
+<table>
+<tbody>
+<tr>
+<td><input type="checkbox" id="paddock" onchange="updateConfig();" checked/></td>
+<td><label for="paddock">Show Paddock</label></td>
+</tr>
+</tbody>
+</table>
+
+<table>
+<tbody>
+<tr>
+<td><label for="iframe-width">Width:</label></td>
+<td>
+<input type="text" class="number" id="iframe-width" value="640" data-value="640"
+	data-min="10" data-decimals="0" data-step="10" size="3"
+	onchange="numberFieldChanged.call(this,event);"/>
+</td>
+<td>px</td>
+<td>
+<button onclick="increaseNumberField.call($('iframe-width'));">+</button>
+<button onclick="decreaseNumberField.call($('iframe-width'));">&ndash;</button>
+</td>
+</tr>
+
+<tr>
+<td><label for="iframe-height">Height:</label></td>
+<td>
+<input type="text" class="number" id="iframe-height" value="480" data-value="480"
+	data-min="10" data-decimals="0" data-step="10" size="3"
+	onchange="numberFieldChanged.call(this,event);"/>
+</td>
+<td>px</td>
+<td>
+<button onclick="increaseNumberField.call($('iframe-height'));">+</button>
+<button onclick="decreaseNumberField.call($('iframe-height'));">&ndash;</button>
+</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+<div id="iframewrap"><textarea id="iframe" onclick="this.select();"></textarea></div>
+</p>
+
+<h3>Change settings and choose your ponies</h3>
+
+<table>
+<tbody>
+<tr>
+<td><input type="checkbox" id="enableaudio" onchange="updateConfig();"/></td>
+<td><label for="enableaudio">Enable Audio</label>
+<span id="noaudio">(Your Browser does not support HTML5 Audio. Get a
+<a href="http://www.google.com/chrome" title="Goolge Chrome or&hellip;">better</a>
+<a href="http://www.mozilla.org/firefox/" title="&hellip;Mozilla Firefox">browser</a>.)</span>
+<span id="hasaudio" style="display:none;">(Your browser supports HTML 5 Audio.)</span>
+</td>
+</tr>
+
+<tr>
+<td><input type="checkbox" id="showfps" onchange="updateConfig();"/></td>
+<td><label for="showfps">Show Frames per Second</label></td>
+</tr>
+<tr>
+<td><input type="checkbox" id="progressbar" onchange="updateConfig();" checked/></td>
+<td><label for="progressbar">Show Progress Bar</label></td>
+</tr>
+</tbody>
+</table>
+
+<table>
+<tbody>
+<tr>
+<td><label for="speed">Speed Multiplier:</label></td>
+<td>
+<input type="text" class="number" id="speed" value="3.0" data-value="3.0"
+	data-min="0.1" data-decimals="1" data-step="0.1" size="3"
+	onchange="numberFieldChanged.call(this,event);"/>
+</td>
+<td></td>
+<td>
+<button onclick="increaseNumberField.call($('speed'));">+</button>
+<button onclick="decreaseNumberField.call($('speed'));">&ndash;</button>
+</td>
+</tr>
+
+<tr>
+<td><label for="speak">Speak Probability:</label></td>
+<td>
+<input type="text" class="number" id="speak" value="15"
+	data-value="15" data-min="0" data-max="100" data-decimals="0" size="3"
+	onchange="numberFieldChanged.call(this,event);"/>
+</td>
+<td>%</td>
+<td>
+<button onclick="increaseNumberField.call($('speak'));">+</button>
+<button onclick="decreaseNumberField.call($('speak'));">&ndash;</button>
+</td>
+</tr>
+
+<tr>
+<td><label for="volume">Volume:</label></td>
+<td>
+<input type="text" class="number" id="volume" value="100" data-value="100"
+	data-min="0" data-max="100" data-decimals="0" data-step="10" size="3"
+	onchange="numberFieldChanged.call(this,event);"/>
+</td>
+<td>%</td>
+<td>
+<button onclick="increaseNumberField.call($('volume'));">+</button>
+<button onclick="decreaseNumberField.call($('volume'));">&ndash;</button>
+</td>
+</tr>
+
+<tr>
+<td><label for="fps">Frames per Second:</label></td>
+<td>
+<input type="text" class="number" id="fps" value="25"
+	data-value="25" data-min="1" data-decimals="0" size="3"
+	onchange="numberFieldChanged.call(this,event);"/>
+</td>
+<td></td>
+<td>
+<button onclick="increaseNumberField.call($('fps'));">+</button>
+<button onclick="decreaseNumberField.call($('fps'));">&ndash;</button>
+</td>
+</tr>
+
+<tr>
+<td><label for="fade">Fade Duration:</label></td>
+<td>
+<input type="text" class="number" id="fade" value="0.5"
+	data-value="0.5" data-min="0" data-decimals="1" data-step="0.1" size="3"
+	onchange="numberFieldChanged.call(this,event);"/>
+</td>
+<td>sec</td>
+<td>
+<button onclick="increaseNumberField.call($('fade'));">+</button>
+<button onclick="decreaseNumberField.call($('fade'));">&ndash;</button>
+</td>
+</tr>
+</tbody>
+</table>
+
+<div id="filterwrapper">
+<label for="addcat">Filter Categories:</label>
+<button id="addcat" onclick="showCategorySelect();">+</button>
+<ul id="catselect" style="display:none;">
+<li id="allcatsadded">All Added</li>
+</ul>
+<ul id="catlist"></ul>
+<span id="nocatadded" style="display:none;">No Category Selected</span>
+<button onclick="removeAllCategories();" title="Remove All">&#x232B;</button>
+</div>
+
+<ul id="ponylist"></ul>
+
+<p id="zero"><button onclick="setAllZero();">Set all Ponies to 0</button></p>
+
+<h3>Bookmarks Menu</h3>
+
+<p>
+If you'd like you can download a bookmarks file with links to add a certain pony
+and the controls from the top of this page. Just right click-save this link and
+import the resulting file in your browser (only tested in Chrome and Firefox):
+</p>
+
+<p id="bookmarkswrapper">
+<a class="button" href="javascript:void(0)" id="bookmarks">Bookmarks Menu</a>
+</p>
+
+<h3>Feedback</h3>
+
+<p>
+Send me feedback via <a id="email">email</a>,
+<a href="http://www.twitter.com/bloodyalbatross">tweet me</a> or write a
+<a href="https://bitbucket.org/panzi/browser-ponies/issues?status=new&status=open">bug report</a>.
+</p>
+
+<script type="text/javascript">
+// <!--
+$('email').href = 'znvygb:tebffre.zrvfgre.zbegv@tzk.arg'.replace(/[a-z]/ig, function(c){
+	return String.fromCharCode((c<="Z"?90:122)>=(c=c.charCodeAt(0)+13)?c:c-26);
+});
+// -->
+</script>
+
+<h2>Advanced User Stuff</h2>
+
+<h3>Browser Support</h3>
+
+<p>
+Firefox has a bug concerning the animation speed of animated GIFs (I tried to work around this by
+shortening all effect durations when using Firefox). Also I found no way to control the animation
+playback of individual images in Firefox, which sometimes causes animation errors (when a effect
+is shown twice both effect animations are synchronized).
+</p>
+
+<p>
+In Internet Explorer I managed to control GIF animation playback using iframes, but you can't make
+them transparent and border less. In Chrome iframes do not suffer from this limitation.
+</p>
+
+<h3 id="toggleinbg">Toggle ponies in background</h3>
+
+<p>
+In order to support the <cite>Toggle ponies in background</cite> function websites need
+to define a special function called <tt>toggleBrowserPoniesToBackground</tt>. This function
+changes the z-index of everything that should appear in front of the ponies. The ponies have
+a z-index of <tt>9000000 + distance from top window border to bottom of the pony</tt>. The
+speak bubbles have a z-index of <tt>9009000</tt> (I assumed noone has a screen higher than
+9000 pixels).
+</p>
+
+<p>
+For instance, this webpage defines the <tt>toggleBrowserPoniesToBackground</tt> function like so:
+</p>
+
+<pre class="code">
+<span class="keyword">function</span> toggleBrowserPoniesToBackground () {
+	<span class="keyword">var</span> main = document.getElementById(<span class="literal">'main'</span>);
+	<span class="keyword">if</span> (main.style.zIndex === <span class="literal">''</span>) {
+		main.style.zIndex = <span class="literal">'100000000'</span>;
+	}
+	<span class="keyword">else</span> {
+		main.style.zIndex = <span class="literal">''</span>;
+	}
+}
+</pre>
+
+<p>
+In addition to that it defines these style rules:
+</p>
+
+<pre class="code">
+<span class="keyword">#main</span> {
+	position: <span class="keyword">relative</span>;
+	background: <span class="keyword">rgba</span>(<span class="literal">255</span>, <span class="literal">255</span>, <span class="literal">255</span>, <span class="literal">0.8</span>)</span>;
+	border: <span class="literal">5px</span> <span class="keyword">solid</span> <span class="keyword">rgba</span>(<span class="literal">163</span>, <span class="literal">204</span>, <span class="literal">222</span>, <span class="literal">0.8</span>);
+}
+</pre>
+
+<h3>Using your own ponies</h3>
+
+<p>
+If you want to use your own ponies you can convert the INI files to JavaScript using the tools below.
+Just load the INI files, fix the filenames/URLs if needed and generate the JavaScript. The resulting
+pony script will use the settings from above except for which pony is loaded.
+</p>
+
+<p>
+<strong>Note:</strong>
+This currently only works with Firefox and Chrome. Opera does currently not support files
+being dropped (so click to use the file open dialog) and Internet Explorer currently cannot
+read files at all in JavaScript (probably in version 10 it will be able to do that).
+</p>
+
+<h4>Your Ponies:</h4>
+<div class="dropzone"
+	ondrop="dropPony.call(this,event);"
+	ondragover="dragoverPony.call(this,event);"
+	ondragenter="dragoverPony.call(this,event);"
+	ondragleave="dragleaveDropzone.call(this,event);"
+	onmousemove="mousemoveDropzone.call(this,event);">
+Click or drop Pony.ini files here.
+<input type="file" multiple="multiple" onchange="loadPonyFiles(this.files);"/>
+</div>
+
+<p>
+As a next step you may need to adapt the URLs of the images and sounds to where they
+really are hosted. If they are hosted on some web server with the files of each pony
+in a seperate distinct directory you just need to change the base URL to the location
+of said directory. Don't forget the / (slash) at the end of the base URL and please
+note that the web is case sensitive. This means the file names as they are on the
+server have to exactly the ones defined here.
+</p>
+
+<p>
+If the files are all at some more or less random location, you need to adapt all the
+URLs individually. In this case just enter an absolute URL in the URL fields of each
+file. If the URL of an file is absolute the base URL will be ignored.
+</p>
+
+<p>
+As a third option you can also embed the files directly in the generated script.
+Note that this encodes the whole files into data URLs, which might cause the generated
+script to be a lot bigger than the sum size of all the files. Also Internet Explorer
+does not support data URLs of the length of 2048 characters, and the pony sprites
+are usually an order of magnitude bigger than that.
+</p>
+
+<ul id="own-ponies"></ul>
+
+<h4>Your Interacions:</h4>
+<div class="dropzone"
+	ondrop="dropInteractions.call(this,event);"
+	ondragover="dragoverInteractions.call(this,event);"
+	ondragenter="dragoverInteractions.call(this,event);"
+	ondragleave="dragleaveDropzone.call(this,event);"
+	onmousemove="mousemoveDropzone.call(this,event);">
+Click or drop Interactions.ini files here.
+<input type="file" multiple="multiple" onchange="loadInteractionFiles(this.files);"/>
+</div>
+
+<ul id="own-interactions"></ul>
+
+<p>
+<label title="Common prefix of image/audio file URLs of all ponies. (Not needed if you embed the files.)">Base URL:
+<input type="text" id="own-baseurl"/></label>
+</p>
+
+<p>
+<button onclick="inisToJS();">Generate JavaScript Code</button>
+</p>
+
+<p>
+<label for="javascript-output">your-ponies.js:</label>
+<textarea class="code" id="javascript-output" rows="8"></textarea>
+</p>
+
+<p>
+Then put the contents of the text area above into a file called e.g. <tt>"your-ponies.js"</tt>
+and host it somewhere on the web. You can then embed your ponies on your web site by adding
+this code somewhere in the HTML code of your web site (I recommend somewhere between
+<tt>&lt;head&gt;</tt> and <tt>&lt;/head&gt;</tt>):
+</p>
+
+<pre class="code">
+&lt;<span class="keyword">script</span> type=<span class="literal">"text/javascript"</span>
+        src=<span class="literal">"<span id="javascript-url">browser-ponies.js</span>"</span>&gt;&lt;/<span class="keyword">script</span>&gt;
+&lt;<span class="keyword">script</span> type=<span class="literal">"text/javascript"</span>
+        src=<span class="literal">"http://example.org/your-ponies.js"</span>&gt;&lt;/<span class="keyword">script</span>&gt;
+</pre>
+
+<p>
+Of course you need to replace <tt>http://example.org/your-ponies.js</tt> with the URL where
+you really host the file.
+</p>
+
+<p>
+If you want to you can also copy the <tt>browserponies.js</tt> file and serve it yourself.
+This server here does not have the best uptime so you might want to do that. 
+</p>
+
+<h2>Download</h2>
+<p>
+You can download the source here:<br/>
+<a href="https://bitbucket.org/panzi/browser-ponies/get/tip.zip">browser-ponies-source.zip</a>
+</p>
+
+<p>
+The image files and sounds you can download here:<br/>
+<a href="browser-ponies-resources.zip">browser-ponies-resources.zip</a>
+</p>
+
+<p>
+Note that none of the images are made by me. They simply are the images of
+<a href="http://www.desktopponies.com/">Desktop Ponies</a>. Go there for a full list of
+art credits. The only changes I made are fixes to the file names, because the web is
+case sensitive.
+</p>
+
+<p>
+A mercurial repository can be found here:<br/>
+<a href="https://bitbucket.org/panzi/browser-ponies/">https://bitbucket.org/panzi/browser-ponies/</a>
+</p>
+</div>
+
+<div id="footer">&copy; 2011-2012 Mathias Panzenb&ouml;ck</div>
+</body>
+</html>
