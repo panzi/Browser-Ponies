@@ -1783,10 +1783,18 @@ var BrowserPonies = (function () {
 				if (this.following.img.parentNode) {
 					dest   = this.dest_position;
 					dest.x = this.following.current_position.x;
-					dest.y = this.following.current_position.y;
-					dest.x += this.following.facing_right ?
-						this.current_behavior.x : -this.current_behavior.x;
-					dest.y += this.current_behavior.y;
+
+					if (this.following.facing_right) {
+						dest.x += this.current_behavior.x - this.following.paint_behavior.rightcenter.x;
+//						dest.x += this.current_behavior.x - this.following.paint_behavior.rightcenter.x + 40;
+//						dest.x += -this.following.paint_behavior.rightcenter.x + 50;
+					}
+					else {
+						dest.x += -this.current_behavior.x + this.following.paint_behavior.leftcenter.x;
+//						dest.x += -this.current_behavior.x + this.following.paint_behavior.leftcenter.x - 20;
+//						dest.x += this.following.paint_behavior.leftcenter.x - 30;
+					}
+					dest.y = this.following.current_position.y + this.current_behavior.y;
 					dist = distance(curr, dest);
 					if (!this.current_behavior.x && !this.current_behavior.y &&
 						dist <= curr.width * 0.5) {
@@ -2347,7 +2355,7 @@ var BrowserPonies = (function () {
 		},
 		randomBehavior: function (forceMovement) {
 			var behaviors;
-			var current_group = this.current_behavior ? this.current_behavior.group : null;
+			var current_group = this.current_behavior ? this.current_behavior.group : 0;
 			
 			if (this === dragged && this.canDrag()) {
 				behaviors = this.pony.dragged_behaviors;
@@ -2366,7 +2374,7 @@ var BrowserPonies = (function () {
 				// don't filter looping behaviors because getNearestInstance filteres
 				// looping instances and then it just degrades to a standard behavior
 				if (forceMovement && !behavior.isMoving()) continue;
-				if (current_group !== null && behavior.group !== 0 && behavior.group !== current_group) continue;
+				if (current_group !== 0 && behavior.group !== 0 && behavior.group !== current_group) continue;
 				sumprob += behavior.probability;
 				filtered.push(behavior);
 			}
