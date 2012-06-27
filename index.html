@@ -25,7 +25,6 @@ if (!window.atob) window.atob = base64.decodeo;
 <script type="text/javascript" src="jquery.socialshareprivacy.tumblr.js"></script>
 <script type="text/javascript" src="jquery.socialshareprivacy.reddit.js"></script>
 <script type="text/javascript" src="jquery.socialshareprivacy.pinterest.js"></script>
-<script type="text/javascript" src="jquery.socialshareprivacy.flattr.js"></script>
 <script type="text/javascript" src="ponycfg.js" id="browser-ponies-config"></script>
 <script type="text/javascript" src="browserponies.js" id="browser-ponies-script"></script>
 <script type="text/javascript" src="gui-common.js"></script>
@@ -33,7 +32,7 @@ if (!window.atob) window.atob = base64.decodeo;
 <script type="text/javascript">
 jQuery(document).ready(function () {
 	jQuery('#share').socialSharePrivacy({
-		order: ['twitter','tumblr','reddit','gplus','pinterest','facebook','flattr'],
+		order: ['twitter','tumblr','reddit','gplus','pinterest','facebook'],
 		layout: 'box',
 		services: {
 			tumblr:  {type: 'video'},
