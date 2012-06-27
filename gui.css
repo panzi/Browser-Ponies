@@ -18,6 +18,18 @@ background: linear-gradient(top, #2d96c6 0%,#c9e6f4 100%);
 body, option {
 	color: #294256;
 }
+#share {
+	position: absolute;
+	left: -100px;
+	width: 100px;
+	opacity: 0.5;
+	*zoom: 1;
+	filter: alpha(opacity=50);
+}
+#share:hover {
+	opacity: 1;
+	filter: alpha(opacity=100);
+}
 h1 {
 	text-align: center;
 	margin: 0;

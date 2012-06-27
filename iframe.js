@@ -38,6 +38,9 @@ function loadConfig (configStr) {
 		BrowserPonies.Util.$('paddock-back').style.display = config.paddock.trim().toLowerCase() === "true" ?
 			'' : 'none';
 	}
+	if ('grass' in config && config.grass.trim().toLowerCase() === "true") {
+		document.body.style.background = 'url("grass.png")';
+	}
 }
 
 if (!BrowserPoniesBaseConfig.loaded) {

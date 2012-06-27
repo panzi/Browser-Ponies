@@ -3,9 +3,11 @@
 <head>
 <meta http-equiv="content-type" content="text/html; charset=utf8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=edge;chrome=1"/>
+<meta name="description" content="Browser Ponies lets you place ponies on websites"/>
 <title>Browser Ponies</title>
 <link rel="shortcut icon" type="image/x-icon" href="favicon.ico"/>
 <link rel="stylesheet" type="text/css" href="gui.css"/>
+<link rel="stylesheet" type="text/css" href="socialshareprivacy/socialshareprivacy.css"/>
 <!--[if IE]>
 <script type="text/javascript" src="http://stringencoders.googlecode.com/svn-history/r230/trunk/javascript/base64.js"></script>
 <script type="text/javascript">
@@ -13,10 +15,40 @@ if (!window.btoa) window.btoa = base64.encode;
 if (!window.atob) window.atob = base64.decodeo;
 </script>
 <![endif]-->
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+<script type="text/javascript">jQuery.noConflict();</script>
+<script type="text/javascript" src="jquery.cookies.js"></script>
+<script type="text/javascript" src="jquery.socialshareprivacy.js"></script>
+<script type="text/javascript" src="jquery.socialshareprivacy.facebook.js"></script>
+<script type="text/javascript" src="jquery.socialshareprivacy.twitter.js"></script>
+<script type="text/javascript" src="jquery.socialshareprivacy.gplus.js"></script>
+<script type="text/javascript" src="jquery.socialshareprivacy.tumblr.js"></script>
+<script type="text/javascript" src="jquery.socialshareprivacy.reddit.js"></script>
+<script type="text/javascript" src="jquery.socialshareprivacy.pinterest.js"></script>
+<script type="text/javascript" src="jquery.socialshareprivacy.flattr.js"></script>
 <script type="text/javascript" src="ponycfg.js" id="browser-ponies-config"></script>
 <script type="text/javascript" src="browserponies.js" id="browser-ponies-script"></script>
 <script type="text/javascript" src="gui-common.js"></script>
 <script type="text/javascript" src="gui.js"></script>
+<script type="text/javascript">
+jQuery(document).ready(function () {
+	jQuery('#share').socialSharePrivacy({
+		order: ['twitter','tumblr','reddit','gplus','pinterest','facebook','flattr'],
+		layout: 'box',
+		services: {
+			tumblr:  {type: 'video'},
+			twitter: {tweet_text: jQuery.fn.socialSharePrivacy.getDescription}
+		},
+		image: absUrl('ponies/rainbow%20dash/hoverupdown_rainbow_right.gif'),
+		embed: function () { return iframeEmbedCode({
+				baseurl: absUrl(''),
+				autostart: true,
+				spawn: BrowserPoniesConfig.spawn
+			});
+		}
+	});
+});
+</script>
 </head>
 <body onload="init();updateConfig();initScriptUrl();">
 <div id="main">
@@ -31,6 +63,8 @@ if (!window.atob) window.atob = base64.decodeo;
 	title="Toggle ponies in background">&#x2195;</a>
 <a class="button" href="javascript:BrowserPonies.unspawnAll();BrowserPonies.stop();void(0)" title="Remove all Ponies">&times;</a>
 </p>
+
+<div id="share"></div>
 
 <h2>What is this?</h2>
 <p>
@@ -98,6 +132,10 @@ you can use this embed code to confine the ponies into an iframe:</label>
 <tr>
 <td><input type="checkbox" id="paddock" onchange="updateConfig();" checked/></td>
 <td><label for="paddock">Show Paddock</label></td>
+</tr>
+<tr>
+<td><input type="checkbox" id="grass" onchange="updateConfig();" checked/></td>
+<td><label for="grass">Show Grass</label></td>
 </tr>
 </tbody>
 </table>
