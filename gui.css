@@ -25,10 +25,13 @@ body, option {
 	opacity: 0.5;
 	*zoom: 1;
 	filter: alpha(opacity=50);
+	padding-bottom: 20px;
+	overflow: hidden;
 }
 #share:hover {
 	opacity: 1;
 	filter: alpha(opacity=100);
+	overflow: visible;
 }
 h1 {
 	text-align: center;
