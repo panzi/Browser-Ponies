@@ -214,20 +214,31 @@
 	}
 
 	// build URI from rel="canonical" or document.location
-	function getURI () {
+	function getURI (options) {
 		var uri = document.location.href;
 		var canonical = $("link[rel=canonical]").attr("href") || $('head meta[property="og:url"]').attr("content");
 
 		if (canonical) {
 			uri = absurl(canonical);
 		}
+		else if (options && options.ignore_fragment) {
+			uri = uri.replace(/#.*$/,'');
+		}
 
 		return uri;
 	}
 
-	function buttonClickHandler (service, button_class, uri, options) {
+	function buttonClickHandler (service_name) {
 		function onclick () {
 			var $container = $(this).parents('li.help_info').first();
+			var $share = $container.parents('.social_share_privacy_area').first().parent();
+			var options = $share.data('social-share-privacy-options');
+			var service = options.services[service_name];
+			var button_class = service.button_class || service_name;
+			var uri = options.uri;
+			if (typeof uri === 'function') {
+				uri = uri.call($share[0], options);
+			}
 			var $switch = $container.find('span.switch');
 			if ($switch.hasClass('off')) {
 				$container.addClass('info_off');
@@ -271,17 +282,17 @@
 		$info_wrapper.removeClass('display');
 	}
 
-	function permCheckChangeHandler (options) {
-		return function () {
-			var $input = $(this);
-			if ($input.is(':checked')) {
-				options.set_perma_option($input.attr('data-service'), options);
-				$input.parent().addClass('checked');
-			} else {
-				options.del_perma_option($input.attr('data-service'), options);
-				$input.parent().removeClass('checked');
-			}
-		};
+	function permCheckChangeHandler () {
+		var $input = $(this);
+		var $share = $input.parents('.social_share_privacy_area').first().parent();
+		var options = $share.data('social-share-privacy-options');
+		if ($input.is(':checked')) {
+			options.set_perma_option($input.attr('data-service'), options);
+			$input.parent().addClass('checked');
+		} else {
+			options.del_perma_option($input.attr('data-service'), options);
+			$input.parent().removeClass('checked');
+		}
 	}
 
 	function enterSettingsInfo () {
@@ -330,6 +341,72 @@
 	// extend jquery with our plugin function
 	function socialSharePrivacy (options) {
 
+		if (typeof options === "string") {
+			var command = options;
+			if (arguments.length === 1) {
+				switch (command) {
+					case "enable":
+						this.find('.switch.off').click();
+						break;
+
+					case "disable":
+						this.find('.switch.on').click();
+						break;
+
+					case "toggle":
+						this.find('.switch').click();
+						break;
+
+					case "options":
+						return this.data('social-share-privacy-options');
+
+					case "destroy":
+						this.children('.social_share_privacy_area').remove();
+						this.removeData('social-share-privacy-options');
+						break;
+	
+					default:
+						throw new Error("socialSharePrivacy: unknown command: "+command);
+				}
+			}
+			else {
+				var arg = arguments[1];
+				options = this.data('social-share-privacy-options');
+				switch (command) {
+					case "enable":
+						this.find('.'+(options.services[arg].class_name||arg)+' .switch.off').click();
+						break;
+
+					case "disable":
+						this.find('.'+(options.services[arg].class_name||arg)+' .switch.on').click();
+						break;
+
+					case "toggle":
+						this.find('.'+(options.services[arg].class_name||arg)+' .switch').click();
+						break;
+
+					case "option":
+						if (arguments.length > 2) {
+							var value = {};
+							value[arg] = arguments[2];
+							$.extend(true, options, value);
+						}
+						else {
+							return options[arg];
+						}
+						break;
+
+					case "options":
+						$.extend(true, options, arg);
+						break;
+
+					default:
+						throw new Error("socialSharePrivacy: unknown command: "+command);
+				}
+			}
+			return this;
+		}
+
 		// overwrite default values with user settings
 		options = $.extend(true, {}, socialSharePrivacy.settings, options);
 		var order = options.order || [];
@@ -341,14 +418,14 @@
 		var unordered  = [];
 		for (var service_name in options.services) {
 			var service = options.services[service_name];
-			if (service.status === 'on') {
+			if (service.status) {
 				any_on = true;
 				if ($.inArray(service_name, order) === -1) {
 					unordered.push(service_name);
 				}
 				if (service.privacy !== 'safe') {
 					any_unsafe = true;
-					if (service.perma_option === 'on') {
+					if (service.perma_option) {
 						any_perm = true;
 					}
 				}
@@ -381,7 +458,7 @@
 
 		// get stored perma options
 		var permas;
-		if (options.perma_option === 'on' && any_perm) {
+		if (options.perma_option && any_perm) {
 			if (options.get_perma_options) {
 				permas = options.get_perma_options(options);
 			}
@@ -393,20 +470,22 @@
 			}
 		}
 
-		// canonical uri that will be shared
-		var uri = options.uri;
-		if (typeof uri === 'function') {
-			uri = uri.call(this, options);
-		}
-
 		return this.each(function () {
+			// canonical uri that will be shared
+			var uri = options.uri;
+			if (typeof uri === 'function') {
+				uri = uri.call(this, options);
+			}
+
 			var $context = $('<ul class="social_share_privacy_area"></ul>').addClass(options.layout);
 			
+			$(this).prepend($context).data('social-share-privacy-options',options);
+
 			for (var i = 0; i < order.length; ++ i) {
 				var service_name = order[i];
 				var service = options.services[service_name];
 
-				if (service && service.status === 'on') {
+				if (service && service.status) {
 					var class_name = service.class_name || service_name;
 					var button_class = service.button_class || service_name;
 					var $help_info;
@@ -431,7 +510,7 @@
 								}));
 					
 						$help_info.find('.dummy_btn img.privacy_dummy, span.switch').click(
-							buttonClickHandler(service, button_class, uri, options));
+							buttonClickHandler(service_name));
 					}
 					$context.append($help_info);
 				}
@@ -452,7 +531,7 @@
 				$context.find('.help_info').on('mouseenter', enterHelpInfo).on('mouseleave', leaveHelpInfo);
 
 				// menu for permanently enabling of service buttons
-				if (options.perma_option === 'on' && any_perm) {
+				if (options.perma_option && any_perm) {
 
 					// define container
 					var $container_settings_info = $context.find('li.settings_info');
@@ -466,14 +545,13 @@
 						'<span class="settings">' + options.txt_settings + '</span><form><fieldset><legend>' +
 						options.settings_perma + '</legend></fieldset></form>');
 
-
 					// write services with <input> and <label> and checked state from cookie
 					var $fieldset = $settings_info_menu.find('form fieldset');
 					for (var i = 0; i < order.length; ++ i) {
 						var service_name = order[i];
 						var service = options.services[service_name];
 
-						if (service && service.status === 'on' && service.perma_option === 'on' && service.privacy !== 'safe') {
+						if (service && service.status && service.perma_option && service.privacy !== 'safe') {
 							var class_name = service.class_name || service_name;
 							var perma = permas[service_name];
 							var $field = $('<label><input type="checkbox"' + (perma ? ' checked="checked"/>' : '/>') +
@@ -495,12 +573,10 @@
 					// show settings menu on hover
 					$container_settings_info.on('mouseenter', enterSettingsInfo).on('mouseleave', leaveSettingsInfo);
 
-					// interaction for <input> to enable services permanently (cookie will be set or deleted)
-					$container_settings_info.find('fieldset input').on('change', permCheckChangeHandler(options));
+					// interaction for <input> to enable services permanently
+					$container_settings_info.find('fieldset input').on('change', permCheckChangeHandler);
 				}
 			}
-			
-			$(this).prepend($context);
 		});
 	};
 
@@ -525,14 +601,15 @@
 		'del_perma_option'  : delPermaOption,
 		'get_perma_options' : getPermaOptions,
 		'get_perma_option'  : getPermaOption,
-		'perma_option'      : $.cookie ? 'on' : 'off',
+		'perma_option'      : !!$.cookie,
 		'cookie_path'       : '/',
 		'cookie_domain'     : document.location.hostname,
 		'cookie_expires'    : 365,
 		'path_prefix'       : '',
 		'css_path'          : 'socialshareprivacy/socialshareprivacy.css',
 		'uri'               : getURI,
-		'language'          : 'en'
+		'language'          : 'en',
+		'ignore_fragment'   : true
 	};
 
 	$.fn.socialSharePrivacy = socialSharePrivacy;

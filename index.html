@@ -28,18 +28,29 @@ if (!window.atob) window.atob = base64.decodeo;
 <script type="text/javascript" src="jquery.socialshareprivacy.mail.js"></script>
 <script type="text/javascript" src="jquery.socialshareprivacy.stumbleupon.js"></script>
 <script type="text/javascript" src="jquery.socialshareprivacy.linkedin.js"></script>
+<script type="text/javascript" src="jquery.socialshareprivacy.buffer.js"></script>
+<script type="text/javascript" src="jquery.socialshareprivacy.disqus.js"></script>
+<script type="text/javascript" src="jquery.socialshareprivacy.xing.js"></script>
 <script type="text/javascript" src="ponycfg.js" id="browser-ponies-config"></script>
 <script type="text/javascript" src="browserponies.js" id="browser-ponies-script"></script>
 <script type="text/javascript" src="gui-common.js"></script>
 <script type="text/javascript" src="gui.js"></script>
 <script type="text/javascript">
-jQuery(document).ready(function () {
-	jQuery('#share').socialSharePrivacy({
-		order: ['twitter','tumblr','reddit','stumbleupon','linkedin','mail','gplus','pinterest','facebook'],
+// <![CDATA[
+var disqus_shortname = 'browserponies';
+jQuery(document).ready(function ($) {
+	$('#share').socialSharePrivacy({
+		order: ['twitter','tumblr','disqus','reddit','stumbleupon','linkedin','mail','gplus','pinterest','facebook'],
 		layout: 'box',
 		services: {
 			tumblr:  {type: 'video'},
-			twitter: {tweet_text: jQuery.fn.socialSharePrivacy.getDescription}
+			twitter: {tweet_text: $.fn.socialSharePrivacy.getDescription},
+			disqus: {
+				shortname: disqus_shortname,
+				onclick: function () {
+					$('#comments-button').click();
+				}
+			}
 		},
 		image: absUrl('ponies/rainbow%20dash/hoverupdown_rainbow_right.gif'),
 		embed: function () { return iframeEmbedCode({
@@ -49,7 +60,12 @@ jQuery(document).ready(function () {
 			});
 		}
 	});
+	$('#comments-button').click(function () {
+		$.getScript('http://' + disqus_shortname + '.disqus.com/embed.js');
+		$(this).remove();
+	});
 });
+// ]]>
 </script>
 </head>
 <body onload="init();updateConfig();initScriptUrl();">
@@ -508,6 +524,13 @@ case sensitive.
 A git repository can be found here:<br/>
 <a href="https://github.com/panzi/Browser-Ponies">https://github.com/panzi/Browser-Ponies</a>
 </p>
+
+<h2>Comments</h2>
+
+<div id="disqus_thread"></div>
+
+<a id="comments-button" href="javascript:void(0)">Show Comments</a>
+
 </div>
 
 <div id="footer">&copy; 2011-2012 Mathias Panzenb&ouml;ck</div>
