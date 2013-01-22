@@ -174,6 +174,6 @@ Or
 	Probability As Double,
 	Proximity As Double Or "default",
 	Targets As String(),
-	All As Enum("True", "False", "All", "Any", "Random"),
+	TargetActivation As Enum("One", "Any", "All"),
 	Behaviors As String(),
 	Optional Delay As Double = 0
