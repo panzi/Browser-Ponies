@@ -670,7 +670,7 @@ var BrowserPonies = (function () {
 		this.name        = interaction.name;
 		this.probability = interaction.probability;
 		this.proximity   = interaction.proximity === "default" ? 640 : interaction.proximity;
-		this.all         = !!interaction.all;
+		this.activate    = interaction.activate;
 		this.delay       = interaction.delay;
 		this.targets     = [];
 		this.behaviors   = [];
@@ -704,19 +704,40 @@ var BrowserPonies = (function () {
 	Interaction.prototype = {
 		reachableTargets: function (pos) {
 			var targets = [];
-			for (var i = 0, n = this.targets.length; i < n; ++ i) {
+			var n = this.targets.length;
+			if (n === 0)
+				return targets;
+			for (var i = 0; i < n; ++ i) {
 				var pony = this.targets[i];
-				var reachable = false;
+				var instance = null;
+				var instance_dist = Infinity;
 				for (var j = 0, m = pony.instances.length; j < m; ++ j) {
 					var inst = pony.instances[j];
-					// XXX: is it me or is the proximity much to low for all these interactions?
-					if (distance(pos, inst.position()) < this.proximity) {
-						targets.push(inst);
-						reachable = true;
+					var dist = distance(pos, inst.position());
+					if (dist <= this.proximity && dist < instance_dist) {
+						instance = inst;
+						instance_dist = dist;
 					}
 				}
-				if (this.all && !reachable) {
-					return [];
+				if (instance) {
+					targets.push([instance_dist,instance]);
+				}
+				else if (this.activate === "all") {
+					return null;
+				}
+			}
+			if (targets.length === 0) {
+				return null;
+			}
+			if (this.activate === "one") {
+				targets.sort(function (lhs,rhs) {
+					return lhs[0] - rhs[0];
+				});
+				return [targets[0][1]];
+			}
+			else {
+				for (var i = 0; i < targets.length; ++ i) {
+					targets[i] = targets[i][1];
 				}
 			}
 			return targets;
@@ -1717,15 +1738,8 @@ var BrowserPonies = (function () {
 		interact: function (currentTime,interaction,targets) {
 			var pony, behavior = randomSelect(interaction.behaviors);
 			this.behave(this.pony.behaviors_by_name[behavior]);
-			if (interaction.all) {
-				for (var i = 0, n = targets.length; i < n; ++ i) {
-					pony = targets[i];
-					pony.behave(pony.pony.behaviors_by_name[behavior]);
-					pony.current_interaction = interaction;
-				}
-			}
-			else {
-				pony = randomSelect(targets);
+			for (var i = 0, n = targets.length; i < n; ++ i) {
+				pony = targets[i];
 				pony.behave(pony.pony.behaviors_by_name[behavior]);
 				pony.current_interaction = interaction;
 			}
@@ -1896,7 +1910,7 @@ var BrowserPonies = (function () {
 				for (var i = 0, n = this.pony.interactions.length; i < n; ++ i) {
 					interaction = this.pony.interactions[i];
 					var targets = interaction.reachableTargets(curr);
-					if (targets.length > 0) {
+					if (targets) {
 						sumprob += interaction.probability;
 						interactions.push([interaction, targets]);
 					}
@@ -1913,7 +1927,7 @@ var BrowserPonies = (function () {
 						}
 					}
 
-					// The probability is meant for a execution evere 100ms,
+					// The probability is meant for an execution evere 100ms,
 					// but I use a configurable interaction interval.
 					dice = Math.random() * (100 / interactionInterval);
 					if (dice <= interaction[0].probability) {
@@ -2941,17 +2955,20 @@ var BrowserPonies = (function () {
 
 			for (var i = 0, n = rows.length; i < n; ++ i) {
 				var row = rows[i];
-				var all = false;
+				var activate = "one";
 				if (row.length > 4) {
-					all = row[5].trim().toLowerCase();
-					if (all === "true" || all === "all") {
-						all = true;
+					activate = row[5].trim().toLowerCase();
+					if (activate === "true" || activate === "all") {
+						activate = "all";
 					}
-					else if (all === "false" || all == "random" || all === "any") {
-						all = false;
+					else if (activate == "random" || activate === "any") {
+						activate = "any";
+					}
+					else if (activate === "false" || activate === "one") {
+						activate = "one";
 					}
 					else {
-						throw new Error("illegal value: "+row[5]);
+						throw new Error("illegal target activation value: "+row[5]);
 					}
 				}
 
@@ -2963,7 +2980,7 @@ var BrowserPonies = (function () {
 					probability: parseFloat(row[2]),
 					proximity:   proximity,
 					targets:     row[4],
-					all:         all,
+					activate:    activate,
 					behaviors:   row[6],
 					delay:       row.length > 7 ? parseFloat(row[7].trim()) : 0
 				});

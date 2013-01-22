@@ -1,6 +1,6 @@
 #!/bin/bash
 
-find ponies -iname '*.mp3'|while read -r mp3; do
+find -L ponies -iname '*.mp3'|while read -r mp3; do
 	ogg=${mp3%.mp3}.ogg
 	if [ ! -f "$ogg" ]; then
 		wav=${mp3%.mp3}-tmp-$$.wav
