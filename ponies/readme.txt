@@ -1,15 +1,9 @@
-These images and configuration files are taken from Desktop Ponies:
-http://www.desktopponies.com/
+These images and configuration files are taken from the Ponychan fork of Desktop Ponies:
+http://www.ponychan.net/chan/collab/res/43172.html
 
-Nothing here is affiliated with Hasbro in any way, all of the art has been either created by
-others, or, in the case of the original Derpy images, from Derpy Delivery:
-http://www.hamalonesandwich.com/derpydelivery/#l 
+Go there to find out who contributed the images.
 
-A lot of the animations have been done by Jay Wright.
-
-See http://www.desktopponies.com/ for a full list of art credits.
-
-Many sounds where taken from:
-http://kyrospawn.deviantart.com/art/MLP-FIM-Soundboard-V6-0-244757196
+See also:
+http://desktop-pony-team.deviantart.com/
 
 My Little Pony is (c) by Hasbro

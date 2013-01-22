@@ -7,7 +7,7 @@
 <title>Browser Ponies</title>
 <link rel="shortcut icon" type="image/x-icon" href="favicon.ico"/>
 <link rel="stylesheet" type="text/css" href="gui.css"/>
-<link rel="stylesheet" type="text/css" href="socialshareprivacy/socialshareprivacy.css"/>
+<link rel="stylesheet" type="text/css" href="http://panzi.github.com/SocialSharePrivacy/stylesheets/jquery.socialshareprivacy.min.css"/>
 <!--[if IE]>
 <script type="text/javascript" src="http://stringencoders.googlecode.com/svn-history/r230/trunk/javascript/base64.js"></script>
 <script type="text/javascript">
@@ -18,19 +18,7 @@ if (!window.atob) window.atob = base64.decodeo;
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
 <script type="text/javascript">jQuery.noConflict();</script>
 <script type="text/javascript" src="jquery.cookies.js"></script>
-<script type="text/javascript" src="jquery.socialshareprivacy.js"></script>
-<script type="text/javascript" src="jquery.socialshareprivacy.facebook.js"></script>
-<script type="text/javascript" src="jquery.socialshareprivacy.twitter.js"></script>
-<script type="text/javascript" src="jquery.socialshareprivacy.gplus.js"></script>
-<script type="text/javascript" src="jquery.socialshareprivacy.tumblr.js"></script>
-<script type="text/javascript" src="jquery.socialshareprivacy.reddit.js"></script>
-<script type="text/javascript" src="jquery.socialshareprivacy.pinterest.js"></script>
-<script type="text/javascript" src="jquery.socialshareprivacy.mail.js"></script>
-<script type="text/javascript" src="jquery.socialshareprivacy.stumbleupon.js"></script>
-<script type="text/javascript" src="jquery.socialshareprivacy.linkedin.js"></script>
-<script type="text/javascript" src="jquery.socialshareprivacy.buffer.js"></script>
-<script type="text/javascript" src="jquery.socialshareprivacy.disqus.js"></script>
-<script type="text/javascript" src="jquery.socialshareprivacy.xing.js"></script>
+<script type="text/javascript" src="http://panzi.github.com/SocialSharePrivacy/javascripts/jquery.socialshareprivacy.min.js"></script>
 <script type="text/javascript" src="ponycfg.js" id="browser-ponies-config"></script>
 <script type="text/javascript" src="browserponies.js" id="browser-ponies-script"></script>
 <script type="text/javascript" src="gui-common.js"></script>
@@ -45,6 +33,7 @@ jQuery(document).ready(function ($) {
 		services: {
 			tumblr:  {type: 'video'},
 			twitter: {tweet_text: $.fn.socialSharePrivacy.getDescription},
+			flattr:  {status: false},
 			disqus: {
 				shortname: disqus_shortname,
 				onclick: function () {
@@ -58,7 +47,8 @@ jQuery(document).ready(function ($) {
 				autostart: true,
 				spawn: BrowserPoniesConfig.spawn
 			});
-		}
+		},
+		path_prefix: "http://panzi.github.com/SocialSharePrivacy/"
 	});
 	$('#comments-button').click(function () {
 		$.getScript('http://' + disqus_shortname + '.disqus.com/embed.js');
@@ -101,10 +91,9 @@ work okay in <a href="http://www.mozilla.org/firefox/">Mozilla Firefox</a>.
 </p>
 
 <p>
-The artwork used is from <a href="http://sourceforge.net/projects/desktopponies/">Desktop Ponies</a> with added audio from
-<a href="http://kyrospawn.deviantart.com/art/MLP-FIM-Soundboard-V6-0-244757196">MLP:FIM Soundboard V6.0</a>
-by <a href="http://kyrospawn.deviantart.com/">kyrospawn</a>, <cite>My Little Pony: Friendship Is Magic</cite>
-is &copy; by <a href="http://www.hubworld.com/my-little-pony/shows/friendship-is-magic">Hasbro</a> and
+The artwork used is from the <a href="http://www.ponychan.net/chan/collab/res/43172.html">Ponychan fork</a> of
+<a href="http://sourceforge.net/projects/desktopponies/">Desktop Ponies</a>, <cite>My Little Pony: Friendship Is
+Magic</cite> is &copy; by <a href="http://www.hubworld.com/my-little-pony/shows/friendship-is-magic">Hasbro</a> and
 <a href="http://fyre-flye.deviantart.com/">Lauren Faust</a>.
 </p>
 
@@ -515,9 +504,9 @@ The image files and sounds you can download here:<br/>
 
 <p>
 Note that none of the images are made by me. They simply are the images of
+the <a href="http://www.ponychan.net/chan/collab/res/43172.html">Ponychan fork</a> of
 <a href="http://sourceforge.net/projects/desktopponies/">Desktop Ponies</a>. Go there for a full list of
-art credits. The only changes I made are fixes to the file names, because the web is
-case sensitive.
+art credits. The only changes I made are fixes to the file names, because the web is case sensitive.
 </p>
 
 <p>
