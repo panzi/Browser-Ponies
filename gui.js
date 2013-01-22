@@ -71,24 +71,30 @@ function embedCode (config) {
 		'})('+JSON.stringify(copy).replace(/\]\]/g,']"+"]')+'); /* ]]> */</script>');
 }
 
+function iframeEmbedCode (config) {
+	var iframeWidth  = getNumberFieldValue($('iframe-width'));
+	var iframeHeight = getNumberFieldValue($('iframe-height'));
+	delete config.baseurl;
+	config.paddock = $('paddock').checked;
+	config.grass = $('grass').checked;
+	return '<iframe src="'+absUrl("ponies-iframe.html#"+
+		configToQueryString(config))+'" style="overflow:hidden;border-style:none;margin:0;'+
+		'padding:0;background:transparent;width:'+iframeWidth+'px;'+iframeHeight+'px;" '+
+		'width="'+iframeWidth+'" height="'+iframeHeight+'" '+
+		'frameborder="0" scrolling="no" marginheight="0" marginwidth="0"></iframe>';
+}
+
 function updateConfig () {
 	var config = dumpConfig();
 	var code = ponyCode(config);
-	var iframeWidth  = getNumberFieldValue($('iframe-width'));
-	var iframeHeight = getNumberFieldValue($('iframe-height'));
 
 	$('bookmarklet').href = 'javascript:'+code+'void(0)';
 	$('embedcode').value = embedCode(config);
 
 	var baseurl = config.baseurl;
-	delete config.baseurl;
-	config.paddock = $('paddock').checked;
-	$('iframe').value = '<iframe src="'+absUrl("ponies-iframe.html#"+
-		configToQueryString(config))+'" style="overflow:hidden;border-style:none;margin:0;'+
-		'padding:0;background:transparent;width:'+iframeWidth+'px;'+iframeHeight+'px;" '+
-		'width="'+iframeWidth+'" height="'+iframeHeight+'" '+
-		'frameborder="0" scrolling="no" marginheight="0" marginwidth="0"></iframe>';
+	$('iframe').value = iframeEmbedCode(config);
 	delete config.paddock;
+	delete config.grass;
 
 	BrowserPonies.setVolume(config.volume);
 	BrowserPonies.setFadeDuration(config.fadeDuration);
