@@ -42,6 +42,7 @@ function setSimpleConfig (config) {
 	if ('showFps' in config) BrowserPonies.setShowFps(config.showFps);
 	if ('showLoadProgress' in config) BrowserPonies.setShowLoadProgress(config.showLoadProgress);
 	if ('speakProbability' in config) BrowserPonies.setSpeakProbability(config.speakProbability);
+	if ('dontSpeak' in config) BrowserPonies.setDontSpeak(config.dontSpeak);
 }
 
 function updateConfig () {
@@ -113,6 +114,7 @@ function loadConfig () {
 	$('progressbar').checked = BrowserPonies.isShowLoadProgress();
 	$('enableaudio').checked = BrowserPonies.isAudioEnabled();
 	$('showfps').checked     = BrowserPonies.isShowFps();
+	$('dontspeak').checked   = BrowserPonies.isDontSpeak();
 
 	BrowserPonies.unspawnAll();
 	var ponies = BrowserPonies.ponies();

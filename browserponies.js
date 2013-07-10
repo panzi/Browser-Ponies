@@ -202,8 +202,8 @@ var BrowserPonies = (function () {
 
 			switch (m[6]) {
 				case 'd': s += padd(parseInt(arguments[argind++]).toFixed(0),fill,padding,right); break;
-				case 'f': s += padd(parseFloat(arguments[argind++]).toFixed(decimal),fill,padding,right); break;
-				case 'e': s += padd(parseFloat(arguments[argind++]).toExponential(decimal),fill,padding,right); break;
+				case 'f': s += padd(Number(arguments[argind++]).toFixed(decimal),fill,padding,right); break;
+				case 'e': s += padd(Number(arguments[argind++]).toExponential(decimal),fill,padding,right); break;
 				case 's': s += padd(String(arguments[argind++]),fill,' ',right); break;
 				case 'j': s += padd(JSON.stringify(arguments[argind++]),fill,' ',right); break;
 				case '%': s += padd('%',fill,' ',right);
@@ -387,7 +387,7 @@ var BrowserPonies = (function () {
 								element.style.styleFloat = cssValue;
 							}
 							else if (name === 'opacity') {
-								setOpacity(element, parseFloat(cssValue));
+								setOpacity(element, Number(cssValue));
 							}
 							else {
 								try {
@@ -611,7 +611,7 @@ var BrowserPonies = (function () {
 	};
 
 	var randomSelect = function (list) {
-		return list[Math.round((list.length - 1) * Math.random())];
+		return list[Math.floor(list.length * Math.random())];
 	};
 
 	var Movements = {
@@ -1769,6 +1769,7 @@ var BrowserPonies = (function () {
 			this.interaction_targets = targets;
 		},
 		speak: function (currentTime,speech) {
+			if (dontSpeak) return;
 			if (speech.text) {
 				var duration = Math.max(speech.text.length * 150, 1000);
 				var remove = {at: currentTime + duration};
@@ -2715,6 +2716,7 @@ var BrowserPonies = (function () {
 	var globalBaseUrl = URL.abs('');
 	var globalSpeed = 3; // why is it too slow otherwise?
 	var speakProbability = 0.1;
+	var dontSpeak = false;
 	var interval = 40;
 	var interactionInterval = 500;
 	var ponies = {};
@@ -2801,10 +2803,10 @@ var BrowserPonies = (function () {
 					case "behavior":
 						var behavior = {
 							name: row[1],
-							probability: parseFloat(row[2]),
-							maxduration: parseFloat(row[3]),
-							minduration: parseFloat(row[4]),
-							speed:       parseFloat(row[5]),
+							probability: Number(row[2]),
+							maxduration: Number(row[3]),
+							minduration: Number(row[4]),
+							speed:       Number(row[5]),
 							rightimage:  encodeURIComponent(row[6]),
 							leftimage:   encodeURIComponent(row[7]),
 							movement:    row[8],
@@ -2819,8 +2821,8 @@ var BrowserPonies = (function () {
 							var speakend = (row[11] || '').trim();
 							if (speakend)   behavior.speakend   = speakend;
 							behavior.skip = parseBoolean(row[12]);
-							behavior.x    = parseFloat(row[13]);
-							behavior.y    = parseFloat(row[14]);
+							behavior.x    = Number(row[13]);
+							behavior.y    = Number(row[14]);
 							if (row[15]) behavior.follow = row[15];
 
 							if (row.length > 16) {
@@ -2861,8 +2863,8 @@ var BrowserPonies = (function () {
 							behavior:    row[2],
 							rightimage:  encodeURIComponent(row[3]),
 							leftimage:   encodeURIComponent(row[4]),
-							duration:    parseFloat(row[5]),
-							delay:       parseFloat(row[6]),
+							duration:    Number(row[5]),
+							delay:       Number(row[6]),
 							rightloc:    row[7].trim(),
 							rightcenter: row[8].trim(),
 							leftloc:     row[9].trim(),
@@ -2995,16 +2997,16 @@ var BrowserPonies = (function () {
 				}
 
 				var proximity = row[3].trim().toLowerCase();
-				if (proximity !== "default") proximity = parseFloat(proximity);
+				if (proximity !== "default") proximity = Number(proximity);
 				interactions.push({
 					name:        row[0],
 					pony:        row[1],
-					probability: parseFloat(row[2]),
+					probability: Number(row[2]),
 					proximity:   proximity,
 					targets:     row[4],
 					activate:    activate,
 					behaviors:   row[6],
-					delay:       row.length > 7 ? parseFloat(row[7].trim()) : 0
+					delay:       row.length > 7 ? Number(row[7].trim()) : 0
 				});
 			}
 
@@ -3270,13 +3272,13 @@ var BrowserPonies = (function () {
 			return interval;
 		},
 		setFps: function (fps) {
-			this.setInterval(1000 / parseFloat(fps));
+			this.setInterval(1000 / Number(fps));
 		},
 		getFps: function () {
 			return 1000 / interval;
 		},
 		setInteractionInterval: function (ms) {
-			ms = parseFloat(ms);
+			ms = Number(ms);
 			if (isNaN(ms)) {
 				console.error("unexpected NaN value for interaction interval");
 			}
@@ -3288,7 +3290,7 @@ var BrowserPonies = (function () {
 			return interactionInterval;
 		},
 		setSpeakProbability: function (probability) {
-			probability = parseFloat(probability);
+			probability = Number(probability);
 			if (isNaN(probability)) {
 				console.error("unexpected NaN value for speak probability");
 			}
@@ -3299,8 +3301,14 @@ var BrowserPonies = (function () {
 		getSpeakProbability: function () {
 			return speakProbability;
 		},
+		setDontSpeak: function (value) {
+			dontSpeak = !!value;
+		},
+		isDontSpeak: function () {
+			return dontSpeak;
+		},
 		setVolume: function (value) {
-			value = parseFloat(value);
+			value = Number(value);
 			if (isNaN(value)) {
 				console.error("unexpected NaN value for volume");
 			}
@@ -3322,7 +3330,7 @@ var BrowserPonies = (function () {
 			return globalBaseUrl;
 		},
 		setSpeed: function (speed) {
-			globalSpeed = parseFloat(speed);
+			globalSpeed = Number(speed);
 		},
 		getSpeed: function () {
 			return globalSpeed;
@@ -3417,7 +3425,7 @@ var BrowserPonies = (function () {
 			return fadeDuration;
 		},
 		setFadeDuration: function (ms) {
-			fadeDuration = parseFloat(ms);
+			fadeDuration = Number(ms);
 		},
 		running: function () {
 			return timer !== null;
@@ -3434,6 +3442,9 @@ var BrowserPonies = (function () {
 			}
 			if ('speakProbability' in config) {
 				this.setSpeakProbability(config.speakProbability);
+			}
+			if ('dontSpeak' in config) {
+				this.setDontSpeak(config.dontSpeak);
 			}
 			if ('volume' in config) {
 				this.setVolume(config.volume);
@@ -3496,6 +3507,7 @@ var BrowserPonies = (function () {
 			config.baseurl = this.getBaseUrl();
 			config.speed = this.getSpeed();
 			config.speakProbability = this.getSpeakProbability();
+			config.dontSpeak = this.isDontSpeak();
 			config.volume = this.getVolume();
 			config.interval = this.getInterval();
 			config.fps = this.getFps();

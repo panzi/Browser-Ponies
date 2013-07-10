@@ -87,6 +87,14 @@ a.button:visited {
 		inset  20px  20px 40px -20px #4c92c4,
 		inset -20px -20px 40px -20px #b1dbed;
 }
+.button.disabled, button:disabled, select:disabled {
+	cursor: default;
+	border-color: #8A8A8A;
+	background: #D3DBE1;
+	box-shadow:
+		inset -20px -20px 40px -20px #999FA3,
+		inset  20px  20px 40px -20px #D3DBE1;
+}
 #bookmarklet {
 	padding: 10px 30px;
 	font-size: 1.2em;

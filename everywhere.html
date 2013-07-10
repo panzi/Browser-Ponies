@@ -100,9 +100,15 @@ form {
 <td><input type="checkbox" id="showfps" onchange="updateConfig();"/></td>
 <td><label for="showfps">Show Frames per Second</label></td>
 </tr>
+
 <tr>
 <td><input type="checkbox" id="progressbar" onchange="updateConfig();" checked/></td>
 <td><label for="progressbar">Show Progress Bar</label></td>
+</tr>
+
+<tr>
+<td><input type="checkbox" id="dontspeak" onchange="updateDontSpeak(this.checked);"/></td>
+<td><label for="dontspeak">Never Speak</label></td>
 </tr>
 </tbody>
 </table>
@@ -123,8 +129,8 @@ form {
 </td>
 </tr>
 
-<tr>
-<td><label for="speak">Speak Probability:</label></td>
+<tr title="Even if this is 0% ponies will speak if an animation requires it.">
+<td><label for="speak">Random Speak Probability:</label></td>
 <td>
 <input type="text" class="number" id="speak" value="15"
 	data-value="15" data-min="0" data-max="100" data-decimals="0" size="3"
