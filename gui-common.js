@@ -34,6 +34,7 @@ function init () {
 	setNumberFieldValue($('speed'), BrowserPonies.getSpeed());
 	$('progressbar').checked = BrowserPonies.isShowLoadProgress();
 	$('enableaudio').checked = BrowserPonies.isAudioEnabled();
+	$('dontspeak').checked   = BrowserPonies.isDontSpeak();
 	$('showfps').checked     = BrowserPonies.isShowFps();
 
 	var list = $('ponylist');
@@ -329,6 +330,7 @@ function dumpConfig (dontSkip) {
 	config.fps = getNumberFieldValue($('fps'));
 	config.speed = getNumberFieldValue($('speed'));
 	config.audioEnabled = $('enableaudio').checked;
+	if ($('dontspeak').checked) config.dontSpeak = true;
 	config.showFps = $('showfps').checked;
 	config.showLoadProgress = $('progressbar').checked;
 	config.speakProbability = getNumberFieldValue($('speak')) / 100;
@@ -371,4 +373,17 @@ function configToQueryString (config) {
 		buf.push(encodeURIComponent(name)+"="+encodeURIComponent(params[name]));
 	}
 	return buf.join("&");
+}
+
+function updateDontSpeak (checked) {
+	var speak = $('speak');
+	var tr = speak.parentNode.parentNode;
+	tr.className = checked ? 'disabled' : '';
+	speak.disabled = checked;
+	var buttons = tr.getElementsByTagName('button');
+	for (var i = 0; i < buttons.length; ++ i) {
+		buttons[i].disabled = checked;
+	}
+
+	updateConfig();
 }

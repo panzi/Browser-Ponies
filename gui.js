@@ -104,6 +104,7 @@ function updateConfig () {
 	BrowserPonies.setShowFps(config.showFps);
 	BrowserPonies.setShowLoadProgress(config.showLoadProgress);
 	BrowserPonies.setSpeakProbability(config.speakProbability);
+	BrowserPonies.setDontSpeak(config.dontSpeak);
 
 	var random = config.spawnRandom || 0;
 	var ponies = BrowserPonies.ponies();
