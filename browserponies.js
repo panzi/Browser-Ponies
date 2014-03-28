@@ -1605,6 +1605,33 @@ var BrowserPonies = (function () {
 
 	PonyInstance.prototype = extend(new Instance(), {
 		createImage: function () {
+			var touch = function(evt) {
+				evt.preventDefault();
+				if (evt.touches.length > 1 || (evt.type === "touchend" && evt.touches.length > 0))
+				return;
+
+				var newEvt = document.createEvent("MouseEvents");
+				var type = null;
+				var touch = null;
+				switch (evt.type) {
+					case "touchstart":
+						type = "mousedown";
+						touch = evt.changedTouches[0];
+						break;
+					case "touchmove":
+						type = "mousemove";
+						touch = evt.changedTouches[0];
+						break;
+					case "touchend":
+						type = "mouseup";
+						touch = evt.changedTouches[0];
+						break;
+				}
+				newEvt.initMouseEvent(type, true, true, evt.target.ownerDocument.defaultView, 1,
+					touch.screenX, touch.screenY, touch.clientX, touch.clientY,
+					evt.ctrlKey, evt.altKey, evt.shiftKey, evt.metaKey, 0, null);
+				evt.target.dispatchEvent(newEvt);
+			};
 			return tag('img', {
 				draggable: 'false',
 				style: {
@@ -1619,6 +1646,9 @@ var BrowserPonies = (function () {
 				ondragstart: function (event) {
 					event.preventDefault();
 				},
+				ontouchstart: touch,
+				ontouchmove: touch,
+				ontouchend: touch,
 				ondblclick: function () {
 					// debug output
 					var pos = this.position();
@@ -2739,6 +2769,9 @@ var BrowserPonies = (function () {
 		return overlay;
 	};
 
+	observe(document, 'touchstart', function (event) {
+		mousePosition = null;
+	});
 	observe(document, 'mousemove', function (event) {
 		if (!mousePosition) {
 			mousePosition = {
