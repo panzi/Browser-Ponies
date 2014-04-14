@@ -132,16 +132,16 @@ var BrowserPonies = (function () {
 			}
 		};
 
-	var documentHidden = (function () {
-		var names = ['hidden', 'webkitHidden', 'mozHidden', 'msHidden', 'oHidden'];
+	var documentHidden = function () {
+		var names = ['hidden', 'webkitHidden', 'mozHidden', 'msHidden'];
 		for (var i = 0; i < names.length; ++ i) {
 			var name = names[i];
 			if (name in document) {
-				return new Function("return document."+name+";");
+				return document[name];
 			}
 		}
-		return new Function("return false;");
-	})();
+		return false;
+	};
 
 	var visibilitychange = function (event) {
 		if (timer !== null) {
@@ -155,11 +155,18 @@ var BrowserPonies = (function () {
 		}
 	};
 
-	observe(document, 'visibilitychange', visibilitychange);
-	observe(document, 'webkitvisibilitychange', visibilitychange);
-	observe(document, 'mozvisibilitychange', visibilitychange);
-	observe(document, 'msvisibilitychange', visibilitychange);
-	observe(document, 'ovisibilitychange', visibilitychange);
+	if (typeof document.hidden !== 'undefined') {
+		observe(document, 'visibilitychange', visibilitychange);
+	}
+	else if (typeof document.webkitHidden !== 'undefined') {
+		observe(document, 'webkitvisibilitychange', visibilitychange);
+	}
+	else if (typeof document.mozHidden !== 'undefined') {
+		observe(document, 'mozvisibilitychange', visibilitychange);
+	}
+	else if (typeof document.msHidden !== 'undefined') {
+		observe(document, 'msvisibilitychange', visibilitychange);
+	}
 
 	var windowSize = 'innerWidth' in window ?
 		function () {
@@ -372,9 +379,7 @@ var BrowserPonies = (function () {
 				}
 				else if (/^on/.test(attr)) {
 					if (typeof(value) !== "function") {
-						value = new Function("event",
-							'if ((function (event) {\n'+value+
-							'\n}).call(this,event) === false) { event.preventDefault(); }');
+						throw new Error("Event listeners must be a function.");
 					}
 					observe(element, attr.replace(/^on/,""), value);
 				}
