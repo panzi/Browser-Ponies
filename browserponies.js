@@ -155,16 +155,16 @@ var BrowserPonies = (function () {
 		}
 	};
 
-	if (typeof document.hidden !== 'undefined') {
+	if (typeof(document.hidden) !== 'undefined') {
 		observe(document, 'visibilitychange', visibilitychange);
 	}
-	else if (typeof document.webkitHidden !== 'undefined') {
+	else if (typeof(document.webkitHidden) !== 'undefined') {
 		observe(document, 'webkitvisibilitychange', visibilitychange);
 	}
-	else if (typeof document.mozHidden !== 'undefined') {
+	else if (typeof(document.mozHidden) !== 'undefined') {
 		observe(document, 'mozvisibilitychange', visibilitychange);
 	}
-	else if (typeof document.msHidden !== 'undefined') {
+	else if (typeof(document.msHidden) !== 'undefined') {
 		observe(document, 'msvisibilitychange', visibilitychange);
 	}
 
