@@ -1457,7 +1457,7 @@ var BrowserPonies = (function () {
 				return false;
 			}
 			
-			for (var i = 0, n = interaction.behaviors.length; i < n;) {
+			for (var i = 0; i < interaction.behaviors.length;) {
 				var behavior = interaction.behaviors[i];
 				if (has(this.behaviors_by_name, behavior)) {
 					 ++ i;
