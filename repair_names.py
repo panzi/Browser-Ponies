@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import sys
 import os
 import re
 import argparse
@@ -65,8 +66,9 @@ def main():
 	dirs = args.directories
 	if not dirs:
 		dirs = [u'.']
+	encoding = sys.getfilesystemencoding()
 	for directory in dirs:
-		repair_names(unicode(directory))
+		repair_names(unicode(directory,encoding))
 
 if __name__ == '__main__':
 	main()

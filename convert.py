@@ -23,7 +23,7 @@ BOMS.sort(key=lambda bom:-len(bom))
 
 def decode(s):
 #	s = unicode(s,chardet.detect(s)['encoding'])
-	s = unicode(s,"utf8")
+	s = s.decode("utf-8")
 	for bom in BOMS:
 		if s.startswith(bom):
 			s = s[len(bom):]
@@ -37,7 +37,7 @@ def wrap(files,out):
 		with open(filepath,'rb') as f:
 			data = IGNORE.sub("", decode(f.read())).replace("\r\n","\n")
 			ponies.append({'ini': data, 'baseurl': urllib.quote(normpath(dirname)+"/")})
-	json.dump(ponies,out)
+	out.write(json.dumps(ponies).encode("utf-8"))
 	out.write("\n")
 
 if __name__ == '__main__':

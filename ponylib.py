@@ -9,7 +9,7 @@ BOMS = list(set(unicode(getattr(codecs, name),CODEC.match(name).group(1))
 BOMS.sort(key=lambda bom:-len(bom))
 
 def decode(s):
-	s = unicode(s,chardet.detect(s)['encoding'])
+	s = s.decode(chardet.detect(s)['encoding'])
 	for bom in BOMS:
 		if s.startswith(bom):
 			s = s[len(bom):]
