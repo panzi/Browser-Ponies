@@ -3,10 +3,15 @@
 var observe   = BrowserPonies.Util.observe;
 var tag       = BrowserPonies.Util.tag;
 var $         = BrowserPonies.Util.$;
-var absUrl    = BrowserPonies.Util.URL.abs;
+var _absUrl   = BrowserPonies.Util.URL.abs;
 var has       = BrowserPonies.Util.has;
 var partial   = BrowserPonies.Util.partial;
 var dataUrl   = BrowserPonies.Util.dataUrl;
+
+function absUrl (url) {
+	// force https
+	return _absUrl(url).replace(/^http:/,'https:');
+}
 
 if (typeof($x) === "undefined" && document.evaluate) {
 	window.$x = function (xpath, context) {
