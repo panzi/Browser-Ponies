@@ -337,7 +337,7 @@ var BrowserPonies = (function () {
 			return URL.fix(baseurl);
 		},
 		fix: function (url) {
-			return url.replace(/^https?:\/\/web\d?\.student\.tuwien\.ac\.at\/~e0427417\/browser-ponies\//,"http://panzi.github.com/Browser-Ponies/");
+			return url.replace(/^https?:\/\/web\d?\.student\.tuwien\.ac\.at\/~e0427417\/browser-ponies\//,"https://panzi.github.com/Browser-Ponies/");
 		}
 	});
 
